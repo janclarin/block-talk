@@ -66,7 +66,7 @@ public class Server
 	 * 
 	 * @param token
 	 */
-	public void Authenticate(InetAddress clientIp, String token){
+	public void authenticate(InetAddress clientIp, String token){
 		InetAddress hostIp;
 		if(roomMap.containsKey(token)){
 			hostIp = getRoomHost(token);
