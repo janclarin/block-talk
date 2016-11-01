@@ -1,6 +1,6 @@
 /**
  * Interface to be implemented by classes that should be
- * notified by an instance ofBlockTalkProtocol.
+ * notified by an instance of BlockTalkProtocol.
  *
  * @author Clinton Cabiles
  * @author Jan Clarin
