@@ -9,8 +9,7 @@ import java.net.InetAddress;
  * @author Jan Clarin
  * @author Riley Lahd
  */
-public class User
-{
+public class User {
 	/**
 	 * User IP address. Should not change after initialization.
 	 */
@@ -26,8 +25,7 @@ public class User
 	 * @param ipAddress IP address.
 	 * @param port Port number.
 	 */
-	public User(InetAddress ipAddress, short port)
-	{
+	public User(InetAddress ipAddress, short port) {
 		this.ipAddress = ipAddress;
 		this.port = port;
 	}
