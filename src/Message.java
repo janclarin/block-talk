@@ -16,7 +16,7 @@ import java.net.UnknownHostException;
  * @author Riley Lahd
  */
 public class Message{
-	public final int HEADER_SIZE = 10;
+	public static final int HEADER_SIZE = 10;
 	private InetAddress ip;
 	private short port;
 	private String data;
@@ -109,19 +109,11 @@ public class Message{
 	 * @return the byte array representing this message in the prescribed format
 	 */
 	public byte[] toByteArray(){
-		byte[] arr = new byte[HEADER_SIZE+data.length()];
-		byte[] ipByte = ip.getAddress();
-		ByteBuffer bbPort = ByteBuffer.allocate(2);
-		byte[] portByte = bbPort.putShort(port).array();
-		ByteBuffer bbSize = ByteBuffer.allocate(4);
-		byte[] sizeByte = bbSize.putInt(data.length()).array();
-		byte[] dataByte = data.getBytes();
-		for(int i = 0; i<arr.length;i++){
-			if(i<4){arr[i] = ipByte[i];}
-			else if(i<6){arr[i] = portByte[i-4];}
-			else if(i<HEADER_SIZE){arr[i] = sizeByte[i-6];}
-			else{arr[i] = dataByte[i-HEADER_SIZE];}
-		}
-		return arr;
+		ByteBuffer arr = ByteBuffer.allocate(HEADER_SIZE+data.length());
+		arr.put(ip.getAddress());
+		arr.putShort(port);
+		arr.putInt(data.length());
+		arr.put(data.getBytes());
+		return arr.array();
 	}
 }

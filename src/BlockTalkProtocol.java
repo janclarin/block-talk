@@ -1,7 +1,5 @@
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.io.OutputStream;
-import java.io.InputStream;
 /**
  * This class manages the sending and receiveing of messages using
  * the prescribed format. It is intended to be used for both Client-Server
