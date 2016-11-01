@@ -9,7 +9,7 @@ import java.util.List;
  * @author Jan Clarin
  * @author Riley Lahd
  */
-public class ChatRoomClient implements BlockTalkProtocolListener {
+public class ChatRoomClient {
 	/**
 	 * User information.
 	 */
@@ -42,19 +42,5 @@ public class ChatRoomClient implements BlockTalkProtocolListener {
 	 */
 	public List<User> getOtherKnownUsers() {
 		return otherKnownUsers;
-	}
-
-	/**
-	 * TODO: Updates the GUI to indicate that a message has been successfully sent.
-	 */
-	@Override
-	public void messageSent() {
-	}
-
-	/**
-	 * TODO: Updates the GUI to display the received message.
-	 */
-	@Override
-	public void messageReceived(String message) {
 	}
 }
