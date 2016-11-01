@@ -12,22 +12,18 @@ import java.io.InputStream;
  * @author Jan Clarin
  * @author Riley Lahd
  */
-public class BlockTalkProtocol
-{
-	private Socket socket;
-	private final ip;
-	private final port;
+public class BlockTalkProtocol{
+	private final InetAddress ip;
+	private final short port;
 
 	/**
 	 * Constructs a protocol object
 	 * @param ip The local ip to prepend to messages
 	 * @param port The local port to prepend to messages
 	 */
-	public BlockTalkProtocol(InetAddress ip, short port)
-	{
+	public BlockTalkProtocol(InetAddress ip, short port){
 		this.ip = ip;
 		this.port = port;
-		socket = new Socket();
 	}
 
 	/**
@@ -40,24 +36,20 @@ public class BlockTalkProtocol
 	public short getPort(){return port;}
 
 	/**
-	 * Sends a message to the target
+	 * Wraps a message to prepare to be sent, converting to message format and encrypting
 	 * @param data The payload of the message object to send
-	 * @param targetIp The destination address
-	 * @param targetPort The destination port
 	 */
-	public void send(String data, InetAddress targetIp, short targetPort)
-	{
+	public byte[] wrap(String data){
 		Message msg = new Message(ip, port, data);
-		Socket sendSock = new Socket(targetIp, targetPort);
-		OutputStream out = sendSock.getOutputStream();
-		out.send(msg.toByteArray());
-		SendSock.close();
+		return msg.toByteArray();
 	}
 
-	public Message receive()
-	{
+	/**
+	 * Unwraps a message to prepare into a Message object, by decrypting and parsing
+	 * @param bytes The received, encrypted Message object
+	 */
+	public Message unwrap(byte[] bytes) throws UnknownHostException{
 		//Somehow access a byte[] of the message
-		byte[] bytes;
 		Message msg = new Message(bytes);
 		return msg;
 	}
