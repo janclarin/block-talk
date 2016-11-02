@@ -18,14 +18,14 @@ public class User {
 	/**
 	 * Port number. Should not change after initialization.
 	 */
-	private final short port;
+	private final int port;
 	
 	/**
 	 * Creates a new User with the given IP address and port. 
 	 * @param ipAddress IP address.
 	 * @param port Port number.
 	 */
-	public User(InetAddress ipAddress, short port) {
+	public User(InetAddress ipAddress, int port) {
 		this.ipAddress = ipAddress;
 		this.port = port;
 	}
@@ -42,7 +42,15 @@ public class User {
 	 * Gets the port of this User.
 	 * @return The port of this User.
 	 */
-	public short getPort() {
+	public int getPort() {
 		return port;
+	}
+	
+	/**
+	 * Returns a String representation of this User.
+	 * @return String representation of this User.
+	 */
+	public String toString() {
+		return String.format("IP %s Port %d", ipAddress, port);
 	}
 }
