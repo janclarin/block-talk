@@ -10,11 +10,17 @@ public interface ChatRoomClientListener {
 	/**
 	 * To be called when a message is sent.
 	 */
-	void messageSent();
+	void messageSent(String message);
 	
 	/**
 	 * To be called when a message is received.
 	 * @param message The received message.
 	 */
 	void messageReceived(String message);
+	
+	/**
+	 * To be called when a new User has joined.
+	 * @param newUser The new user who has just joined.
+	 */
+	void userHasJoined(User newUser);
 }
