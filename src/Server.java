@@ -15,6 +15,10 @@ public class Server
 {
 	private HashMap<String, ChatRoom> roomMap;
 	
+	public static void main(String args){
+		
+	}
+	
 	/**
 	 * Initializes the server and room map
 	 */
