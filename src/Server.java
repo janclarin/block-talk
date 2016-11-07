@@ -11,13 +11,13 @@ import java.util.Objects;
  * @author Jan Clarin
  * @author Riley Lahd
  */
-public class Server
+public class Server implements ServerConnectionListener
 {
 	private HashMap<String, ChatRoom> roomMap;
 	
 	public static void main(String args){
 		Server server = new Server();
-		
+		ServerConnectionManager connectionManager = new ServerConnectionManager(); 
 		
 	}
 	
@@ -89,5 +89,23 @@ public class Server
 			hostIp = clientIp;
 		}
 		sendHost(hostIp, clientIp);
+	}
+
+	@Override
+	public void HostRequest() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void RoomRequest() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void UpdateHost() {
+		// TODO Auto-generated method stub
+		
 	}
 }

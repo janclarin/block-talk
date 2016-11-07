@@ -7,6 +7,7 @@ public class ServerConnectionManager {
 	
 	private ServerSocket server;
 	private int port = 9999;
+	private boolean listen;
 	
 	public ServerConnectionManager(){
 		ExecutorService threadPool = Executors.newCachedThreadPool();
@@ -20,7 +21,7 @@ public class ServerConnectionManager {
 			System.exit(1);
 		}
 		
-		while(true){
+		while(listen){
 			try{
 				threadPool.execute(new ServerConnection(server.accept()));
 			}
