@@ -15,6 +15,11 @@ public class Server implements ServerConnectionListener
 {
 	private HashMap<String, ChatRoom> roomMap;
 	
+	/**
+	 * Creates main server, and starts listening for incoming connections
+	 * 
+	 * @param args
+	 */
 	public static void main(String args){
 		Server server = new Server();
 		ServerConnectionManager connectionManager = new ServerConnectionManager(server); 
@@ -94,18 +99,18 @@ public class Server implements ServerConnectionListener
 	@Override
 	public boolean HostRequest() {
 		// TODO Auto-generated method stub
-		
+		return false;
 	}
 
 	@Override
 	public ChatRoom[] RoomRequest() {
 		// TODO Auto-generated method stub
-		
+		return null;
 	}
 
 	@Override
 	public boolean UpdateHost() {
 		// TODO Auto-generated method stub
-		
+		return false;
 	}
 }

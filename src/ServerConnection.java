@@ -4,6 +4,14 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This worker class handles a distinct connection and handles their messages to communicate
+ * with main server. 
+ *
+ * @author Clinton Cabiles
+ * @author Jan Clarin
+ * @author Riley Lahd
+ */
 public class ServerConnection implements Runnable {
 	private Socket socket;
 	private boolean closeConnection;
@@ -15,6 +23,10 @@ public class ServerConnection implements Runnable {
 		listeners.add(listener);
 	}
 	
+	/**
+	 * Receives messages and handles their input
+	 * 
+	 */
 	@Override
 	public void run() {
 		while(!closeConnection){
@@ -26,16 +38,31 @@ public class ServerConnection implements Runnable {
 				e.printStackTrace();
 			}
 		}
+		try {
+			socket.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
+	/**
+	 * Notifies listener that a client is requesting a creation of new chatroom
+	 */
 	public void notifyHostRequest(){
 		
 	}
 	
+	/**
+	 * Notifies listener that a client is requesting a list of rooms
+	 */
 	public void notifyRoomRequest(){
 		
 	}
 	
+	/**
+	 * Notifies listener that a room is requesting a host update
+	 */
 	public void notifyUpdateHostRequest(){
 		
 	}
