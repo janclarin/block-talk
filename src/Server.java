@@ -17,7 +17,7 @@ public class Server implements ServerConnectionListener
 	
 	public static void main(String args){
 		Server server = new Server();
-		ServerConnectionManager connectionManager = new ServerConnectionManager(); 
+		ServerConnectionManager connectionManager = new ServerConnectionManager(server); 
 		
 	}
 	
@@ -92,19 +92,19 @@ public class Server implements ServerConnectionListener
 	}
 
 	@Override
-	public void HostRequest() {
+	public boolean HostRequest() {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void RoomRequest() {
+	public ChatRoom[] RoomRequest() {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void UpdateHost() {
+	public boolean UpdateHost() {
 		// TODO Auto-generated method stub
 		
 	}

@@ -4,15 +4,15 @@ public interface ServerConnectionListener {
 	/**
 	 * Requests a room and sets the host to the room
 	 */
-	public void HostRequest();
+	public boolean HostRequest();
 	
 	/**
 	 * Request for room list
 	 */
-	public void RoomRequest();
+	public ChatRoom[] RoomRequest();
 	
 	/**
 	 * Sets new host for existing chatroom
 	 */
-	public void UpdateHost();
+	public boolean UpdateHost();
 }

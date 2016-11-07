@@ -9,7 +9,7 @@ public class ServerConnectionManager {
 	private int port = 9999;
 	private boolean listen;
 	
-	public ServerConnectionManager(){
+	public ServerConnectionManager(Server mainServer){
 		ExecutorService threadPool = Executors.newCachedThreadPool();
 		
 		try {
@@ -23,7 +23,7 @@ public class ServerConnectionManager {
 		
 		while(listen){
 			try{
-				threadPool.execute(new ServerConnection(server.accept()));
+				threadPool.execute(new ServerConnection(server.accept(), mainServer));
 			}
 			catch(Exception ex){
 				System.err.println("Error: Exception: " + ex.getMessage());
