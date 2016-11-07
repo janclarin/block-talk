@@ -1,3 +1,7 @@
+package protocols;
+
+import models.Message;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 /**
@@ -15,7 +19,7 @@ public class BlockTalkProtocol{
 	private final short port;
 
 	/**
-	 * Constructs a protocol object
+	 * Constructs a protocols object
 	 * @param ip The local ip to prepend to messages
 	 * @param port The local port to prepend to messages
 	 */
@@ -43,8 +47,8 @@ public class BlockTalkProtocol{
 	}
 
 	/**
-	 * Unwraps a message to prepare into a Message object, by decrypting and parsing
-	 * @param bytes The received, encrypted Message object
+	 * Unwraps a message to prepare into a models.Message object, by decrypting and parsing
+	 * @param bytes The received, encrypted models.Message object
 	 */
 	public Message unwrap(byte[] bytes) throws UnknownHostException{
 		//Somehow access a byte[] of the message

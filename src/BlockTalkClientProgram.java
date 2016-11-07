@@ -1,14 +1,18 @@
+import chatroom.Client;
+import chatroom.ClientListener;
+import models.User;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 /**
- * Main class to participate in chat rooms.
+ * Main program for running a Block Talk Client.
  * 
  * @author Clinton Cabiles
  * @author Jan Clarin
  * @author Riley Lahd
  */
-public class ChatRoomProgram implements ChatRoomClientListener {
+public class BlockTalkClientProgram implements ClientListener {
 	@Override
 	public void messageSent(String message) {
 		System.out.printf("Successfully sent message: %s\n", message);
@@ -34,34 +38,32 @@ public class ChatRoomProgram implements ChatRoomClientListener {
 	 * - Other client IP address
 	 * - Other client port number
 	 * 
-	 * e.g. java ChatRoomProgram 127.0.0.1 5001 [127.0.0.1 5002]
+	 * e.g. java BlockTalkClientProgram 127.0.0.1 5001 [127.0.0.1 5002]
 	 * 
 	 * @param args Command line arguments.
 	 * @throws UnknownHostException Invalid host.
 	 */
 	public static void main(String[] args) throws UnknownHostException {
-		if (args.length < 2) {
+		if (args.length != 2 && args.length != 4) {
 			throw new IllegalArgumentException();
 		}
 
 		String host = args[0];
 		int port = Integer.parseInt(args[1]);
 		User user = new User(InetAddress.getByName(host), port);
-		
-		// Initialize the ChatRoomClient and register this as a listener.
-		ChatRoomClient client = new ChatRoomClient(user);
-		client.register(new ChatRoomProgram());
-		
+
+		// Initialize the Client and register this as a listener.
+		BlockTalkClientProgram program = new BlockTalkClientProgram();
+		Client client = new Client(user, program);
+        new Thread(client).start();
+
 		// Determine if we should broadcast a message to a specified user immediately.
 		if (args.length == 4) {
 			String otherHost = args[2];
 			int otherHostPort = Integer.parseInt(args[3]);
-			User otherUser = new User(InetAddress.getByName(otherHost), otherHostPort);
+			models.User otherUser = new models.User(InetAddress.getByName(otherHost), otherHostPort);
 			String message = String.format("Sent from (%s) to (%s)", user, otherUser);
 			client.sendMessage(message, otherUser);
 		}
-		
-		// Start listening for incoming requests.
-		client.startListening();
 	}
 }

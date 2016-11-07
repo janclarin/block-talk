@@ -1,12 +1,16 @@
+package chatroom;
+
+import models.User;
+
 /**
  * Interface to be implemented by classes that should be
- * notified by an instance of ChatRoomClient.
+ * notified by an instance of Client.
  *
  * @author Clinton Cabiles
  * @author Jan Clarin
  * @author Riley Lahd
  */
-public interface ChatRoomClientListener {
+public interface ClientListener {
 	/**
 	 * To be called when a message is sent.
 	 */
@@ -19,7 +23,7 @@ public interface ChatRoomClientListener {
 	void messageReceived(String message);
 	
 	/**
-	 * To be called when a new User has joined.
+	 * To be called when a new models.User has joined.
 	 * @param newUser The new user who has just joined.
 	 */
 	void userHasJoined(User newUser);

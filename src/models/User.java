@@ -1,3 +1,5 @@
+package models;
+
 import java.net.InetAddress;
 
 /**
@@ -11,7 +13,7 @@ import java.net.InetAddress;
  */
 public class User {
 	/**
-	 * User IP address. Should not change after initialization.
+	 * models.User IP address. Should not change after initialization.
 	 */
 	private final InetAddress ipAddress;
 	
@@ -21,7 +23,7 @@ public class User {
 	private final int port;
 	
 	/**
-	 * Creates a new User with the given IP address and port. 
+	 * Creates a new models.User with the given IP address and port.
 	 * @param ipAddress IP address.
 	 * @param port Port number.
 	 */
@@ -31,24 +33,24 @@ public class User {
 	}
 	
 	/**
-	 * Gets the IP address of this User.
-	 * @return The IP address of this User. 
+	 * Gets the IP address of this models.User.
+	 * @return The IP address of this models.User.
 	 */
 	public InetAddress getIpAddress() {
 		return ipAddress;
 	}
 	
 	/**
-	 * Gets the port of this User.
-	 * @return The port of this User.
+	 * Gets the port of this models.User.
+	 * @return The port of this models.User.
 	 */
 	public int getPort() {
 		return port;
 	}
 	
 	/**
-	 * Returns a String representation of this User.
-	 * @return String representation of this User.
+	 * Returns a String representation of this models.User.
+	 * @return String representation of this models.User.
 	 */
 	public String toString() {
 		return String.format("IP %s Port %d", ipAddress, port);
