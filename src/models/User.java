@@ -68,6 +68,6 @@ public class User {
 	 * @return String representation of this User.
 	 */
 	public String toString() {
-		return String.format("(Username %s | IP %s | Port %d)", username, ipAddress, port);
+		return String.format("%s | %s:%d", username, ipAddress, port);
 	}
 }
