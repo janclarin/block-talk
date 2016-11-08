@@ -1,3 +1,5 @@
+package models;
+
 import java.nio.ByteBuffer;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
