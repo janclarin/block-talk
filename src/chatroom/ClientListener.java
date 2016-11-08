@@ -11,21 +11,26 @@ import models.User;
  * @author Riley Lahd
  */
 public interface ClientListener {
-	/**
-	 * To be called when a message is sent.
-	 */
-	void messageSent(User recipient, String message);
-	
-	/**
-	 * To be called when a message is received.
-	 * @param sender The user who sent the message.
-	 * @param message The received message.
-	 */
-	void messageReceived(User sender, String message);
-	
-	/**
-	 * To be called when a new models.User has joined.
-	 * @param newUser The new user who has just joined.
-	 */
-	void userHasJoined(User newUser);
+    /**
+     * To be called when a message is sent.
+     *
+     * @param recipient  The user who received the message.
+     * @param message The sent message.
+     */
+    void messageSent(User recipient, String message);
+
+    /**
+     * To be called when a message is received.
+     *
+     * @param sender  The user who sent the message.
+     * @param message The received message.
+     */
+    void messageReceived(User sender, String message);
+
+    /**
+     * To be called when a new models.User has joined.
+     *
+     * @param newUser The new user who has just joined.
+     */
+    void userHasJoined(User newUser);
 }
