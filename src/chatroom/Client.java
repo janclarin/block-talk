@@ -20,11 +20,15 @@ import java.util.concurrent.Executors;
  * @author Riley Lahd
  */
 public class Client implements Runnable, SocketHandlerListener {
+    /**
+     * Username used for sending messages.
+     */
+    private final String clientUsername;
 
 	/**
-	 * User information.
+	 * Port used for incoming requests.
 	 */
-	private final User user;
+	private final int clientPort;
 
 	/**
 	 * Socket map for retrieving the socket handler for a models.User.
@@ -32,9 +36,9 @@ public class Client implements Runnable, SocketHandlerListener {
 	private final Map<User, SocketHandler> userSocketHandlerMap = new HashMap<>();
 
 	/**
-	 * Thread pool.
+	 * Thread pool for SocketHandlers.
 	 */
-	private ExecutorService threadPool;
+	private ExecutorService socketHandlerThreadPool;
 
 	/**
 	 * Listener for chat room events.
@@ -53,11 +57,27 @@ public class Client implements Runnable, SocketHandlerListener {
 	
 	/**
 	 * Creates a new Client with the given models.User info.
-	 * @param user Information about the models.User.
+     * @param clientPort Port that other Users will connect to.
+     * @param listener Listener to notify when certain events occur.
 	 */
-	public Client(final User user, final ClientListener listener) {
-		this.user = user;
+	public Client(final String clientUsername, final int clientPort, final ClientListener listener) {
+        this.clientUsername = clientUsername;
+        this.clientPort = clientPort;
 		this.listener = listener;
+	}
+
+    @Override
+    public void messageSent(SocketHandler recipientSocketHandler, User recipient, String message) {
+        notifyMessageSent(recipient, message);
+    }
+
+    @Override
+	public void messageReceived(SocketHandler senderSocketHandler, User sender, String message) {
+		userSocketHandlerMap.putIfAbsent(sender, senderSocketHandler);
+		notifyMessageReceived(sender, message);
+
+        // TODO: Remove auto-reply.
+        sendMessage("Hello from " + clientUsername, sender);
 	}
 
 	/**
@@ -65,45 +85,23 @@ public class Client implements Runnable, SocketHandlerListener {
 	 */
 	@Override
 	public void run() {
-		threadPool = Executors.newCachedThreadPool();
+        socketHandlerThreadPool = Executors.newCachedThreadPool();
 
 		try {
-			serverSocket = new ServerSocket(user.getPort());
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+			serverSocket = new ServerSocket(clientPort);
 
-		while (continueRunning) {
-			try {
-				Socket socket = serverSocket.accept();
-				SocketHandler socketHandler = new SocketHandler(socket, this);
-				threadPool.execute(socketHandler);
-
-                // Generate a socket from the user.
-				User user = new User(socket.getInetAddress(), socket.getPort());
-				userSocketHandlerMap.put(user, socketHandler);
-				notifyUserHasJoined(user);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			while (continueRunning) {
+                Socket socket = serverSocket.accept();
+                SocketHandler socketHandler = new SocketHandler(socket, this);
+                socketHandlerThreadPool.execute(socketHandler);
 			}
-		}
 
-		threadPool.shutdown();
-		try {
+			socketHandlerThreadPool.shutdown();
 			serverSocket.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-	
-	/**
-	 * Stops the thread from running and listening for incoming requests.
-	 */
-	public void stopRunning() {
-		continueRunning = false;
 	}
 
 	/**
@@ -123,11 +121,14 @@ public class Client implements Runnable, SocketHandlerListener {
 	 */
 	public void sendMessage(String message, User recipient) {
 		try {
-			SocketHandler socketHandler = getUserSocketHandler(recipient);
+            Thread.sleep(1000); // TODO: Remove delay.
+			SocketHandler socketHandler = getSocketHandler(recipient);
 			socketHandler.sendMessage(message);
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 	}
 
 	/**
@@ -136,37 +137,35 @@ public class Client implements Runnable, SocketHandlerListener {
 	 * @return The SocketHandler for a given user.
 	 * @throws IOException Thrown when there is an issue creating a new Socket if the User does not have one.
 	 */
-	private SocketHandler getUserSocketHandler(User user) throws IOException {
-        SocketHandler userSocketHandler = userSocketHandlerMap.get(user);
+	private SocketHandler getSocketHandler(User user) throws IOException {
+        SocketHandler socketHandler = userSocketHandlerMap.get(user);
 
-        if (userSocketHandler == null || userSocketHandler.isConnectionClosed()) {
-            userSocketHandler = createUserSocketHandler()
+        if (socketHandler == null || socketHandler.isConnectionClosed()) {
+            Socket socket = new Socket(user.getIpAddress(), user.getPort());
+            socketHandler = new SocketHandler(socket, this);
+            userSocketHandlerMap.put(user, socketHandler);
+            socketHandlerThreadPool.execute(socketHandler);
 		}
 
-		return userSocketHandler;
+		return socketHandler;
 	}
 
-	private SocketHandler createUserSocketHandler(Socket socket) throws IOException {
-        User user = new User(socket.getInetAddress(), socket.getPort());
-		SocketHandler userSocketHandler = new SocketHandler(socket, this);
-		userSocketHandlerMap.put(user, userSocketHandler);
-        return userSocketHandler;
-	}
-	
 	/**
 	 * Notifies all listeners about the sent message.
-	 * @param message The sent message.
-	 */
-	private void notifyMessageSent(String message) {
-		listener.messageSent(message);
+     * @param recipient The User who received the sent message.
+     * @param message The sent message.
+     */
+	private void notifyMessageSent(User recipient, String message) {
+		listener.messageSent(recipient, message);
 	}
 	
 	/**
 	 * Notifies all listeners about the received message.
+     * @param sender The User who sent the received message.
 	 * @param message The received message.
 	 */
-	private void notifyMessageReceived(String message) {
-		listener.messageReceived(message);
+	private void notifyMessageReceived(User sender, String message) {
+		listener.messageReceived(sender, message);
 	}
 	
 	/**

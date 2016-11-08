@@ -1,5 +1,7 @@
 package chatroom;
 
+import models.User;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -37,26 +39,18 @@ public class SocketHandler implements Runnable {
 		BufferedReader incomingStream = null;
 		try {
 			incomingStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 
-		String message;
-		try {
+			// TODO: Get username from received.
+			User dummyUser = new User("Port" + socket.getPort(), socket.getInetAddress(), socket.getPort());
+
+			String message;
 			while (continueRunning && (message = incomingStream.readLine()) != null) {
-                //notifyMessageReceived(message);
-            }
+				notifyMessageReceived(dummyUser, message);
+			}
+
+			socket.close();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (NullPointerException e) {
-            // TODO: Handle when readLine() throws.
-            e.printStackTrace();
-        }
-
-        try {
-            socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -90,4 +84,12 @@ public class SocketHandler implements Runnable {
     public boolean isConnectionClosed() {
         return !socket.isConnected() || socket.isClosed();
     }
+
+    private void notifyMessageSent(User recipient, String message) {
+		listener.messageSent(this, recipient, message);
+	}
+
+	private void notifyMessageReceived(User sender, String message) {
+		listener.messageReceived(this, sender, message);
+	}
 }

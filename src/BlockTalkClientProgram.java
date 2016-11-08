@@ -14,13 +14,13 @@ import java.net.UnknownHostException;
  */
 public class BlockTalkClientProgram implements ClientListener {
 	@Override
-	public void messageSent(String message) {
+	public void messageSent(User recipient, String message) {
 		System.out.printf("Successfully sent message: %s\n", message);
 	}
 
 	@Override
-	public void messageReceived(String message) {
-		System.out.printf("Received message: %s\n", message);
+	public void messageReceived(User sender, String message) {
+		System.out.printf("%s: \"%s\"\n", sender.getUsername(), message);
 	}
 	
 	@Override
@@ -31,14 +31,14 @@ public class BlockTalkClientProgram implements ClientListener {
 	/**
 	 * Main function to participate in chat rooms.
 	 * Must specify the following command line arguments:
-	 * - Host IP address
+     * - Host username
 	 * - Host port number
 	 * TODO: Remove the following:
-	 * Optional arguments (to connect to another client immediately (This is temporary)
+	 * Optional arguments (to connect to another client immediately (This is temporary until server is up)
 	 * - Other client IP address
 	 * - Other client port number
 	 * 
-	 * e.g. java BlockTalkClientProgram 127.0.0.1 5001 [127.0.0.1 5002]
+	 * e.g. java BlockTalkClientProgram MyUsername 5001 [127.0.0.1 5002]
 	 * 
 	 * @param args Command line arguments.
 	 * @throws UnknownHostException Invalid host.
@@ -48,21 +48,18 @@ public class BlockTalkClientProgram implements ClientListener {
 			throw new IllegalArgumentException();
 		}
 
-		String host = args[0];
-		int port = Integer.parseInt(args[1]);
-		User user = new User(InetAddress.getByName(host), port);
-
-		// Initialize the Client and register this as a listener.
+        String clientUsername = args[0];
+		int clientPort = Integer.parseInt(args[1]);
 		BlockTalkClientProgram program = new BlockTalkClientProgram();
-		Client client = new Client(user, program);
+		Client client = new Client(clientUsername, clientPort, program);
         new Thread(client).start();
 
 		// Determine if we should broadcast a message to a specified user immediately.
 		if (args.length == 4) {
 			String otherHost = args[2];
 			int otherHostPort = Integer.parseInt(args[3]);
-			models.User otherUser = new models.User(InetAddress.getByName(otherHost), otherHostPort);
-			String message = String.format("Sent from (%s) to (%s)", user, otherUser);
+            User otherUser = new User("OtherUser:" + otherHostPort, InetAddress.getByName(otherHost), otherHostPort);
+			String message = String.format("Sent from (%s) to (%s)", clientPort, otherUser);
 			client.sendMessage(message, otherUser);
 		}
 	}

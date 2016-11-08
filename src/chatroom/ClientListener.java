@@ -14,13 +14,14 @@ public interface ClientListener {
 	/**
 	 * To be called when a message is sent.
 	 */
-	void messageSent(String message);
+	void messageSent(User recipient, String message);
 	
 	/**
 	 * To be called when a message is received.
+	 * @param sender The user who sent the message.
 	 * @param message The received message.
 	 */
-	void messageReceived(String message);
+	void messageReceived(User sender, String message);
 	
 	/**
 	 * To be called when a new models.User has joined.
