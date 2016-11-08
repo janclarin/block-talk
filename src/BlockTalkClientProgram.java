@@ -2,6 +2,8 @@ import chatroom.Client;
 import chatroom.ClientListener;
 import models.User;
 
+import java.util.Scanner;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -48,7 +50,7 @@ public class BlockTalkClientProgram implements ClientListener {
             throw new IllegalArgumentException();
         }
 
-        String clientUsername = args[0];
+        String clientUsername = args[0]+":"+args;
         int clientPort = Integer.parseInt(args[1]);
         BlockTalkClientProgram program = new BlockTalkClientProgram();
         Client client = new Client(clientUsername, clientPort, program);
@@ -61,6 +63,13 @@ public class BlockTalkClientProgram implements ClientListener {
             User otherUser = new User("OtherUser:" + otherHostPort, InetAddress.getByName(otherHost), otherHostPort);
             String message = String.format("Sent from (%s) to (%s)", clientPort, otherUser);
             client.sendMessage(message, otherUser);
+
+            Scanner scan = new Scanner(System.in);
+            while(!message.equals("/q"))
+            {
+                message = scan.nextLine();
+                client.sendMessageToAll(message);
+            }
         }
     }
 }

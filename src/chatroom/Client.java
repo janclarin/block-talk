@@ -78,7 +78,7 @@ public class Client implements Runnable, SocketHandlerListener {
         notifyMessageReceived(sender, message);
 
         // TODO: Remove auto-reply.
-        sendMessage("Hello from " + clientUsername, sender);
+        //sendMessage("Hello from " + clientUsername, sender);
     }
 
     /**
