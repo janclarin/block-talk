@@ -16,8 +16,8 @@ public class ChatRoom {
 	 * 
 	 * @param ipAddress
 	 */
-	public ChatRoom(InetAddress ipAddress){
-		hostIp = ipAddress;
+	public ChatRoom(InetAddress hostIpAddress){
+		hostIp = hostIpAddress;
 	}
 	
 	/**

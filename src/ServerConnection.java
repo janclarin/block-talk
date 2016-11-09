@@ -1,5 +1,4 @@
 import java.io.DataInputStream;
-import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,28 +25,28 @@ public class ServerConnection implements Runnable {
 	/**
 	 * Receives messages and handles their input
 	 * 
+	 * TODO: handle the recieved message
 	 */
 	@Override
 	public void run() {
-		while(!closeConnection){
-			try {
+		try{
+			while(!closeConnection){
 				DataInputStream incoming = new DataInputStream(socket.getInputStream());
 				String message = incoming.readUTF();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
-		}
-		try {
 			socket.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		}
+		catch(Exception ex){
+			System.err.println("Error: Exception: " + ex.getMessage());
+			ex.printStackTrace();
+			System.exit(1);
 		}
 	}
 	
 	/**
 	 * Notifies listener that a client is requesting a creation of new chatroom
+	 * 
+	 * TODO: implement notify all active servers of new host request
 	 */
 	public void notifyHostRequest(){
 		
@@ -55,6 +54,8 @@ public class ServerConnection implements Runnable {
 	
 	/**
 	 * Notifies listener that a client is requesting a list of rooms
+	 * 
+	 * TODO: implement notify receive list of all active rooms from servers
 	 */
 	public void notifyRoomRequest(){
 		
@@ -62,6 +63,8 @@ public class ServerConnection implements Runnable {
 	
 	/**
 	 * Notifies listener that a room is requesting a host update
+	 * 
+	 * TODO: implement notify all servers of new host request for existing room
 	 */
 	public void notifyUpdateHostRequest(){
 		

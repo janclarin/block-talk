@@ -1,3 +1,5 @@
+import java.util.List;
+
 /**
  * This interface is used to request network functions from the main server
  *
@@ -12,19 +14,19 @@ public interface ServerConnectionListener {
 	 * 
 	 * @return true if host request succeeded
 	 */
-	public boolean HostRequest();
+	public boolean hostRequest();
 	
 	/**
 	 * Request for room list.
 	 * 
 	 * @return List of existing rooms in map
 	 */
-	public ChatRoom[] RoomRequest();
+	public List<ChatRoom> roomRequest();
 	
 	/**
 	 * Sets new host for existing chatroom
 	 * 
 	 * @return true if host successfully updated
 	 */
-	public boolean UpdateHost();
+	public boolean updateHost();
 }

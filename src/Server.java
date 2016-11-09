@@ -1,7 +1,7 @@
-import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Objects;
+import java.util.List;
 
 /**
  * This class represents a head server of the system for exchanging
@@ -13,6 +13,11 @@ import java.util.Objects;
  */
 public class Server implements ServerConnectionListener
 {
+	/**
+	 * <Username, Chatroom> Hash Map of all existing chatrooms on the server
+	 * TODO:
+	 * 	update token to desired variable
+	 */
 	private HashMap<String, ChatRoom> roomMap;
 	
 	/**
@@ -97,19 +102,19 @@ public class Server implements ServerConnectionListener
 	}
 
 	@Override
-	public boolean HostRequest() {
+	public boolean hostRequest() {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
-	public ChatRoom[] RoomRequest() {
+	public List<ChatRoom> roomRequest() {
 		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList<ChatRoom>();
 	}
 
 	@Override
-	public boolean UpdateHost() {
+	public boolean updateHost() {
 		// TODO Auto-generated method stub
 		return false;
 	}
