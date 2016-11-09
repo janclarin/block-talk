@@ -95,7 +95,11 @@ public class User {
      */
     @Override
     public boolean equals(Object o) {
-        return hashCode()==(o.hashCode());
+        if(o instanceof User){
+            User user = (User)o;
+            return (user.getIpAddress() == this.getIpAddress() && user.getPort() == this.getPort());
+        }
+        return false;
     }
 
 

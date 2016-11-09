@@ -70,13 +70,15 @@ public class BlockTalkClientProgram implements ClientListener {
         Scanner scan = new Scanner(System.in);
         while(!message.equals("/q")){
             message = scan.nextLine();
+            //TODO: Move this logic to another class
             if(message.startsWith("/connect ")){
                 User newUser = new User("NewUser", InetAddress.getByName(message.split(" ")[1]), Integer.parseInt(message.split(" ")[2]));
                 client.sendMessage("HLO", newUser);
             }
             else if(message.startsWith("/list")){
                 System.out.println("KNOWN USERS");
-                System.out.println(client.listKnownUsers());
+                User[] users = client.getKnownUsersArray();
+                for(User u : users){System.out.println(u.toString());}
             }
             else{
                 client.sendMessageToAll(message);
