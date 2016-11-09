@@ -182,4 +182,13 @@ public class Client implements Runnable, SocketHandlerListener {
     private void notifyUserHasJoined(User newUser) {
         listener.userHasJoined(newUser);
     }
+
+    /**
+     * Returns a string form of the current known users map
+     *
+     * @return String The list of known users and their SocketHandlers
+     */
+    public String listKnownUsers(){
+        return userSocketHandlerMap.toString();
+    }
 }

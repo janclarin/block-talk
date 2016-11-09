@@ -75,4 +75,28 @@ public class User {
     public String toString() {
         return String.format("%s | %s:%d", username, ipAddress, port);
     }
+
+    /**
+     * Returns a hash code of the user based only on IP and port
+     *
+     * @return Int the hash code of the ip and port
+     */
+    @Override
+    public int hashCode() {
+        String encoding = String.format("%s:%d", ipAddress, port);
+        return encoding.hashCode();
+    }
+
+    /**
+     * Returns a String representation of this User.
+     *
+     * @param Object o The object to compare for equality
+     * @return Boolean True if the object o is equal to this object
+     */
+    @Override
+    public boolean equals(Object o) {
+        return hashCode()==(o.hashCode());
+    }
+
+
 }
