@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class represents a client of the system and will
@@ -78,7 +80,7 @@ public class Client implements Runnable, SocketHandlerListener {
         notifyMessageReceived(sender, message);
 
         // TODO: Remove auto-reply.
-        sendMessage("Hello from " + clientUsername, sender);
+        //sendMessage("Hello from " + clientUsername, sender);
     }
 
     /**
@@ -181,5 +183,14 @@ public class Client implements Runnable, SocketHandlerListener {
      */
     private void notifyUserHasJoined(User newUser) {
         listener.userHasJoined(newUser);
+    }
+
+    /**
+     * Returns a string form of the current known users map
+     *
+     * @return String The list of known users and their SocketHandlers
+     */
+    public List<User> getKnownUsersList(){
+        return new ArrayList<User>(userSocketHandlerMap.keySet());
     }
 }
