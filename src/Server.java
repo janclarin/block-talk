@@ -11,7 +11,7 @@ import java.util.List;
  * @author Jan Clarin
  * @author Riley Lahd
  */
-public class Server implements ServerConnectionListener
+public class Server implements ClientConnectionListener
 {
 	/**
 	 * <Username, Chatroom> Hash Map of all existing chatrooms on the server
@@ -19,17 +19,6 @@ public class Server implements ServerConnectionListener
 	 * 	update token to desired variable
 	 */
 	private HashMap<String, ChatRoom> roomMap;
-	
-	/**
-	 * Creates main server, and starts listening for incoming connections
-	 * 
-	 * @param args
-	 */
-	public static void main(String args){
-		Server server = new Server();
-		ServerConnectionManager connectionManager = new ServerConnectionManager(server); 
-		
-	}
 	
 	/**
 	 * Initializes the server and room map
