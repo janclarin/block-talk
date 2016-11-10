@@ -11,14 +11,16 @@ import java.net.InetAddress;
  */
 public class ChatRoom {
 	private InetAddress hostIp;
+	private String name;
 	
 	/**
 	 * Initializes a chat room and sets the current host to given ip
 	 * 
 	 * @param ipAddress
 	 */
-	public ChatRoom(InetAddress hostIpAddress){
+	public ChatRoom(String name, InetAddress hostIpAddress){
 		hostIp = hostIpAddress;
+		this.name = name;
 	}
 	
 	/**
@@ -37,6 +39,15 @@ public class ChatRoom {
 	 */
 	public InetAddress getHost(){
 		return hostIp;
+	}
+	
+	/** 
+	 * Gets the current host
+	 * 
+	 * @return
+	 */
+	public String getName(){
+		return name;
 	}
 	
 }

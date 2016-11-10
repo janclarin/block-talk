@@ -1,6 +1,7 @@
 package server;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,8 +58,8 @@ public class ClientConnection implements Runnable {
 	public void run() {
 		try{
 			while(!closeConnection){
-				DataInputStream incoming = new DataInputStream(socket.getInputStream());
-				String message = incoming.readUTF();
+				DataInputStream inBuffer = new DataInputStream(socket.getInputStream());
+				String message = inBuffer.readUTF();
 				parseMessage(message);
 			}
 			socket.close();
@@ -94,12 +95,47 @@ public class ClientConnection implements Runnable {
 	}
 	
 	/**
+	 * Send generic ACK message
+	 * 
+	 * @param message
+	 */
+	public void sendMessage(String message){
+		try{
+			DataOutputStream outBuffer = new DataOutputStream (socket.getOutputStream());
+			String outgoing = String.format("ACK %s\n", message);
+			outBuffer.writeUTF(outgoing);
+			outBuffer.flush();
+		}
+		catch(Exception ex){
+			System.err.println("Error: Exception: " + ex.getMessage());
+			ex.printStackTrace();
+			System.exit(1);
+		}
+	}
+	
+	/**
+	 * Send roomlist to client
+	 * 
+	 * TODO: send room message using proper protocol
+	 * 
+	 * @param rooms
+	 */
+	public void sendRoomList(List<ChatRoom> rooms){
+		String roomList = "";
+		for (ChatRoom room : rooms){
+			roomList += room.getName() + "\t";
+		}
+		sendMessage(roomList);
+	}
+	
+	/**
 	 * Notifies listener that a client is requesting a creation of new chatroom
 	 * 
 	 * TODO: implement notify all active servers of new host request
 	 */
 	public void notifyHostRequest(String roomName){
-		listener.hostRequest(getUser(), roomName);
+		boolean result = listener.hostRequest(getUser(), roomName);
+		sendMessage(String.valueOf(result));
 	}
 	
 	/**
@@ -108,7 +144,8 @@ public class ClientConnection implements Runnable {
 	 * TODO: implement notify receive list of all active rooms from servers
 	 */
 	public void notifyRoomRequest(){
-		
+		List<ChatRoom> rooms = listener.roomRequest();
+		sendRoomList(rooms);
 	}
 	
 	/**
