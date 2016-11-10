@@ -1,8 +1,11 @@
+package server;
 
 import java.io.DataInputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+
+import models.User;
 
 /**
  * This worker class handles a distinct connection and handles their messages to communicate

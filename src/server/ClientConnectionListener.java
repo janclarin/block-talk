@@ -1,5 +1,8 @@
+package server;
 
 import java.util.List;
+
+import models.User;
 
 /**
  * This interface is used to request network functions from the main server

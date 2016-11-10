@@ -1,8 +1,12 @@
+package server;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import models.User;
+
 
 /**
  * This class represents a head server of the system for exchanging
