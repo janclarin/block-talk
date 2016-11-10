@@ -61,12 +61,12 @@ public class Server implements ClientConnectionListener
 	/**
 	 * Sets a new room in the hash map with token as they key. 
 	 * 
-	 * @param token
+	 * @param roomName
 	 * @param ipAddress
 	 */
-	public void setRoom(String token, InetAddress ipAddress){
+	public void setRoom(String roomName, InetAddress ipAddress){
 		
-		roomMap.put(token, new ChatRoom(ipAddress));
+		roomMap.put(roomName, new ChatRoom(roomName, ipAddress));
 	}
 	
 	/**
