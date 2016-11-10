@@ -2,8 +2,8 @@ import chatroom.Client;
 import chatroom.ClientListener;
 import models.User;
 
+import java.util.List;
 import java.util.Scanner;
-import java.util.ArrayList;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -78,7 +78,7 @@ public class BlockTalkClientProgram implements ClientListener {
             }
             else if(message.startsWith("/list")){
                 System.out.println("KNOWN USERS");
-                ArrayList<User> users = new ArrayList<User>(client.getKnownUsersList());
+                List<User> users = client.getKnownUsersList();
                 for(User u : users){System.out.println(u.toString());}
             }
             else{
