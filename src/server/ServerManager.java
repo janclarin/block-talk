@@ -39,11 +39,13 @@ public class ServerManager {
 			servers.add(new Server());
 			
 			while(listen){
+				System.out.print("Listening...");
 				for(ClientConnectionListener listener : servers){
 					threadPool.execute(new ClientConnection(listenServer.accept(), listener));
 				}
 			}
 			
+			System.out.println("Closing...");
 			listenServer.close();
 		}
 		catch(Exception ex){
