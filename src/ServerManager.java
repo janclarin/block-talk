@@ -18,7 +18,6 @@ public class ServerManager {
 	private static List<ClientConnectionListener> servers;
 	private static int port = 9999;
 	private static boolean listen;
-	private static ClientConnectionListener server;
 	
 	/**
 	 * Starts the main server manager.
@@ -41,6 +40,8 @@ public class ServerManager {
 					threadPool.execute(new ClientConnection(listenServer.accept(), listener));
 				}
 			}
+			
+			listenServer.close();
 		}
 		catch(Exception ex){
 			System.err.println("Error: Exception: " + ex.getMessage());
