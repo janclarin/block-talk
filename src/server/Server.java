@@ -19,7 +19,7 @@ import models.User;
 public class Server implements ClientConnectionListener
 {
 	/**
-	 * <Username, Chatroom> Hash Map of all existing chatrooms on the server
+	 * [Username, Chatroom] Hash Map of all existing chatrooms on the server
 	 * TODO:
 	 * 	update token to desired variable
 	 */
@@ -35,27 +35,27 @@ public class Server implements ClientConnectionListener
 	/**
 	 * Returns room associated with token. Throws null pointer if token does not exist in current map. 
 	 * 
-	 * @param token
+	 * @param roomName
 	 * @return
 	 */
-	public ChatRoom getRoom(String token){
-		if(!roomMap.containsKey(token)){
+	public ChatRoom getRoom(String roomName){
+		if(!roomMap.containsKey(roomName)){
 			throw new NullPointerException(); 
 		}
-		return roomMap.get(token);
+		return roomMap.get(roomName);
 	}
 	
 	/**
 	 * Returns the room hosts ip Address. Throws null pointer if token does not exist in current map.
 	 * 
-	 * @param token
+	 * @param roomName
 	 * @return host ip Address. 
 	 */
-	public InetAddress getRoomHost(String token){
-		if(!roomMap.containsKey(token)){
+	public InetAddress getRoomHost(String roomName){
+		if(!roomMap.containsKey(roomName)){
 			throw new NullPointerException(); 
 		}
-		return roomMap.get(token).getHost();
+		return roomMap.get(roomName).getHost();
 	}
 	
 	/**
@@ -81,15 +81,15 @@ public class Server implements ClientConnectionListener
 	 * Authenticates token string. If token exists, return existing host, else create new room map and return client address.
 	 * 
 	 * 
-	 * @param token
+	 * @param roomName
 	 */
-	public void authenticate(InetAddress clientIp, String token){
+	public void authenticate(InetAddress clientIp, String roomName){
 		InetAddress hostIp;
 		try{
-			hostIp = getRoomHost(token);
+			hostIp = getRoomHost(roomName);
 		}
 		catch(Exception ex){
-			setRoom(token, clientIp);
+			setRoom(roomName, clientIp);
 			hostIp = clientIp;
 		}
 		sendHost(hostIp, clientIp);

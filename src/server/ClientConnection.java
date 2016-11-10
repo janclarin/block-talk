@@ -31,14 +31,13 @@ public class ClientConnection implements Runnable {
 	public ClientConnection(Socket socket, ClientConnectionListener listener){
 		this.socket = socket;
 		this.listener = listener;
-		
 	}
 	
 	/**
 	 * Set distinct user associated with connection.
 	 */
-	public void setUser(){
-		
+	public void setUser(String username){
+		user = new User(username, socket.getInetAddress(), socket.getPort());
 	}
 	
 	/**
@@ -77,7 +76,11 @@ public class ClientConnection implements Runnable {
 	 * @param message
 	 */
 	public void parseMessage(String message){
-		if(message.startsWith("HOST")){
+		if(message.startsWith("HELLO")){
+			String username = message.substring(6);
+			setUser(username);
+		}
+		else if(message.startsWith("HOST")){
 			String roomName = message.substring(5);
 			notifyHostRequest(roomName);
 		}
