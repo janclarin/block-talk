@@ -30,8 +30,15 @@ public class ClientConnection implements Runnable {
 	 * @param listener
 	 */
 	public ClientConnection(Socket socket, ClientConnectionListener listener){
-		this.socket = socket;
-		this.listener = listener;
+		try{
+			this.socket = socket;
+			this.listener = listener;
+		}
+		catch(Exception ex){
+			System.err.println("Error: Exception: " + ex.getMessage());
+			ex.printStackTrace();
+			System.exit(1);
+		}
 	}
 	
 	/**
@@ -80,6 +87,7 @@ public class ClientConnection implements Runnable {
 		if(message.startsWith("HELLO")){
 			String username = message.substring(6);
 			setUser(username);
+			sendMessage(username);
 		}
 		else if(message.startsWith("HOST")){
 			String roomName = message.substring(5);

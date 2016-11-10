@@ -34,6 +34,7 @@ public class ServerManager {
 			port = Integer.parseInt(args[0]);
 			servers = new ArrayList<ClientConnectionListener>();
 			ServerSocket listenServer = new ServerSocket(port);
+			listen = true;
 			
 			//use one main server for now
 			servers.add(new Server());

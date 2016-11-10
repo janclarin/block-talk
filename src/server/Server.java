@@ -3,7 +3,10 @@ package server;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import models.User;
 
@@ -43,6 +46,15 @@ public class Server implements ClientConnectionListener
 			throw new NullPointerException(); 
 		}
 		return roomMap.get(roomName);
+	}
+	
+	public List<ChatRoom> getAllRooms(){
+		Iterator<Entry<String, ChatRoom>> iterator = roomMap.entrySet().iterator();
+		List allRooms = new ArrayList<ChatRoom>();
+		while(iterator.hasNext()){
+			allRooms.add((ChatRoom)iterator.next().getValue());
+		}
+		return allRooms;
 	}
 	
 	/**
@@ -109,8 +121,8 @@ public class Server implements ClientConnectionListener
 	 */
 	@Override
 	public List<ChatRoom> roomRequest() {
-		// TODO Auto-generated method stub
-		return new ArrayList<ChatRoom>();
+		
+		return getAllRooms();
 	}
 
 	/**
