@@ -9,7 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class represents a client of the system and will
@@ -189,10 +190,7 @@ public class Client implements Runnable, SocketHandlerListener {
      *
      * @return String The list of known users and their SocketHandlers
      */
-    public User[] getKnownUsersArray(){
-        Set<User> userSet = userSocketHandlerMap.keySet();
-        User[] userArr = new User[userSet.size()];
-        userArr = userSet.toArray(userArr);
-        return userArr;
+    public List<User> getKnownUsersList(){
+        return new ArrayList<User>(userSocketHandlerMap.keySet());
     }
 }

@@ -88,7 +88,7 @@ public class User {
     }
 
     /**
-     * Returns a String representation of this User.
+     * Compares IP and Port for equality. Username is not considered.
      *
      * @param Object o The object to compare for equality
      * @return Boolean True if the object o is equal to this object
