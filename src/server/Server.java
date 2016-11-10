@@ -50,7 +50,7 @@ public class Server implements ClientConnectionListener
 	
 	public List<ChatRoom> getAllRooms(){
 		Iterator<Entry<String, ChatRoom>> iterator = roomMap.entrySet().iterator();
-		List allRooms = new ArrayList<ChatRoom>();
+		List<ChatRoom> allRooms = new ArrayList<ChatRoom>();
 		while(iterator.hasNext()){
 			allRooms.add((ChatRoom)iterator.next().getValue());
 		}
