@@ -1,3 +1,4 @@
+
 import java.io.DataInputStream;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -14,12 +15,35 @@ import java.util.List;
 public class ClientConnection implements Runnable {
 	private Socket socket;
 	private boolean closeConnection;
-	private List<ClientConnectionListener> listeners;
+	private User user;
+	private ClientConnectionListener listener;
 	
+	/**
+	 * Initializes the server and sets the socket and listener.
+	 * A new User object is created based on socket information.
+	 * 
+	 * @param socket
+	 * @param listener
+	 */
 	public ClientConnection(Socket socket, ClientConnectionListener listener){
 		this.socket = socket;
-		listeners = new ArrayList<ClientConnectionListener>();
-		listeners.add(listener);
+		this.listener = listener;
+		
+	}
+	
+	/**
+	 * Set distinct user associated with connection.
+	 */
+	public void setUser(){
+		
+	}
+	
+	/**
+	 * Return distint user associated with connection
+	 * @return
+	 */
+	public User getUser(){
+		return user;
 	}
 	
 	/**
@@ -33,6 +57,7 @@ public class ClientConnection implements Runnable {
 			while(!closeConnection){
 				DataInputStream incoming = new DataInputStream(socket.getInputStream());
 				String message = incoming.readUTF();
+				parseMessage(message);
 			}
 			socket.close();
 		}
@@ -44,12 +69,31 @@ public class ClientConnection implements Runnable {
 	}
 	
 	/**
+	 * Parse incoming message and send distinct notify event
+	 * 
+	 * @param message
+	 */
+	public void parseMessage(String message){
+		if(message.startsWith("HOST")){
+			String roomName = message.substring(5);
+			notifyHostRequest(roomName);
+		}
+		else if(message.startsWith("ROOM")){
+			notifyRoomRequest();
+		}
+		else if(message.startsWith("NEWHOST")){
+			String userInfo = message.substring(8);
+			//notify new host
+		}
+	}
+	
+	/**
 	 * Notifies listener that a client is requesting a creation of new chatroom
 	 * 
 	 * TODO: implement notify all active servers of new host request
 	 */
-	public void notifyHostRequest(){
-		
+	public void notifyHostRequest(String roomName){
+		listener.hostRequest(getUser(), roomName);
 	}
 	
 	/**

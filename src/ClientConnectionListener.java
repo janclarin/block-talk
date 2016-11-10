@@ -1,3 +1,4 @@
+
 import java.util.List;
 
 /**
@@ -14,7 +15,7 @@ public interface ClientConnectionListener {
 	 * 
 	 * @return true if host request succeeded
 	 */
-	public boolean hostRequest();
+	public boolean hostRequest(User user, String roomName);
 	
 	/**
 	 * Request for room list.

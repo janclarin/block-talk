@@ -1,3 +1,4 @@
+
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -90,18 +91,27 @@ public class Server implements ClientConnectionListener
 		sendHost(hostIp, clientIp);
 	}
 
+	/**
+	 * On host request, create a new room and return true if success.
+	 */
 	@Override
-	public boolean hostRequest() {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean hostRequest(User user, String roomName) {
+		setRoom(roomName, user.getIpAddress());
+		return true;
 	}
 
+	/**
+	 * On room request return current list of active rooms.
+	 */
 	@Override
 	public List<ChatRoom> roomRequest() {
 		// TODO Auto-generated method stub
 		return new ArrayList<ChatRoom>();
 	}
 
+	/**
+	 * On update host, set associated room to new host. 
+	 */
 	@Override
 	public boolean updateHost() {
 		// TODO Auto-generated method stub
