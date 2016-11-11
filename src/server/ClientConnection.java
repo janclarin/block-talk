@@ -1,9 +1,9 @@
 package server;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
 
 import models.User;
@@ -57,6 +57,13 @@ public class ClientConnection implements Runnable {
 	}
 	
 	/**
+	 * Sets closeConnection flag to true
+	 */
+	public void closeConnection(){
+		closeConnection = true;
+	}
+	
+	/**
 	 * Receives messages and handles their input
 	 * 
 	 * TODO: handle the recieved message
@@ -64,9 +71,9 @@ public class ClientConnection implements Runnable {
 	@Override
 	public void run() {
 		try{
-			while(!closeConnection){
-				DataInputStream inBuffer = new DataInputStream(socket.getInputStream());
-				String message = inBuffer.readUTF();
+			BufferedReader inputStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			String message;
+			while(!closeConnection && ((message = inputStream.readLine()) != null)){
 				parseMessage(message);
 			}
 			socket.close();
@@ -84,21 +91,24 @@ public class ClientConnection implements Runnable {
 	 * @param message
 	 */
 	public void parseMessage(String message){
-		if(message.startsWith("HELLO")){
+		if(message.startsWith("HLO")){
 			String username = message.substring(6);
 			setUser(username);
 			sendMessage(username);
 		}
-		else if(message.startsWith("HOST")){
+		else if(message.startsWith("HST")){
 			String roomName = message.substring(5);
 			notifyHostRequest(roomName);
 		}
-		else if(message.startsWith("ROOM")){
+		else if(message.startsWith("ROM")){
 			notifyRoomRequest();
 		}
-		else if(message.startsWith("NEWHOST")){
+		else if(message.startsWith("NHS")){
 			String userInfo = message.substring(8);
 			//notify new host
+		}
+		else if(message.startsWith("QIT")){
+			closeConnection();
 		}
 	}
 	
@@ -109,10 +119,10 @@ public class ClientConnection implements Runnable {
 	 */
 	public void sendMessage(String message){
 		try{
-			DataOutputStream outBuffer = new DataOutputStream (socket.getOutputStream());
+			PrintWriter outputStream = new PrintWriter (socket.getOutputStream());
 			String outgoing = String.format("ACK %s\n", message);
-			outBuffer.writeUTF(outgoing);
-			outBuffer.flush();
+			outputStream.println(outgoing);
+			outputStream.flush();
 		}
 		catch(Exception ex){
 			System.err.println("Error: Exception: " + ex.getMessage());
@@ -129,11 +139,12 @@ public class ClientConnection implements Runnable {
 	 * @param rooms
 	 */
 	public void sendRoomList(List<ChatRoom> rooms){
-		String roomList = "";
+		StringBuffer roomList = new StringBuffer();
 		for (ChatRoom room : rooms){
-			roomList += room.getName() + "\t";
+			roomList.append(room.getName());
+			roomList.append("\t");
 		}
-		sendMessage(roomList);
+		sendMessage(roomList.toString());
 	}
 	
 	/**

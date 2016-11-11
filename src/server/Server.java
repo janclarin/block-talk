@@ -22,7 +22,7 @@ import models.User;
 public class Server implements ClientConnectionListener
 {
 	/**
-	 * [Username, Chatroom] Hash Map of all existing chatrooms on the server
+	 * [RoomName, Chatroom] Hash Map of all existing chatrooms on the server
 	 * TODO:
 	 * 	update token to desired variable
 	 */
@@ -71,12 +71,12 @@ public class Server implements ClientConnectionListener
 	}
 	
 	/**
-	 * Sets a new room in the hash map with token as they key. 
+	 * Add a new map to room in the hash map with token as they key. 
 	 * 
 	 * @param roomName
 	 * @param ipAddress
 	 */
-	public void setRoom(String roomName, InetAddress ipAddress){
+	public void addRoom(String roomName, InetAddress ipAddress){
 		
 		roomMap.put(roomName, new ChatRoom(roomName, ipAddress));
 	}
@@ -101,7 +101,7 @@ public class Server implements ClientConnectionListener
 			hostIp = getRoomHost(roomName);
 		}
 		catch(Exception ex){
-			setRoom(roomName, clientIp);
+			addRoom(roomName, clientIp);
 			hostIp = clientIp;
 		}
 		sendHost(hostIp, clientIp);
@@ -112,7 +112,7 @@ public class Server implements ClientConnectionListener
 	 */
 	@Override
 	public boolean hostRequest(User user, String roomName) {
-		setRoom(roomName, user.getIpAddress());
+		addRoom(roomName, user.getIpAddress());
 		return true;
 	}
 
