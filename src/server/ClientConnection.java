@@ -66,7 +66,6 @@ public class ClientConnection implements Runnable {
 	/**
 	 * Receives messages and handles their input
 	 * 
-	 * TODO: handle the recieved message
 	 */
 	@Override
 	public void run() {
@@ -150,7 +149,6 @@ public class ClientConnection implements Runnable {
 	/**
 	 * Notifies listener that a client is requesting a creation of new chatroom
 	 * 
-	 * TODO: implement notify all active servers of new host request
 	 */
 	public void notifyHostRequest(String roomName){
 		boolean result = listener.hostRequest(getUser(), roomName);
@@ -160,7 +158,6 @@ public class ClientConnection implements Runnable {
 	/**
 	 * Notifies listener that a client is requesting a list of rooms
 	 * 
-	 * TODO: implement notify receive list of all active rooms from servers
 	 */
 	public void notifyRoomRequest(){
 		List<ChatRoom> rooms = listener.roomRequest();
