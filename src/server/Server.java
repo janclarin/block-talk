@@ -37,7 +37,7 @@ public class Server implements ClientConnectionListener
 	}
 	
 	/**
-	 * Returns room associated with token. Throws null pointer if token does not exist in current map. 
+	 * Returns room associated with token. Throws ChatRoomNotFoundException if token does not exist in current map. 
 	 * 
 	 * @param roomName
 	 * @return
@@ -64,7 +64,7 @@ public class Server implements ClientConnectionListener
 	}
 	
 	/**
-	 * Returns the room hosts ip Address. Throws null pointer if token does not exist in current map.
+	 * Returns the room hosts ip Address. Throws ChatRoomNotFoundException if token does not exist in current map.
 	 * 
 	 * @param roomName
 	 * @return host ip Address. 
@@ -77,7 +77,7 @@ public class Server implements ClientConnectionListener
 	}
 	
 	/**
-	 * Add a new map to room in the hash map with token as they key. 
+	 * Add a new map to room in the hash map with roomName as they key. 
 	 * 
 	 * @param roomName
 	 * @param ipAddress
@@ -96,7 +96,7 @@ public class Server implements ClientConnectionListener
 	}
 
 	/**
-	 * Authenticates token string. If token exists, return existing host, else create new room map and return client address.
+	 * Authenticates token string. If roomName exists, return existing host, else create new room map and return client address.
 	 * 
 	 * 
 	 * @param roomName
