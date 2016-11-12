@@ -44,8 +44,15 @@ public class ClientConnection implements Runnable {
 	/**
 	 * Set distinct user associated with connection.
 	 */
-	public void setUser(String username){
-		user = new User(username, socket.getInetAddress(), socket.getPort());
+	public void setUser(String username, String port){
+		try{
+			user = new User(username, socket.getInetAddress(), Integer.parseInt(port));
+		}
+		catch(Exception ex){
+			System.err.println("Error: Exception: " + ex.getMessage());
+			ex.printStackTrace();
+			System.exit(1);
+		}
 	}
 	
 	/**
@@ -91,22 +98,22 @@ public class ClientConnection implements Runnable {
 	 */
 	public void parseMessage(String message){
 		if(message.startsWith("HLO")){
-			String username = message.substring(6);
-			setUser(username);
-			sendMessage(username);
+			String[] messages = message.substring(4).split(" ");
+			setUser(messages[0], messages[1]);
+			sendMessage(messages[0]);
 		}
 		else if(message.startsWith("HST")){
-			String roomName = message.substring(5);
+			String roomName = message.substring(4);
 			notifyHostRequest(roomName);
 		}
 		else if(message.startsWith("ROM")){
 			notifyRoomRequest();
 		}
 		else if(message.startsWith("NHS")){
-			String userInfo = message.substring(8);
+			String userInfo = message.substring(4);
 			//notify new host
 		}
-		else if(message.startsWith("QIT")){
+		else if(message.startsWith("BYE")){
 			closeConnection();
 		}
 	}
