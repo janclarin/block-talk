@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import exceptions.ChatRoomNotFoundException;
 import models.User;
 
 
@@ -41,9 +42,9 @@ public class Server implements ClientConnectionListener
 	 * @param roomName
 	 * @return
 	 */
-	public ChatRoom getRoom(String roomName){
+	public ChatRoom getRoom(String roomName) throws ChatRoomNotFoundException{
 		if(!roomMap.containsKey(roomName)){
-			throw new NullPointerException(); 
+			throw new ChatRoomNotFoundException(); 
 		}
 		return roomMap.get(roomName);
 	}
@@ -63,9 +64,9 @@ public class Server implements ClientConnectionListener
 	 * @param roomName
 	 * @return host ip Address. 
 	 */
-	public InetAddress getRoomHost(String roomName){
+	public InetAddress getRoomHost(String roomName) throws ChatRoomNotFoundException{
 		if(!roomMap.containsKey(roomName)){
-			throw new NullPointerException(); 
+			throw new ChatRoomNotFoundException(); 
 		}
 		return roomMap.get(roomName).getHost();
 	}
@@ -76,7 +77,7 @@ public class Server implements ClientConnectionListener
 	 * @param roomName
 	 * @param ipAddress
 	 */
-	public void addRoom(String roomName, InetAddress ipAddress){
+	public void addRoomMap(String roomName, InetAddress ipAddress){
 		
 		roomMap.put(roomName, new ChatRoom(roomName, ipAddress));
 	}
@@ -101,7 +102,7 @@ public class Server implements ClientConnectionListener
 			hostIp = getRoomHost(roomName);
 		}
 		catch(Exception ex){
-			addRoom(roomName, clientIp);
+			addRoomMap(roomName, clientIp);
 			hostIp = clientIp;
 		}
 		sendHost(hostIp, clientIp);
@@ -112,7 +113,7 @@ public class Server implements ClientConnectionListener
 	 */
 	@Override
 	public boolean hostRequest(User user, String roomName) {
-		addRoom(roomName, user.getIpAddress());
+		addRoomMap(roomName, user.getIpAddress());
 		return true;
 	}
 
