@@ -193,4 +193,14 @@ public class Client implements Runnable, SocketHandlerListener {
     public List<User> getKnownUsersList(){
         return new ArrayList<User>(userSocketHandlerMap.keySet());
     }
+
+    /**
+     * Removes a user from known users map
+     *
+     * @return boolean True if the user was removed successfully
+     */
+    public boolean removeUserFromList(User user){
+        SocketHandler sh = userSocketHandlerMap.remove(user);
+        return sh != null;
+    }
 }

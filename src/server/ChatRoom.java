@@ -12,24 +12,27 @@ import java.net.InetAddress;
 public class ChatRoom {
 	private InetAddress hostIp;
 	private String name;
+	private int port;
 	
 	/**
 	 * Initializes a chat room and sets the current host to given ip
 	 * 
 	 * @param ipAddress
 	 */
-	public ChatRoom(String name, InetAddress hostIpAddress){
+	public ChatRoom(String name, InetAddress hostIpAddress, int port){
 		hostIp = hostIpAddress;
 		this.name = name;
+		this.port = port;
 	}
 	
 	/**
-	 * Sets host to given ip Address
+	 * Sets host to given ip Address + port
 	 * 
 	 * @param ipAddress
 	 */
-	public void setHost(InetAddress ipAddress){
+	public void setHost(InetAddress ipAddress, int port){
 		hostIp = ipAddress;
+		this.port = port;
 	}
 	
 	/** 
@@ -48,6 +51,15 @@ public class ChatRoom {
 	 */
 	public String getName(){
 		return name;
+	}
+
+	/** 
+	 * Gets the current host port
+	 * 
+	 * @return
+	 */
+	public int getPort(){
+		return port;
 	}
 	
 }

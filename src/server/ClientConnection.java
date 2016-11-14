@@ -127,7 +127,26 @@ public class ClientConnection implements Runnable {
 		try{
 			PrintWriter outputStream = new PrintWriter (socket.getOutputStream());
 			String outgoing = String.format("ACK %s\n", message);
-			outputStream.println(outgoing);
+			outputStream.print(outgoing);
+			outputStream.flush();
+		}
+		catch(Exception ex){
+			System.err.println("Error: Exception: " + ex.getMessage());
+			ex.printStackTrace();
+			System.exit(1);
+		}
+	}
+
+	/**
+	 * Send room list
+	 * 
+	 * @param message
+	 */
+	public void sendRoomListMessage(String message){
+		try{
+			PrintWriter outputStream = new PrintWriter (socket.getOutputStream());
+			String outgoing = String.format("LST %s\n", message);
+			outputStream.print(outgoing);
 			outputStream.flush();
 		}
 		catch(Exception ex){
@@ -148,9 +167,13 @@ public class ClientConnection implements Runnable {
 		StringBuffer roomList = new StringBuffer();
 		for (ChatRoom room : rooms){
 			roomList.append(room.getName());
+			roomList.append(" @ ");
+			roomList.append(room.getHost());
+			roomList.append(":");
+			roomList.append(room.getPort());
 			roomList.append("\t");
 		}
-		sendMessage(roomList.toString());
+		sendRoomListMessage(roomList.toString());
 	}
 	
 	/**

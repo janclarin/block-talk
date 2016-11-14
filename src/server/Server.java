@@ -82,9 +82,9 @@ public class Server implements ClientConnectionListener
 	 * @param roomName
 	 * @param ipAddress
 	 */
-	public void addRoomMap(String roomName, InetAddress ipAddress){
+	public void addRoomMap(String roomName, InetAddress ipAddress, int port){
 		
-		roomMap.put(roomName, new ChatRoom(roomName, ipAddress));
+		roomMap.put(roomName, new ChatRoom(roomName, ipAddress, port));
 	}
 	
 	/**
@@ -101,13 +101,13 @@ public class Server implements ClientConnectionListener
 	 * 
 	 * @param roomName
 	 */
-	public void authenticate(InetAddress clientIp, String roomName){
+	public void authenticate(InetAddress clientIp, int port,String roomName){
 		InetAddress hostIp;
 		try{
 			hostIp = getRoomHost(roomName);
 		}
 		catch(Exception ex){
-			addRoomMap(roomName, clientIp);
+			addRoomMap(roomName, clientIp, port);
 			hostIp = clientIp;
 		}
 		sendHost(hostIp, clientIp);
@@ -118,7 +118,7 @@ public class Server implements ClientConnectionListener
 	 */
 	@Override
 	public boolean hostRequest(User user, String roomName) {
-		addRoomMap(roomName, user.getIpAddress());
+		addRoomMap(roomName, user.getIpAddress(), user.getPort());
 		return true;
 	}
 

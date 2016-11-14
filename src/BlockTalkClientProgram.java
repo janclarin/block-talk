@@ -47,28 +47,32 @@ public class BlockTalkClientProgram implements ClientListener {
      * @throws UnknownHostException Invalid host.
      */
     public static void main(String[] args) throws UnknownHostException {
-        if (args.length != 2 && args.length != 4) {
+        if (args.length != 2) {
             throw new IllegalArgumentException();
         }
-
-        String clientUsername = args[0]+":"+args;
         int clientPort = Integer.parseInt(args[1]);
         BlockTalkClientProgram program = new BlockTalkClientProgram();
+
+        Scanner scan = new Scanner(System.in);
+        System.out.print("Enter your username: ");
+        String clientUsername = scan.nextLine();
+        System.out.print("Enter server address: ");
+        InetAddress serverAddr = InetAddress.getByName(scan.nextLine());
+        System.out.print("Enter server port: ");
+        int serverPort = Integer.parseInt(scan.nextLine());
+
         Client client = new Client(clientUsername, clientPort, program);
         new Thread(client).start();
 
-        // Determine if we should broadcast a message to a specified user immediately.
-        if (args.length == 4) {
-            String otherHost = args[2];
-            int otherHostPort = Integer.parseInt(args[3]);
-            User otherUser = new User("OtherUser:" + otherHostPort, InetAddress.getByName(otherHost), otherHostPort);
-            String message = String.format("Sent from (%s) to (%s)", clientPort, otherUser);
-            client.sendMessage(message, otherUser);
-        }
-
+        //Handshake with the server
+        User server = new User("SERVER", serverAddr, serverPort);
+        client.sendMessage("HLO "+clientUsername+" "+clientPort,server);
+        System.out.print("Enter message for server: ");
+        client.sendMessage(scan.nextLine(),server);
+        client.sendMessage("BYE",server);
+        client.removeUserFromList(server);
         
         String message = "";
-        Scanner scan = new Scanner(System.in);
         while(!message.equals("/q")){
             message = scan.nextLine();
             //TODO: Move this logic to another class
@@ -81,6 +85,7 @@ public class BlockTalkClientProgram implements ClientListener {
                 List<User> users = client.getKnownUsersList();
                 for(User u : users){System.out.println(u.toString());}
             }
+            else if(message.startsWith("/")){}
             else{
                 client.sendMessageToAll(message);
             }
