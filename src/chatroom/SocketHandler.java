@@ -30,6 +30,11 @@ public class SocketHandler implements Runnable {
     private boolean continueRunning = true;
 
     /**
+     * User on the end of this socket.
+     */
+    private User user;
+
+    /**
      * Constructs a SocketHandler with a given Socket.
      *
      * @param socket The socket to manage.
@@ -37,6 +42,8 @@ public class SocketHandler implements Runnable {
     public SocketHandler(final Socket socket, final SocketHandlerListener listener) {
         this.socket = socket;
         this.listener = listener;
+        user = new User("Port" + socket.getPort(), socket.getInetAddress(), socket.getPort());
+
     }
 
     @Override
@@ -44,9 +51,6 @@ public class SocketHandler implements Runnable {
         InputStream incomingStream = null;
         try {
             incomingStream = socket.getInputStream();
-
-            // TODO: Get username from received.
-            User dummyUser = new User("Port" + socket.getPort(), socket.getInetAddress(), socket.getPort());
 
             Message message;
             while (continueRunning) {
@@ -58,7 +62,10 @@ public class SocketHandler implements Runnable {
                 while(incomingStream.available()<data.length){}
                 incomingStream.read(data);
                 message.setData(new String(data));
-                notifyMessageReceived(dummyUser, message);
+                if(message.getData().startsWith("HLO") && !message.getData().split(" ").equals(user.getUsername())){
+                    this.user = new User(message.getData().split(" ")[1], socket.getInetAddress(),Integer.parseInt(message.getData().split(" ")[2]));
+                }
+                notifyMessageReceived(user, message);
             }
 
             socket.close();
@@ -119,4 +126,28 @@ public class SocketHandler implements Runnable {
     private void notifyMessageReceived(User sender, Message message) {
         listener.messageReceived(this, sender, message);
     }
+
+    /**
+     * Set the user on the end of this socket.
+     *
+     * @param peer The remote user.
+     */
+    private void setUser(User peer) {
+        this.user = peer;
+    }
+
+    /**
+     * Get the user on the end of this socket.
+     *
+     * @return User the user object of the peer
+     */
+    private User setUser() {
+        return this.user;
+    }
+
+    public void shutdown(){
+        continueRunning = false;
+    }
+
+
 }

@@ -77,7 +77,16 @@ public class Client implements Runnable, SocketHandlerListener {
 
     @Override
     public void messageReceived(SocketHandler senderSocketHandler, User sender, Message message) {
-        userSocketHandlerMap.putIfAbsent(sender, senderSocketHandler);
+        try{
+            if(getSocketHandler(sender)!= senderSocketHandler || true){
+                //REMOVE OLD SENDERSOCKETHANDLER ENTRY FROM HASHMAP
+                removeUserFromList(senderSocketHandler);
+                userSocketHandlerMap.remove(sender);
+                userSocketHandlerMap.put(sender, senderSocketHandler);
+            }
+        }catch(IOException ex){
+            //TODO: Catch this properly
+        }
         notifyMessageReceived(sender, message);
 
         // TODO: Remove auto-reply.
@@ -196,12 +205,40 @@ public class Client implements Runnable, SocketHandlerListener {
     }
 
     /**
-     * Removes a user from known users map
+     * Removes a user and their socket from known users map
      *
      * @return boolean True if the user was removed successfully
      */
     public boolean removeUserFromList(User user){
         SocketHandler sh = userSocketHandlerMap.remove(user);
         return sh != null;
+    }
+
+    /**
+     * Removes a user and their socket from known users map
+     *
+     * @return boolean True if the user was removed successfully
+     */
+    public boolean removeUserFromList(SocketHandler sh){
+        //find the key matching this sh
+        for(Map.Entry<User,SocketHandler> entry : userSocketHandlerMap.entrySet()){
+            if(entry.getValue() == sh)
+            {
+                userSocketHandlerMap.remove(entry.getKey());
+                break;
+            }
+        }
+        return sh != null;
+    }
+
+    /**
+     * Closes connection with user
+     *
+     * @return boolean True if the connection closes
+     */
+    public boolean closeConnection(User user){
+        SocketHandler sh = userSocketHandlerMap.remove(user);
+        sh.shutdown();
+        return sh.isConnectionClosed();
     }
 }

@@ -181,7 +181,7 @@ public class ClientConnection implements Runnable {
 			roomList.append(room.getHost());
 			roomList.append(":");
 			roomList.append(room.getPort());
-			roomList.append("\t");
+			roomList.append("\n");
 		}
 		sendRoomListMessage(roomList.toString());
 	}

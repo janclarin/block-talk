@@ -97,7 +97,7 @@ public class User {
     public boolean equals(Object o) {
         if(o instanceof User){
             User user = (User)o;
-            return (user.getIpAddress() == this.getIpAddress() && user.getPort() == this.getPort());
+            return (user.getIpAddress().equals(this.getIpAddress()) && user.getPort() == this.getPort());
         }
         return false;
     }

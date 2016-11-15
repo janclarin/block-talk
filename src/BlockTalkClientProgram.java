@@ -27,7 +27,18 @@ public class BlockTalkClientProgram implements ClientListener {
     @Override
     public void messageReceived(User sender, Message message) {
         System.out.println("MSGINFO: "+message.getIp().toString()+" "+message.getPort()+" "+message.getSize());
-        System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData());
+        if(message.getData().startsWith("MSG")){
+            System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData().substring(4));
+        }
+        else if(message.getData().startsWith("LST")){
+            System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData().substring(4));
+        }
+        else if(message.getData().startsWith("ACK")){
+            System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData().substring(4));
+        }
+        else if(message.getData().startsWith("HLO")){
+            System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData().substring(4));
+        }
     }
 
     @Override
@@ -83,17 +94,21 @@ public class BlockTalkClientProgram implements ClientListener {
             //TODO: Move this logic to another class
             if(message.startsWith("/connect ")){
                 User newUser = new User("NewUser", InetAddress.getByName(message.split(" ")[1]), Integer.parseInt(message.split(" ")[2]));
-                client.sendMessage(new Message(clientAddr,clientPort,"HLO"), newUser);
+                client.sendMessage(new Message(clientAddr,clientPort,"HLO "+clientUsername+" "+clientPort), newUser);
             }
             else if(message.startsWith("/list")){
                 System.out.println("KNOWN USERS");
                 List<User> users = client.getKnownUsersList();
                 for(User u : users){System.out.println(u.toString());}
             }
+            else if(message.startsWith("/HLO")){
+                System.out.println("SEND HLO");
+                client.sendMessageToAll(new Message(clientAddr,clientPort,"HLO "+clientUsername+" "+clientPort));
+            }
             else if(message.startsWith("/")){}
             else{
-                Message msg;
-                client.sendMessageToAll(msg = new Message(clientAddr,clientPort,message));            }
+                client.sendMessageToAll(new Message(clientAddr,clientPort,"MSG "+message));            
+            }
         }
     }
 }
