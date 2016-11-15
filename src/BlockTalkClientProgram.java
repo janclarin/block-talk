@@ -8,6 +8,9 @@ import java.util.Scanner;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import models.Message;
+import protocols.BlockTalkProtocol;
+
 /**
  * Main program for running a Block Talk Client.
  *
@@ -17,13 +20,14 @@ import java.net.UnknownHostException;
  */
 public class BlockTalkClientProgram implements ClientListener {
     @Override
-    public void messageSent(User recipient, String message) {
-        System.out.printf("Successfully sent message: %s\n", message);
+    public void messageSent(User recipient, Message message) {
+        System.out.printf("Successfully sent message: %s\n", message.getData());
     }
 
     @Override
-    public void messageReceived(User sender, String message) {
-        System.out.printf("%s: \"%s\"\n", sender.getUsername(), message);
+    public void messageReceived(User sender, Message message) {
+        System.out.println("MSGINFO: "+message.getIp().toString()+" "+message.getPort()+" "+message.getSize());
+        System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData());
     }
 
     @Override
@@ -51,6 +55,7 @@ public class BlockTalkClientProgram implements ClientListener {
             throw new IllegalArgumentException();
         }
         int clientPort = Integer.parseInt(args[1]);
+        InetAddress clientAddr = InetAddress.getByName(args[0]);
         BlockTalkClientProgram program = new BlockTalkClientProgram();
 
         Scanner scan = new Scanner(System.in);
@@ -66,10 +71,10 @@ public class BlockTalkClientProgram implements ClientListener {
 
         //Handshake with the server
         User server = new User("SERVER", serverAddr, serverPort);
-        client.sendMessage("HLO "+clientUsername+" "+clientPort,server);
+        client.sendMessage(new Message(clientAddr,clientPort,"HLO "+clientUsername+" "+clientPort),server);
         System.out.print("Enter message for server: ");
-        client.sendMessage(scan.nextLine(),server);
-        client.sendMessage("BYE",server);
+        client.sendMessage(new Message(clientAddr,clientPort,scan.nextLine()),server);
+        client.sendMessage(new Message(clientAddr,clientPort,"BYE"),server);
         client.removeUserFromList(server);
         
         String message = "";
@@ -78,7 +83,7 @@ public class BlockTalkClientProgram implements ClientListener {
             //TODO: Move this logic to another class
             if(message.startsWith("/connect ")){
                 User newUser = new User("NewUser", InetAddress.getByName(message.split(" ")[1]), Integer.parseInt(message.split(" ")[2]));
-                client.sendMessage("HLO", newUser);
+                client.sendMessage(new Message(clientAddr,clientPort,"HLO"), newUser);
             }
             else if(message.startsWith("/list")){
                 System.out.println("KNOWN USERS");
@@ -87,8 +92,8 @@ public class BlockTalkClientProgram implements ClientListener {
             }
             else if(message.startsWith("/")){}
             else{
-                client.sendMessageToAll(message);
-            }
+                Message msg;
+                client.sendMessageToAll(msg = new Message(clientAddr,clientPort,message));            }
         }
     }
 }

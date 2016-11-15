@@ -9,7 +9,7 @@ import java.net.UnknownHostException;
  *
  * Messages follow a format of <ip><port><size><data>
  * ip = 4 bytes, source IP
- * port = 2 bytes, source sender port
+ * port = 4 bytes, source sender port
  * size = 4 bytes, size of message in bytes
  * data = the data of the message
  *
@@ -18,9 +18,9 @@ import java.net.UnknownHostException;
  * @author Riley Lahd
  */
 public class Message{
-	public static final int HEADER_SIZE = 10;
+	public static final int HEADER_SIZE = 12;
 	private InetAddress ip;
-	private short port;
+	private int port;
 	private String data;
 
 	/**
@@ -34,7 +34,7 @@ public class Message{
 	 * @param port The source port of this message
 	 * @param data The payload of this message
 	 */
-	public Message(InetAddress ip, short port, String data){
+	public Message(InetAddress ip, int port, String data){
 		this.ip = ip;
 		this.port = port;
 		this.data = data;
@@ -47,9 +47,9 @@ public class Message{
 	 */
 	public Message(byte[] header, byte[] data) throws UnknownHostException	{
 		ByteBuffer bbIp = ByteBuffer.allocate(4);
-		ByteBuffer bbPort = ByteBuffer.allocate(2);
+		ByteBuffer bbPort = ByteBuffer.allocate(4);
 		this.ip = InetAddress.getByAddress(bbIp.put(header,0,4).array());
-		this.port = bbPort.put(header,4,2).getShort(0);
+		this.port = bbPort.put(header,4,4).getInt(0);
 		this.data = new String(data);
 	}
 
@@ -59,9 +59,9 @@ public class Message{
 	 */
 	public Message(byte[] bytes) throws UnknownHostException{
 		ByteBuffer bbIp = ByteBuffer.allocate(4);
-		ByteBuffer bbPort = ByteBuffer.allocate(2);
+		ByteBuffer bbPort = ByteBuffer.allocate(4);
 		this.ip = InetAddress.getByAddress(bbIp.put(bytes,0,4).array());
-		this.port = bbPort.put(bytes,4,2).getShort(0);
+		this.port = bbPort.put(bytes,4,4).getInt(0);
 		byte[] data = new byte[bytes.length-HEADER_SIZE];
 		for(int i = HEADER_SIZE; i < bytes.length;i++){
 			data[i-HEADER_SIZE] = bytes[i];
@@ -76,7 +76,7 @@ public class Message{
 	/**
 	 * @return the source port attached to this message
 	 */
-	public short getPort(){return port;}
+	public int getPort(){return port;}
 	/**
 	 * @return the payload attached to this message
 	 */
@@ -96,7 +96,7 @@ public class Message{
 	/**
 	 * @param port the source port of this message
 	 */
-	public void setPort(short port){
+	public void setPort(int port){
 		this.port = port;
 	}
 
@@ -113,9 +113,18 @@ public class Message{
 	public byte[] toByteArray(){
 		ByteBuffer arr = ByteBuffer.allocate(HEADER_SIZE+data.length());
 		arr.put(ip.getAddress());
-		arr.putShort(port);
+		arr.putInt(port);
 		arr.putInt(data.length());
 		arr.put(data.getBytes());
 		return arr.array();
+	}
+
+	/**
+	 * @return the last 4 bytes of the given byte array as an int. If it is
+	 * a Message header, this will be the size of the payload.
+	 */
+	public int parseSize(byte[] header){
+		ByteBuffer bbSize = ByteBuffer.allocate(4);
+		return bbSize.put(header,8,4).getInt(0);
 	}
 }

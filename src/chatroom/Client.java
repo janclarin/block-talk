@@ -1,6 +1,7 @@
 package chatroom;
 
 import models.User;
+import models.Message;  
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -70,12 +71,12 @@ public class Client implements Runnable, SocketHandlerListener {
     }
 
     @Override
-    public void messageSent(SocketHandler recipientSocketHandler, User recipient, String message) {
+    public void messageSent(SocketHandler recipientSocketHandler, User recipient, Message message) {
         notifyMessageSent(recipient, message);
     }
 
     @Override
-    public void messageReceived(SocketHandler senderSocketHandler, User sender, String message) {
+    public void messageReceived(SocketHandler senderSocketHandler, User sender, Message message) {
         userSocketHandlerMap.putIfAbsent(sender, senderSocketHandler);
         notifyMessageReceived(sender, message);
 
@@ -112,7 +113,7 @@ public class Client implements Runnable, SocketHandlerListener {
      *
      * @param message The message as a String.
      */
-    public void sendMessageToAll(String message) {
+    public void sendMessageToAll(Message message) {
         for (User recipient : userSocketHandlerMap.keySet()) {
             sendMessage(message, recipient);
         }
@@ -121,14 +122,14 @@ public class Client implements Runnable, SocketHandlerListener {
     /**
      * Sends a message to the given socket.
      *
-     * @param message   The message as a String.
+     * @param message   The message as a Message object.
      * @param recipient The User to send the message to.
      */
-    public void sendMessage(String message, User recipient) {
+    public void sendMessage(Message message, User recipient) {
         try {
             Thread.sleep(1000); // TODO: Remove delay.
             SocketHandler socketHandler = getSocketHandler(recipient);
-            socketHandler.sendMessage(message);
+            socketHandler.sendMessage(message.toByteArray());
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -162,7 +163,7 @@ public class Client implements Runnable, SocketHandlerListener {
      * @param recipient The User who received the sent message.
      * @param message   The sent message.
      */
-    private void notifyMessageSent(User recipient, String message) {
+    private void notifyMessageSent(User recipient, Message message) {
         listener.messageSent(recipient, message);
     }
 
@@ -172,7 +173,7 @@ public class Client implements Runnable, SocketHandlerListener {
      * @param sender  The User who sent the received message.
      * @param message The received message.
      */
-    private void notifyMessageReceived(User sender, String message) {
+    private void notifyMessageReceived(User sender, Message message) {
         listener.messageReceived(sender, message);
     }
 

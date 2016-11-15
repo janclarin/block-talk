@@ -16,14 +16,14 @@ import java.net.UnknownHostException;
  */
 public class BlockTalkProtocol{
 	private final InetAddress ip;
-	private final short port;
+	private final int port;
 
 	/**
 	 * Constructs a protocols object
 	 * @param ip The local ip to prepend to messages
 	 * @param port The local port to prepend to messages
 	 */
-	public BlockTalkProtocol(InetAddress ip, short port){
+	public BlockTalkProtocol(InetAddress ip, int port){
 		this.ip = ip;
 		this.port = port;
 	}
@@ -35,7 +35,7 @@ public class BlockTalkProtocol{
 	/**
 	 * @return the source port attached to this message
 	 */
-	public short getPort(){return port;}
+	public int getPort(){return port;}
 
 	/**
 	 * Wraps a message to prepare to be sent, converting to message format and encrypting

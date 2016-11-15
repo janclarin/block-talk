@@ -2,11 +2,12 @@ package chatroom;
 
 import models.User;
 
-import java.io.BufferedReader;
+import java.io.OutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.InputStream;
 import java.net.Socket;
+
+import models.Message;
 
 /**
  * Handles a connection to a chat room socket.
@@ -40,15 +41,23 @@ public class SocketHandler implements Runnable {
 
     @Override
     public void run() {
-        BufferedReader incomingStream = null;
+        InputStream incomingStream = null;
         try {
-            incomingStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            incomingStream = socket.getInputStream();
 
             // TODO: Get username from received.
             User dummyUser = new User("Port" + socket.getPort(), socket.getInetAddress(), socket.getPort());
 
-            String message;
-            while (continueRunning && (message = incomingStream.readLine()) != null) {
+            Message message;
+            while (continueRunning) {
+                while(incomingStream.available()<Message.HEADER_SIZE){}
+                byte[] header = new byte[Message.HEADER_SIZE];
+                incomingStream.read(header);
+                message = new Message(header, new byte[0]);
+                byte[] data = new byte[message.parseSize(header)];
+                while(incomingStream.available()<data.length){}
+                incomingStream.read(data);
+                message.setData(new String(data));
                 notifyMessageReceived(dummyUser, message);
             }
 
@@ -64,14 +73,14 @@ public class SocketHandler implements Runnable {
      * @param message The message to send.
      * @throws IOException Thrown when the connection has closed and cannot send.
      */
-    public void sendMessage(String message) throws IOException {
+    public void sendMessage(byte[] message) throws IOException {
         if (isConnectionClosed()) {
             throw new IOException("Connection has been terminated.");
         }
 
         try {
-            PrintWriter outgoingStream = new PrintWriter(socket.getOutputStream());
-            outgoingStream.println(message);
+            OutputStream outgoingStream = socket.getOutputStream();
+            outgoingStream.write(message);
             outgoingStream.flush();
             // TODO: Handle when the connection terminates.
             //notifyMessageSent(message); // Notify listeners that the message was successfully sent.
@@ -97,7 +106,7 @@ public class SocketHandler implements Runnable {
      * @param recipient The recipient of the sent message.
      * @param message The message that was sent.
      */
-    private void notifyMessageSent(User recipient, String message) {
+    private void notifyMessageSent(User recipient, Message message) {
         listener.messageSent(this, recipient, message);
     }
 
@@ -107,7 +116,7 @@ public class SocketHandler implements Runnable {
      * @param sender The sender of the received message.
      * @param message The message that was received.
      */
-    private void notifyMessageReceived(User sender, String message) {
+    private void notifyMessageReceived(User sender, Message message) {
         listener.messageReceived(this, sender, message);
     }
 }

@@ -1,12 +1,12 @@
 package server;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.util.List;
 
 import models.User;
+import models.Message;
 
 /**
  * This worker class handles a distinct connection and handles their messages to communicate
@@ -77,11 +77,19 @@ public class ClientConnection implements Runnable {
 	@Override
 	public void run() {
 		try{
-			BufferedReader inputStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			String message;
-			while(!closeConnection && ((message = inputStream.readLine()) != null)){
-				parseMessage(message);
-			}
+			InputStream inputStream = socket.getInputStream();
+			Message message;
+			while (!closeConnection) {
+                while(inputStream.available()<Message.HEADER_SIZE){}
+                byte[] header = new byte[Message.HEADER_SIZE];
+                inputStream.read(header);
+                message = new Message(header, new byte[0]);
+                byte[] data = new byte[message.parseSize(header)];
+                while(inputStream.available()<data.length){}
+                inputStream.read(data);
+                message.setData(new String(data));
+                parseMessage(message.getData());
+            }
 			socket.close();
 		}
 		catch(Exception ex){
@@ -125,9 +133,10 @@ public class ClientConnection implements Runnable {
 	 */
 	public void sendMessage(String message){
 		try{
-			PrintWriter outputStream = new PrintWriter (socket.getOutputStream());
-			String outgoing = String.format("ACK %s\n", message);
-			outputStream.print(outgoing);
+			OutputStream outputStream = socket.getOutputStream();
+			String outgoing = String.format("ACK %s", message);
+			Message msg = new Message(socket.getInetAddress(),socket.getPort(),outgoing);
+			outputStream.write(msg.toByteArray());
 			outputStream.flush();
 		}
 		catch(Exception ex){
@@ -144,9 +153,10 @@ public class ClientConnection implements Runnable {
 	 */
 	public void sendRoomListMessage(String message){
 		try{
-			PrintWriter outputStream = new PrintWriter (socket.getOutputStream());
-			String outgoing = String.format("LST %s\n", message);
-			outputStream.print(outgoing);
+			OutputStream outputStream = socket.getOutputStream();
+			String outgoing = String.format("LST %s", message);
+			Message msg = new Message(socket.getInetAddress(),socket.getPort(),outgoing);
+			outputStream.write(msg.toByteArray());
 			outputStream.flush();
 		}
 		catch(Exception ex){

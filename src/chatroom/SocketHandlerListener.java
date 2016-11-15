@@ -1,6 +1,7 @@
 package chatroom;
 
 import models.User;
+import models.Message;
 
 /**
  * Interface to be implemented by classes that should be
@@ -11,7 +12,7 @@ import models.User;
  * @author Riley Lahd
  */
 public interface SocketHandlerListener {
-    void messageSent(SocketHandler recipientSocketHandler, User recipient, String message);
+    void messageSent(SocketHandler recipientSocketHandler, User recipient, Message message);
 
-    void messageReceived(SocketHandler senderSocketHandler, User sender, String message);
+    void messageReceived(SocketHandler senderSocketHandler, User sender, Message message);
 }
