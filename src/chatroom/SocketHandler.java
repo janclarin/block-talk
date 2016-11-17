@@ -136,10 +136,10 @@ public class SocketHandler implements Runnable {
     /**
      * Set the user on the end of this socket.
      *
-     * @param peer The remote user.
+     * @param user The remote user.
      */
-    private void setUser(User peer) {
-        this.user = peer;
+    private void setUser(User user) {
+        this.user = user;
     }
 
     /**
@@ -147,7 +147,7 @@ public class SocketHandler implements Runnable {
      *
      * @return User the user object of the peer
      */
-    private User setUser() {
+    private User getUser() {
         return this.user;
     }
 
