@@ -77,15 +77,12 @@ public class Client implements Runnable, SocketHandlerListener {
 
     @Override
     public void messageReceived(SocketHandler senderSocketHandler, User sender, Message message) {
-        try{
-            if(getSocketHandler(sender)!= senderSocketHandler || true){
-                //REMOVE OLD SENDERSOCKETHANDLER ENTRY FROM HASHMAP
-                removeUserFromList(senderSocketHandler);
-                userSocketHandlerMap.remove(sender);
-                userSocketHandlerMap.put(sender, senderSocketHandler);
-            }
-        }catch(IOException ex){
-            //TODO: Catch this properly
+        if(true){
+            //REMOVE OLD SENDERSOCKETHANDLER ENTRY FROM HASHMAP
+            //TODO: this relies on username being ignored for equality
+            removeUserFromList(senderSocketHandler);
+            userSocketHandlerMap.remove(sender);
+            userSocketHandlerMap.put(sender, senderSocketHandler);
         }
         notifyMessageReceived(sender, message);
 
