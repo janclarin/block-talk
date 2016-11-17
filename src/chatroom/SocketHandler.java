@@ -20,6 +20,11 @@ public class SocketHandler implements Runnable {
     private final Socket socket;
 
     /**
+     * OutputStream of socket
+     */
+    private OutputStream out;
+
+    /**
      * Listener to notify.
      */
     private final SocketHandlerListener listener;
@@ -62,7 +67,7 @@ public class SocketHandler implements Runnable {
                 while(incomingStream.available()<data.length){}
                 incomingStream.read(data);
                 message.setData(new String(data));
-                String[] words = message.getData.split(" ");
+                String[] words = message.getData().split(" ");
                 if(words[0].equals("HLO") && !words[1].equals(user.getUsername())){
                     this.user = new User(words[1], socket.getInetAddress(),Integer.parseInt(words[2]));
                 }
@@ -87,9 +92,9 @@ public class SocketHandler implements Runnable {
         }
 
         try {
-            OutputStream outgoingStream = socket.getOutputStream();
-            outgoingStream.write(message.toByteArray());
-            outgoingStream.flush();
+            if(out == null){out = socket.getOutputStream();}
+            out.write(message.toByteArray());
+            out.flush();
             // TODO: Handle when the connection terminates.
             //notifyMessageSent(message); // Notify listeners that the message was successfully sent.
         } catch (IOException e) {
