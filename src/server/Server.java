@@ -55,8 +55,7 @@ public class Server implements ClientConnectionListener
 	 * @return List of all ChatRooms
 	 */
 	public List<ChatRoom> getAllRooms(){
-		List<ChatRoom> allRooms = new ArrayList<ChatRoom>(roomMap.values());
-		return allRooms;
+		return new ArrayList<ChatRoom>(roomMap.values());
 	}
 	
 	/**
