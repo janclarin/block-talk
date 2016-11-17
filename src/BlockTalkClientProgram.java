@@ -88,7 +88,7 @@ public class BlockTalkClientProgram implements ClientListener {
         System.out.print("Enter message for server: ");
         client.sendMessage(new Message(clientAddr,clientPort,scan.nextLine()),server);
         client.sendMessage(new Message(clientAddr,clientPort,"BYE"),server);
-        client.removeUserFromList(server);
+        client.removeUserFromMap(server);
         
         String message = "";
         while(!message.equals("/q")){
