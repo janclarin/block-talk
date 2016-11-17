@@ -62,7 +62,7 @@ public class SocketHandler implements Runnable {
                 while(incomingStream.available()<data.length){}
                 incomingStream.read(data);
                 message.setData(new String(data));
-                if(message.getData().startsWith("HLO") && !message.getData().split(" ").equals(user.getUsername())){
+                if(message.getData().startsWith("HLO") && !message.getData().split(" ")[1].equals(user.getUsername())){
                     this.user = new User(message.getData().split(" ")[1], socket.getInetAddress(),Integer.parseInt(message.getData().split(" ")[2]));
                 }
                 notifyMessageReceived(user, message);
