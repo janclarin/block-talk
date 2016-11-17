@@ -55,11 +55,7 @@ public class Server implements ClientConnectionListener
 	 * @return List of all ChatRooms
 	 */
 	public List<ChatRoom> getAllRooms(){
-		Iterator<Entry<String, ChatRoom>> iterator = roomMap.entrySet().iterator();
-		List<ChatRoom> allRooms = new ArrayList<ChatRoom>();
-		while(iterator.hasNext()){
-			allRooms.add((ChatRoom)iterator.next().getValue());
-		}
+		List<ChatRoom> allRooms = new ArrayList<ChatRoom>(roomMap.values());
 		return allRooms;
 	}
 	

@@ -4,6 +4,8 @@ import models.User;
 
 import java.util.List;
 import java.util.Scanner;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -69,7 +71,7 @@ public class BlockTalkClientProgram implements ClientListener {
         InetAddress clientAddr = InetAddress.getByName(args[0]);
         BlockTalkClientProgram program = new BlockTalkClientProgram();
 
-        Scanner scan = new Scanner(System.in);
+        Scanner scan = new Scanner(new BufferedReader(new InputStreamReader(System.in)));
         System.out.print("Enter your username: ");
         String clientUsername = scan.nextLine();
         System.out.print("Enter server address: ");
