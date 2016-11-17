@@ -80,14 +80,14 @@ public class SocketHandler implements Runnable {
      * @param message The message to send.
      * @throws IOException Thrown when the connection has closed and cannot send.
      */
-    public void sendMessage(byte[] message) throws IOException {
+    public void sendMessage(Message message) throws IOException {
         if (isConnectionClosed()) {
             throw new IOException("Connection has been terminated.");
         }
 
         try {
             OutputStream outgoingStream = socket.getOutputStream();
-            outgoingStream.write(message);
+            outgoingStream.write(message.toByteArray());
             outgoingStream.flush();
             // TODO: Handle when the connection terminates.
             //notifyMessageSent(message); // Notify listeners that the message was successfully sent.

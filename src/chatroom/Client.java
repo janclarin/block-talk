@@ -135,7 +135,7 @@ public class Client implements Runnable, SocketHandlerListener {
         try {
             Thread.sleep(1000); // TODO: Remove delay.
             SocketHandler socketHandler = getSocketHandler(recipient);
-            socketHandler.sendMessage(message.toByteArray());
+            socketHandler.sendMessage(message);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
