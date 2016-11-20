@@ -5,7 +5,7 @@ import java.util.List;
 import models.User;
 
 /**
- * This interface is used to request network functions from the main server
+ * This interface is used to listen to incoming requests from a connected client
  *
  * @author Clinton Cabiles
  * @author Jan Clarin

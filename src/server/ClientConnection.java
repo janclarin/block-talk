@@ -10,7 +10,7 @@ import models.User;
 
 /**
  * This worker class handles a distinct connection and handles their messages to communicate
- * with main server. 
+ * with the servers. 
  *
  * @author Clinton Cabiles
  * @author Jan Clarin
@@ -20,19 +20,19 @@ public class ClientConnection implements Runnable {
 	private Socket socket;
 	private boolean closeConnection;
 	private User user;
-	private ClientConnectionListener listener;
+	private List<Socket> listeners;
 	
 	/**
-	 * Initializes the server and sets the socket and listener.
+	 * Initializes the server and sets the socket and listeners.
 	 * A new User object is created based on socket information.
 	 * 
 	 * @param socket
 	 * @param listener
 	 */
-	public ClientConnection(Socket socket, ClientConnectionListener listener){
+	public ClientConnection(Socket socket, List<Socket> listener){
 		try{
 			this.socket = socket;
-			this.listener = listener;
+			this.listeners = listener;
 		}
 		catch(Exception ex){
 			System.err.println("Error: Exception: " + ex.getMessage());
@@ -158,8 +158,8 @@ public class ClientConnection implements Runnable {
 	 * 
 	 */
 	public void notifyHostRequest(String roomName){
-		boolean result = listener.hostRequest(getUser(), roomName);
-		sendMessage(String.valueOf(result));
+		//boolean result = listeners.hostRequest(getUser(), roomName);
+		//sendMessage(String.valueOf(result));
 	}
 	
 	/**
@@ -167,8 +167,8 @@ public class ClientConnection implements Runnable {
 	 * 
 	 */
 	public void notifyRoomRequest(){
-		List<ChatRoom> rooms = listener.roomRequest();
-		sendRoomList(rooms);
+		//List<ChatRoom> rooms = listeners.roomRequest();
+		//sendRoomList(rooms);
 	}
 	
 	/**

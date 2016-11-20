@@ -1,6 +1,10 @@
 package server;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -15,6 +19,9 @@ import models.User;
 /**
  * This class represents a head server of the system for exchanging
  * keys and IPs.
+ * 
+ * <p>
+ * e.g. java Server port
  *
  * @author Clinton Cabiles
  * @author Jan Clarin
@@ -22,18 +29,46 @@ import models.User;
  */
 public class Server implements ClientConnectionListener
 {
+	private static Server instance;
+	
 	/**
 	 * [RoomName, Chatroom] Hash Map of all existing chatrooms on the server
-	 * TODO:
-	 * 	update token to desired variable
+	 * 
+	 * 
 	 */
 	private HashMap<String, ChatRoom> roomMap;
 	
 	/**
+	 * Main function. Requires port to start the server
+	 * 
+	 * @param port
+	 */
+	public static void main(String[] args){
+		try{
+			instance = new Server(Integer.parseInt(args[0]));
+		}
+		catch(Exception ex){
+			ex.printStackTrace();
+		}
+	}
+	
+	/**
 	 * Initializes the server and room map
 	 */
-	public Server(){
+	public Server(int port){
 		roomMap = new HashMap<String, ChatRoom>();
+		try {
+			ServerSocket server;
+			server = new ServerSocket(port);
+			Socket manager = server.accept();
+			PrintWriter outputStream = new PrintWriter (manager.getOutputStream());
+			String ack = "ACK";
+			outputStream.println(ack);
+			outputStream.flush();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -139,4 +174,5 @@ public class Server implements ClientConnectionListener
 		// TODO Auto-generated method stub
 		return false;
 	}
+
 }

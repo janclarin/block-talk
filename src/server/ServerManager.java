@@ -6,6 +6,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -21,6 +22,7 @@ public class ServerManager {
 	private static List<ClientConnectionListener> servers;
 	private static int port = 9999;
 	private static boolean listen;
+	private static List<Socket> serverSockets;
 	
 	/**
 	 * Starts the main server manager.
@@ -33,17 +35,36 @@ public class ServerManager {
 			ExecutorService threadPool = Executors.newCachedThreadPool();
 			port = Integer.parseInt(args[0]);
 			servers = new ArrayList<ClientConnectionListener>();
+			serverSockets = new ArrayList<Socket>();
+			
 			ServerSocket listenServer = new ServerSocket(port);
 			listen = true;
 			
-			//use one main server for now
-			servers.add(new Server());
+			Scanner input = new Scanner(System.in);
+			System.out.println("Enter a server ip and port to connect to, or c to continue:");
+			boolean findServers = true;
+			while(findServers){
+				try{
+					String inputLine = input.nextLine();
+					if(inputLine.startsWith("c")){
+						findServers = false;
+					}
+					
+					String[] connectionInfo = inputLine.split(" ");
+					Socket newServer = new Socket(connectionInfo[0], Integer.parseInt(connectionInfo[1]));
+					if(newServer.isBound()){
+						serverSockets.add(newServer);
+						System.out.println(String.format("Server Added: %s %d", newServer.getInetAddress().toString(), newServer.getPort()));
+					}
+				}
+				catch(Exception ex){
+					ex.printStackTrace();
+				}
+			}
 			
 			while(listen){
 				System.out.print("Listening...");
-				for(ClientConnectionListener listener : servers){
-					threadPool.execute(new ClientConnection(listenServer.accept(), listener));
-				}
+				threadPool.execute(new ClientConnection(listenServer.accept(), serverSockets));
 			}
 			
 			System.out.println("Closing...");
