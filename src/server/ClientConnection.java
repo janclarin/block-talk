@@ -192,7 +192,7 @@ public class ClientConnection implements Runnable {
 	 */
 	public void notifyHostRequest(String roomName){
 		boolean result = listener.hostRequest(getUser(), roomName);
-		sendMessage(String.valueOf(result));
+		sendMessage("HST "+String.valueOf(result));
 	}
 	
 	/**

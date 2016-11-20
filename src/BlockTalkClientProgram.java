@@ -21,6 +21,9 @@ import protocols.BlockTalkProtocol;
  * @author Riley Lahd
  */
 public class BlockTalkClientProgram implements ClientListener {
+    
+    private static boolean isHost = false;
+
     @Override
     public void messageSent(User recipient, Message message) {
         System.out.printf("Successfully sent message: %s\n", message.getData());
@@ -28,18 +31,25 @@ public class BlockTalkClientProgram implements ClientListener {
 
     @Override
     public void messageReceived(User sender, Message message) {
-        System.out.println("MSGINFO: "+message.getIp().toString()+" "+message.getPort()+" "+message.getSize());
+        //System.out.println("MSGINFO: "+message.getIp().toString()+" "+message.getPort()+" "+message.getSize());
         if(message.getData().startsWith("MSG")){
             System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData().substring(4));
         }
         else if(message.getData().startsWith("LST")){
-            System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData().substring(4));
+            //System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData());
         }
         else if(message.getData().startsWith("ACK")){
-            System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData().substring(4));
+            //System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData().substring(4));
         }
         else if(message.getData().startsWith("HLO")){
-            System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData().substring(4));
+            //System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData().substring(4));
+        }
+        else if(message.getData().startsWith("USR")){
+            //System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData().substring(4));
+        }
+        else{
+            System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData());
+
         }
     }
 
@@ -74,10 +84,10 @@ public class BlockTalkClientProgram implements ClientListener {
         Scanner scan = new Scanner(new BufferedReader(new InputStreamReader(System.in)));
         System.out.print("Enter your username: ");
         String clientUsername = scan.nextLine();
-        System.out.print("Enter server address: ");
-        InetAddress serverAddr = InetAddress.getByName(scan.nextLine());
-        System.out.print("Enter server port: ");
-        int serverPort = Integer.parseInt(scan.nextLine());
+        //System.out.print("Enter server address: ");
+        InetAddress serverAddr = InetAddress.getByName("localhost");//scan.nextLine());
+        //System.out.print("Enter server port: ");
+        int serverPort = Integer.parseInt("5000");//scan.nextLine());
 
         Client client = new Client(clientUsername, clientPort, program);
         new Thread(client).start();
@@ -85,8 +95,23 @@ public class BlockTalkClientProgram implements ClientListener {
         //Handshake with the server
         User server = new User("SERVER", serverAddr, serverPort);
         client.sendMessage(new Message(clientAddr,clientPort,"HLO "+clientUsername+" "+clientPort),server);
-        System.out.print("Enter message for server: ");
-        client.sendMessage(new Message(clientAddr,clientPort,scan.nextLine()),server);
+        System.out.println("\"join\" or \"host <roomname>\"");
+        String mode = scan.nextLine();
+        if(mode.toLowerCase().equals("join")){
+            client.sendMessage(new Message(clientAddr,clientPort,"ROM"),server);
+        }
+        else if(mode.toLowerCase().startsWith("host "))
+        {
+            client.sendMessage(new Message(clientAddr,clientPort,"HST "+mode.substring(5)),server);
+            client.setIsHost(true);
+            isHost = true;
+            System.out.println("Hosting room \""+mode.substring(5)+"\"");
+        }
+        else
+        {
+            System.exit(0);
+        }
+        
         client.sendMessage(new Message(clientAddr,clientPort,"BYE"),server);
         client.removeUserFromMap(server);
         

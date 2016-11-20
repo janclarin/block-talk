@@ -51,6 +51,18 @@ public class SocketHandler implements Runnable {
 
     }
 
+    /**
+     * Constructs a SocketHandler with a given Socket.
+     *
+     * @param socket The socket to manage.
+     */
+    public SocketHandler(final Socket socket, final SocketHandlerListener listener, User user) {
+        this.socket = socket;
+        this.listener = listener;
+        this.user = user;
+
+    }
+
     @Override
     public void run() {
         InputStream incomingStream = null;
