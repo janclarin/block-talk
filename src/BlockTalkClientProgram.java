@@ -2,6 +2,9 @@ import chatroom.Client;
 import chatroom.ClientListener;
 import models.User;
 
+import java.util.List;
+import java.util.Scanner;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -48,7 +51,7 @@ public class BlockTalkClientProgram implements ClientListener {
             throw new IllegalArgumentException();
         }
 
-        String clientUsername = args[0];
+        String clientUsername = args[0]+":"+args;
         int clientPort = Integer.parseInt(args[1]);
         BlockTalkClientProgram program = new BlockTalkClientProgram();
         Client client = new Client(clientUsername, clientPort, program);
@@ -61,6 +64,26 @@ public class BlockTalkClientProgram implements ClientListener {
             User otherUser = new User("OtherUser:" + otherHostPort, InetAddress.getByName(otherHost), otherHostPort);
             String message = String.format("Sent from (%s) to (%s)", clientPort, otherUser);
             client.sendMessage(message, otherUser);
+        }
+
+        
+        String message = "";
+        Scanner scan = new Scanner(System.in);
+        while(!message.equals("/q")){
+            message = scan.nextLine();
+            //TODO: Move this logic to another class
+            if(message.startsWith("/connect ")){
+                User newUser = new User("NewUser", InetAddress.getByName(message.split(" ")[1]), Integer.parseInt(message.split(" ")[2]));
+                client.sendMessage("HLO", newUser);
+            }
+            else if(message.startsWith("/list")){
+                System.out.println("KNOWN USERS");
+                List<User> users = client.getKnownUsersList();
+                for(User u : users){System.out.println(u.toString());}
+            }
+            else{
+                client.sendMessageToAll(message);
+            }
         }
     }
 }
