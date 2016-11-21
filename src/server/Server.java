@@ -72,8 +72,7 @@ public class Server
 		this.ip = ip;
 		this.port = port;
 		try {
-			ServerSocket server;
-			server = new ServerSocket(port);
+			ServerSocket server = new ServerSocket(port);
 			managerSocket = server.accept();
 			InputStream inputStream = managerSocket.getInputStream();
 			while(!stopServer){

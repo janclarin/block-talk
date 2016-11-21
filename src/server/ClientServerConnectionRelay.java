@@ -52,7 +52,7 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
 
 	@Override
 	public String roomRequest(User user) {
-		String result = " ";
+		String result ="";
 		for(Socket socket : serverSockets){
 			Message outgoing = new Message(user.getIpAddress(), user.getPort(), "ROM");
 			result = sendMessage(socket, outgoing);
@@ -63,8 +63,8 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
 
 	@Override
 	public String updateHost() {
-		// TODO Auto-generated method stub
-		return " ";
+		// TODO: eventually make this update the host
+		return "";
 	}
 
 }

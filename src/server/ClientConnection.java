@@ -28,7 +28,7 @@ public class ClientConnection implements Runnable {
 	 * A new User object is created based on socket information.
 	 * 
 	 * @param socket
-	 * @param listeners
+	 * @param listener
 	 */
 	public ClientConnection(Socket socket, ClientConnectionListener listener){
 		try{
