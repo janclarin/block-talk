@@ -103,7 +103,7 @@ public class ClientConnection implements Runnable {
 		if(message.startsWith("HLO")){
 			String[] messages = message.substring(4).split(" ");
 			setUser(messages[0], messages[1]);
-			sendMessage(messages[0]);
+			sendMessage("YOU "+messages[0] +" "+ socket.getInetAddress() +" "+ messages[1]);
 		}
 		else if(message.startsWith("HST")){
 			String roomName = message.substring(4);
@@ -129,7 +129,8 @@ public class ClientConnection implements Runnable {
 	public void sendMessage(String message){
 		try{
 			OutputStream outputStream = socket.getOutputStream();
-			String outgoing = String.format("ACK %s", message);
+			//String outgoing = String.format("ACK %s", message);
+			String outgoing = message;
 			Message msg = new Message(socket.getInetAddress(),socket.getPort(),outgoing);
 			outputStream.write(msg.toByteArray());
 			outputStream.flush();
@@ -164,8 +165,8 @@ public class ClientConnection implements Runnable {
 	 * 
 	 */
 	public void notifyHostRequest(String roomName){
-		String reply = listener.hostRequest(getUser(), roomName);
-		sendMessage(reply);
+		String result = listener.hostRequest(getUser(), roomName);
+		sendMessage("HST "+ result);
 	}
 	
 	/**

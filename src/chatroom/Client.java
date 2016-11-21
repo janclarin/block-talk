@@ -13,6 +13,9 @@ import java.util.concurrent.Executors;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 /**
  * This class represents a client of the system and will
  * allow the user to create or connect to rooms and communicate
@@ -32,6 +35,16 @@ public class Client implements Runnable, SocketHandlerListener {
      * Port used for incoming requests.
      */
     private final int clientPort;
+
+    /**
+     * User associate with this client.
+     */
+    private User clientUser;
+
+    /**
+     * Is this client currently a room host.
+     */
+    private boolean isHost = false;
 
     /**
      * Socket map for retrieving the socket handler for a models.User.
@@ -99,6 +112,8 @@ public class Client implements Runnable, SocketHandlerListener {
 
         try {
             serverSocket = new ServerSocket(clientPort);
+            //TODO - figure out how to get external ip - from server??
+            this.clientUser = new User(clientUsername, InetAddress.getLocalHost(), clientPort);
 
             while (continueRunning) {
                 Socket socket = serverSocket.accept();
@@ -181,6 +196,54 @@ public class Client implements Runnable, SocketHandlerListener {
      */
     private void notifyMessageReceived(User sender, Message message) {
         listener.messageReceived(sender, message);
+        if(message.getData().startsWith("MSG")){}
+        else if(message.getData().startsWith("ACK")){}
+        else if(message.getData().startsWith("HLO")){
+            if(isHost)
+            {
+                sendMessageToAll(new Message(serverSocket.getInetAddress(),clientPort,"USR "+sender.getUsername()+" "+sender.getIpAddress()+":"+sender.getPort()));
+                sendMessage(new Message(serverSocket.getInetAddress(),clientPort,"HLO "+clientUsername+" "+clientPort), sender);
+            }
+        }
+        else if(message.getData().startsWith("USR")){
+            try{
+                String[] words = message.getData().split("[ :]");
+                User newUser = new User(words[1], InetAddress.getByName(words[2].replace("/","")), Integer.parseInt(words[3]));
+                if(!clientUser.equals(newUser)){
+                    SocketHandler newSocketHandler = openConnection(newUser);
+                    userSocketHandlerMap.put(newUser, newSocketHandler);
+                    sendMessage(new Message(serverSocket.getInetAddress(),serverSocket.getLocalPort(),"HLO "+clientUsername+" "+serverSocket.getLocalPort()),newUser);
+                }
+            }catch(IOException e){
+                //could not creat given usr
+                System.out.println("FAILED TO CREATE GIVEN USR");
+                e.printStackTrace();
+            }
+            
+        }
+        else if(message.getData().startsWith("LST")){
+            try{
+                String[] rooms = message.getData().substring(4).split("\n");
+                System.out.println("Joining room: "+rooms[0].split(" @ ")[0]);
+                User newUser = new User("NewUser", InetAddress.getByName(rooms[0].split(" @ ")[1].split(":")[0].replace("/","")), Integer.parseInt(rooms[0].split(":")[1]));
+                sendMessage(new Message(serverSocket.getInetAddress(),clientPort,"HLO "+clientUsername+" "+clientPort), newUser);
+            }catch(UnknownHostException e){
+                //could not creat given usr
+                System.out.println("FAILED TO JOIN ROOM");
+                e.printStackTrace();
+            }
+        }
+        else if(message.getData().startsWith("YOU"))
+        {
+            try{
+                String[] words = message.getData().substring(4).split(" ");
+                clientUser = new User(words[0], InetAddress.getByName(words[1].replace("/","")), Integer.parseInt(words[2]));
+            }catch(UnknownHostException e){
+                //could not creat self
+                System.out.println("FAILED TO PARSE USER INFO");
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -219,8 +282,7 @@ public class Client implements Runnable, SocketHandlerListener {
     public boolean removeUserFromMap(SocketHandler socketHandler){
         //find the key matching this sh
         for(Map.Entry<User,SocketHandler> entry : userSocketHandlerMap.entrySet()){
-            if(entry.getValue() == socketHandler)
-            {
+            if(entry.getValue() == socketHandler){
                 userSocketHandlerMap.remove(entry.getKey());
                 break;
             }
@@ -237,5 +299,53 @@ public class Client implements Runnable, SocketHandlerListener {
         SocketHandler sh = userSocketHandlerMap.remove(user);
         sh.shutdown();
         return sh.isConnectionClosed();
+    }
+
+    /**
+     * Set isHost variable
+     *
+     * @param isHost True if the this client is hosting a room
+     */
+    public void setIsHost(boolean isHost){
+        this.isHost = isHost;
+    }
+
+    /**
+     * Get isHost variable
+     *
+     * @return boolean True if the this client is hosting a room
+     */
+    public boolean isHost(){
+        return this.isHost;
+    }
+
+    /**
+     * Opens a connection with given user and sends a HLO
+     * @param user The user to open a connection to
+     * @return SocketHandler The socketHandler connected to that user
+     */
+    private SocketHandler openConnection(User user) throws IOException
+    {
+        Socket socket = new Socket(user.getIpAddress(), user.getPort());
+        SocketHandler socketHandler = new SocketHandler(socket, this, user);
+        socketHandlerThreadPool.execute(socketHandler);
+        return socketHandler;
+    }
+
+    /**
+     * Set clientUser
+     *
+     * @param user The user object representing the local user
+     */
+    public void setLocalUser(User user){
+        clientUser = user;
+    }
+
+    /**
+     *
+     * @return user The user object representing the local user
+     */
+    public User getLocalUser(){
+        return this.clientUser;
     }
 }

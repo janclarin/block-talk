@@ -38,6 +38,7 @@ public class ServerManager {
 			serverSockets = new ArrayList<Socket>();
 			
 			ServerSocket listenServer = new ServerSocket(port);
+			System.out.println(listenServer.getInetAddress() + ":"+listenServer.getLocalPort());
 			listen = true;
 			
 			Scanner input = new Scanner(System.in);
@@ -65,7 +66,7 @@ public class ServerManager {
 			
 			while(listen){
 				try{
-					System.out.println("Listening...");
+					System.out.println("Listening on "+listenServer.getInetAddress() + ":"+listenServer.getLocalPort()+"...");
 					threadPool.execute(new ClientConnection(listenServer.accept(), new ClientServerConnectionRelay(serverSockets)));
 				}
 				catch(Exception ex){
