@@ -34,13 +34,14 @@ public class ServerManager {
 			port = Integer.parseInt(args[0]);
 			servers = new ArrayList<ClientConnectionListener>();
 			ServerSocket listenServer = new ServerSocket(port);
+			System.out.println(listenServer.getInetAddress() + ":"+listenServer.getLocalPort());
 			listen = true;
 			
 			//use one main server for now
 			servers.add(new Server());
 			
 			while(listen){
-				System.out.print("Listening...");
+				System.out.println("Listening on "+listenServer.getInetAddress() + ":"+listenServer.getLocalPort()+"...");
 				for(ClientConnectionListener listener : servers){
 					threadPool.execute(new ClientConnection(listenServer.accept(), listener));
 				}
