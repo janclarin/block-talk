@@ -11,9 +11,9 @@ CPSC 559 Project
 
 2. Start 1 or more Servers: `java server.Server <ip> <port>`
 
-3. Link server(s) to ServerManager: Inside ServerManager: `<server ip> <server port>`
+3. Link server(s) to ServerManager: (Inside ServerManager) `<server ip> <server port>`
 
-4. Stop listening for servers and start listening for clients on ServerManager: Inside ServerManager: `c`
+4. Stop listening for servers and start listening for clients on ServerManager: (Inside ServerManager) `c`
 
 ## Client-side:
 
