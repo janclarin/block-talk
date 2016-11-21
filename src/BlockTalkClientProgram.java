@@ -64,15 +64,6 @@ public class BlockTalkClientProgram implements ClientListener {
 
     /**
      * Main function to participate in chat rooms.
-     * Must specify the following command line arguments:
-     * - Host username
-     * - Host port number
-     * TODO: Remove the following:
-     * Optional arguments (to connect to another client immediately (This is temporary until server is up)
-     * - Other client IP address
-     * - Other client port number
-     * <p>
-     * e.g. java BlockTalkClientProgram MyUsername 5001 [127.0.0.1 5002]
      *
      * @param args Command line arguments.
      * @throws UnknownHostException Invalid host.
@@ -90,8 +81,8 @@ public class BlockTalkClientProgram implements ClientListener {
         String clientUsername = scan.nextLine();
         System.out.print("Enter server address: ");
         InetAddress serverAddr = InetAddress.getByName(scan.nextLine());
-        //System.out.print("Enter server port: ");
-        int serverPort = Integer.parseInt("5000");//scan.nextLine());
+        System.out.print("Enter server port: ");
+        int serverPort = Integer.parseInt(scan.nextLine());
 
         Client client = new Client(clientUsername, clientPort, program);
         new Thread(client).start();
