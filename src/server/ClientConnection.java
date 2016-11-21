@@ -160,26 +160,6 @@ public class ClientConnection implements Runnable {
 	}
 	
 	/**
-	 * Send roomlist to client
-	 * 
-	 * TODO: send room message using proper protocol
-	 * 
-	 * @param rooms
-	 */
-	public void sendRoomList(List<ChatRoom> rooms){
-		StringBuffer roomList = new StringBuffer();
-		for (ChatRoom room : rooms){
-			roomList.append(room.getName());
-			roomList.append(" @ ");
-			roomList.append(room.getHost());
-			roomList.append(":");
-			roomList.append(room.getPort());
-			roomList.append("\n");
-		}
-		sendRoomListMessage(roomList.toString());
-	}
-	
-	/**
 	 * Notifies listener that a client is requesting a creation of new chatroom
 	 * 
 	 */

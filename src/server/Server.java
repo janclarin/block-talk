@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -39,6 +40,8 @@ public class Server
 	
 	private boolean stopServer;
 	private Socket managerSocket;
+	private int port;
+	private InetAddress ip;
 	
 	/**
 	 * [RoomName, Chatroom] Hash Map of all existing chatrooms on the server
@@ -48,13 +51,13 @@ public class Server
 	private HashMap<String, ChatRoom> roomMap;
 	
 	/**
-	 * Main function. Requires port to start the server
+	 * Main function. Requires ip and port to start server
 	 * 
 	 * @param port
 	 */
 	public static void main(String[] args){
 		try{
-			instance = new Server(Integer.parseInt(args[0]));
+			instance = new Server(InetAddress.getByName(args[0]), Integer.parseInt(args[1]));
 		}
 		catch(Exception ex){
 			ex.printStackTrace();
@@ -64,19 +67,18 @@ public class Server
 	/**
 	 * Initializes the server and room map
 	 */
-	public Server(int port){
+	public Server(InetAddress ip, int port){
 		roomMap = new HashMap<String, ChatRoom>();
 		try {
 			ServerSocket server;
 			server = new ServerSocket(port);
 			managerSocket = server.accept();
-		
 			InputStream inputStream = managerSocket.getInputStream();
-			String message;
 			while(!stopServer){
 				parseMessage(MessageReadHelper.readNextMessage(inputStream));
 			}
 			managerSocket.close();
+			server.close();
 		}
 		catch (IOException e) {
 			e.printStackTrace();
@@ -147,14 +149,19 @@ public class Server
 		roomMap.put(roomName, new ChatRoom(roomName, ipAddress, port));
 	}
 	
+	/**
+	 * Read incoming message and handle it
+	 * 
+	 * @param message
+	 */
 	public void parseMessage(Message message){
 		try{	
 			if(message.getData().startsWith("HST")){
 				addRoomMap(message.getData().substring(4), message.getIp(), message.getPort());
-				reply("Host Updated");
+				sendMessage("Host Updated");
 			}
 			else if(message.getData().startsWith("ROM")){
-				reply(getAllRoomsString());
+				sendMessage(getAllRoomsString());
 			}
 			else if(message.getData().startsWith("NHS")){
 				//TODO: set new room host 
@@ -164,11 +171,18 @@ public class Server
 			ex.printStackTrace();
 		}
 	}
-		
-	public void reply(String message){
+	
+	/**
+	 * Send reply message
+	 * 
+	 * @param message
+	 */
+	public void sendMessage(String message){
 		try{
-			PrintWriter outStream = new PrintWriter(managerSocket.getOutputStream());
-			outStream.println(message);
+			OutputStream outStream = managerSocket.getOutputStream();
+			String outgoing = String.format("ACK %s", message);
+			Message msg = new Message(ip, port, outgoing);
+			outStream.write(msg.toByteArray());
 			outStream.flush();
 		}
 		catch(Exception ex){
