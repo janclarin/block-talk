@@ -39,7 +39,7 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
 	public String hostRequest(User user, String roomName) {
 		String result = "";
 		for(Socket socket : serverSockets){
-			String outgoing = String.format("HST %s %s", user.getIpAddress().getHostAddress(), roomName);
+			String outgoing = String.format("HST %s %s %s", roomName, user.getIpAddress().getHostAddress(), user.getPort());
 			result = sendMessage(socket, outgoing);
 		}
 		return result;

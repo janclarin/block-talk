@@ -148,8 +148,9 @@ public class Server
 		try{	
 			if(message.startsWith("HST")){
 				String[] incoming = message.substring(4).split(" ");
-				InetAddress hostIp = InetAddress.getByName(incoming[0]);
-				addRoomMap(incoming[1], hostIp);
+				InetAddress hostIp = InetAddress.getByName(incoming[1]);
+				int port = Integer.parseInt(incoming[2]);
+				addRoomMap(incoming[1], hostIp, port);
 				reply("Host Updated");
 			}
 			else if(message.startsWith("ROM")){
