@@ -66,8 +66,7 @@ public class ServerManager {
 			while(listen){
 				try{
 					System.out.println("Listening...");
-					Socket clientSock = listenServer.accept();
-					threadPool.execute(new ClientConnection(clientSock, new ClientServerConnectionRelay(serverSockets)));
+					threadPool.execute(new ClientConnection(listenServer.accept(), new ClientServerConnectionRelay(serverSockets)));
 				}
 				catch(Exception ex){
 					ex.printStackTrace();

@@ -18,6 +18,7 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
 
 	public String sendMessage(Socket socket, String outgoing){
 		String response = "";
+		synchronized(socket){
 			try{
 				BufferedReader serverInputStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 				PrintWriter serverOutputStream = new PrintWriter(socket.getOutputStream());
@@ -30,6 +31,7 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
 			catch(Exception ex){
 				ex.printStackTrace();
 			}
+		}
 		return response;
 	}
 	
