@@ -4,10 +4,16 @@ import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+
+import helpers.MessageReadHelper;
+import models.Message;
 
 /**
  * Example class: Interacting with the server
@@ -21,20 +27,22 @@ public class testclient {
 		try {
 			Socket sock = new Socket("localhost", 9999);
 			
-			BufferedReader fromServer = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-			PrintWriter toServer = new PrintWriter (sock.getOutputStream());
+			InputStream fromServer = sock.getInputStream();
+			OutputStream toServer = sock.getOutputStream();
 			
-			toServer.println("HLO swag 9999");
-			toServer.flush();
-			String response1 = fromServer.readLine();
+			Message msg;
 			
-			toServer.println("HST teatime");
+			toServer.write((new Message(InetAddress.getLocalHost(), 9999, "HLO client1 9999").toByteArray()));
 			toServer.flush();
-			String response = fromServer.readLine();
+			String response1 = MessageReadHelper.readNextMessage(fromServer).getData();
 			
-			toServer.println("ROM");
+			toServer.write((new Message(InetAddress.getLocalHost(), 9999, "HST teatime").toByteArray()));
 			toServer.flush();
-			response = fromServer.readLine();
+			String response2 = MessageReadHelper.readNextMessage(fromServer).getData();
+			
+			toServer.write((new Message(InetAddress.getLocalHost(), 9999, "ROM").toByteArray()));
+			toServer.flush();
+			String response = MessageReadHelper.readNextMessage(fromServer).getData();
 			
 			System.out.println(response);
 			sock.close();

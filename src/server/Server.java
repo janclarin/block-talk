@@ -69,6 +69,8 @@ public class Server
 	 */
 	public Server(InetAddress ip, int port){
 		roomMap = new HashMap<String, ChatRoom>();
+		this.ip = ip;
+		this.port = port;
 		try {
 			ServerSocket server;
 			server = new ServerSocket(port);

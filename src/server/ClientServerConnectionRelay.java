@@ -31,7 +31,7 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
 				serverOutputStream.flush();
 				
 				Message incoming = MessageReadHelper.readNextMessage(socket.getInputStream());
-				response = incoming.getData();
+				response = incoming.getData().substring(4);
 			}
 			catch(Exception ex){
 				ex.printStackTrace();
@@ -58,7 +58,7 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
 			result = sendMessage(socket, outgoing);
 		}
 		//TODO: change to list of chatroom
-		return null;
+		return result;
 	}
 
 	@Override
