@@ -23,6 +23,7 @@ import protocols.BlockTalkProtocol;
 public class BlockTalkClientProgram implements ClientListener {
     
     private static boolean isHost = false;
+    private static User me;
 
     @Override
     public void messageSent(User recipient, Message message) {
@@ -45,6 +46,9 @@ public class BlockTalkClientProgram implements ClientListener {
             //System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData().substring(4));
         }
         else if(message.getData().startsWith("USR")){
+            //System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData().substring(4));
+        }
+        else if(message.getData().startsWith("YOU")){
             //System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData().substring(4));
         }
         else{
@@ -84,8 +88,8 @@ public class BlockTalkClientProgram implements ClientListener {
         Scanner scan = new Scanner(new BufferedReader(new InputStreamReader(System.in)));
         System.out.print("Enter your username: ");
         String clientUsername = scan.nextLine();
-        //System.out.print("Enter server address: ");
-        InetAddress serverAddr = InetAddress.getByName("localhost");//scan.nextLine());
+        System.out.print("Enter server address: ");
+        InetAddress serverAddr = InetAddress.getByName(scan.nextLine());
         //System.out.print("Enter server port: ");
         int serverPort = Integer.parseInt("5000");//scan.nextLine());
 
@@ -114,6 +118,9 @@ public class BlockTalkClientProgram implements ClientListener {
         
         client.sendMessage(new Message(clientAddr,clientPort,"BYE"),server);
         client.removeUserFromMap(server);
+
+        me = client.getLocalUser();
+        //System.out.println("THIS USER: "+me.toString());
         
         String message = "";
         while(!message.equals("/q")){

@@ -233,6 +233,17 @@ public class Client implements Runnable, SocketHandlerListener {
                 e.printStackTrace();
             }
         }
+        else if(message.getData().startsWith("YOU"))
+        {
+            try{
+                String[] words = message.getData().substring(4).split(" ");
+                clientUser = new User(words[0], InetAddress.getByName(words[1].replace("/","")), Integer.parseInt(words[2]));
+            }catch(UnknownHostException e){
+                //could not creat self
+                System.out.println("FAILED TO PARSE USER INFO");
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -319,5 +330,22 @@ public class Client implements Runnable, SocketHandlerListener {
         SocketHandler socketHandler = new SocketHandler(socket, this, user);
         socketHandlerThreadPool.execute(socketHandler);
         return socketHandler;
+    }
+
+    /**
+     * Set clientUser
+     *
+     * @param user The user object representing the local user
+     */
+    public void setLocalUser(User user){
+        clientUser = user;
+    }
+
+    /**
+     *
+     * @return user The user object representing the local user
+     */
+    public User getLocalUser(){
+        return this.clientUser;
     }
 }
