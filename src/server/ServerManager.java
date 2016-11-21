@@ -49,12 +49,13 @@ public class ServerManager {
 					if(inputLine.startsWith("c")){
 						findServers = false;
 					}
-					
-					String[] connectionInfo = inputLine.split(" ");
-					Socket newServer = new Socket(connectionInfo[0], Integer.parseInt(connectionInfo[1]));
-					if(newServer.isBound()){
-						serverSockets.add(newServer);
-						System.out.println(String.format("Server Added: %s %d", newServer.getInetAddress().toString(), newServer.getPort()));
+					else{
+						String[] connectionInfo = inputLine.split(" ");
+						Socket newServer = new Socket(connectionInfo[0], Integer.parseInt(connectionInfo[1]));
+						if(newServer.isBound()){
+							serverSockets.add(newServer);
+							System.out.println(String.format("Server Added: %s %d", newServer.getInetAddress().toString(), newServer.getPort()));
+						}
 					}
 				}
 				catch(Exception ex){
@@ -63,8 +64,15 @@ public class ServerManager {
 			}
 			
 			while(listen){
-				System.out.print("Listening...");
-				threadPool.execute(new ClientConnection(listenServer.accept(), serverSockets));
+				try{
+					System.out.println("Listening...");
+					Socket clientSock = listenServer.accept();
+					threadPool.execute(new ClientConnection(clientSock, new ClientServerConnectionRelay(serverSockets)));
+				}
+				catch(Exception ex){
+					ex.printStackTrace();
+					continue;
+				}
 			}
 			
 			System.out.println("Closing...");
@@ -73,7 +81,6 @@ public class ServerManager {
 		catch(Exception ex){
 			System.err.println("Error: Exception: " + ex.getMessage());
 			ex.printStackTrace();
-			System.exit(1);
 		}
 	}
 	

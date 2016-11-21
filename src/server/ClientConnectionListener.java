@@ -25,7 +25,7 @@ public interface ClientConnectionListener {
 	 * 
 	 * @return List of existing rooms in map
 	 */
-	public List<ChatRoom> roomRequest();
+	public String roomRequest();
 	
 	/**
 	 * Sets new host for existing chatroom

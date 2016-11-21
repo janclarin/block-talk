@@ -20,25 +20,26 @@ public class ClientConnection implements Runnable {
 	private Socket socket;
 	private boolean closeConnection;
 	private User user;
-	private List<Socket> listeners;
+	private ClientConnectionListener listener;
 	
 	/**
 	 * Initializes the server and sets the socket and listeners.
 	 * A new User object is created based on socket information.
 	 * 
 	 * @param socket
-	 * @param listener
+	 * @param listeners
 	 */
-	public ClientConnection(Socket socket, List<Socket> listener){
+	public ClientConnection(Socket socket, ClientConnectionListener listener){
 		try{
 			this.socket = socket;
-			this.listeners = listener;
+			this.listener = listener;
 		}
 		catch(Exception ex){
 			System.err.println("Error: Exception: " + ex.getMessage());
 			ex.printStackTrace();
 			System.exit(1);
 		}
+		
 	}
 	
 	/**
@@ -158,8 +159,8 @@ public class ClientConnection implements Runnable {
 	 * 
 	 */
 	public void notifyHostRequest(String roomName){
-		//boolean result = listeners.hostRequest(getUser(), roomName);
-		//sendMessage(String.valueOf(result));
+		boolean result = listener.hostRequest(getUser(), roomName);
+		sendMessage(String.valueOf(result));
 	}
 	
 	/**
@@ -167,8 +168,7 @@ public class ClientConnection implements Runnable {
 	 * 
 	 */
 	public void notifyRoomRequest(){
-		//List<ChatRoom> rooms = listeners.roomRequest();
-		//sendRoomList(rooms);
+		sendMessage(listener.roomRequest());
 	}
 	
 	/**

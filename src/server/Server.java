@@ -1,6 +1,8 @@
 package server;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -58,13 +60,13 @@ public class Server implements ClientConnectionListener
 	public Server(int port){
 		roomMap = new HashMap<String, ChatRoom>();
 		try {
-			ServerSocket server;
-			server = new ServerSocket(port);
-			Socket manager = server.accept();
-			PrintWriter outputStream = new PrintWriter (manager.getOutputStream());
-			String ack = "ACK";
-			outputStream.println(ack);
-			outputStream.flush();
+			while(true){
+				ServerSocket server;
+				server = new ServerSocket(port);
+				Socket manager = server.accept();
+				BufferedReader fromServer = new BufferedReader(new InputStreamReader(manager.getInputStream()));
+				String input = fromServer.readLine();
+			}
 		}
 		catch (IOException e) {
 			e.printStackTrace();
@@ -161,9 +163,13 @@ public class Server implements ClientConnectionListener
 	 * On room request return current list of active rooms.
 	 */
 	@Override
-	public List<ChatRoom> roomRequest() {
-		
-		return getAllRooms();
+	public String roomRequest() {
+		StringBuffer roomList = new StringBuffer();
+		for (ChatRoom room : getAllRooms()){
+			roomList.append(room.getName());
+			roomList.append("\t");
+		}
+		return roomList.toString();
 	}
 
 	/**

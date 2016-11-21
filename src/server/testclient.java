@@ -1,8 +1,11 @@
 package server;
 
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
@@ -14,23 +17,24 @@ import java.net.UnknownHostException;
  */
 public class testclient {
 	@SuppressWarnings("unused")
-	public static void main(String[] args){
+	public static void main(String[] args) throws InterruptedException{
 		try {
 			Socket sock = new Socket("localhost", 9999);
-			DataInputStream fromServer = new DataInputStream(sock.getInputStream());
-			DataOutputStream toServer = new DataOutputStream(sock.getOutputStream());
 			
-			toServer.writeUTF("HELLO swag");
-			toServer.flush();
-			String response = fromServer.readUTF();
+			BufferedReader fromServer = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+			PrintWriter toServer = new PrintWriter (sock.getOutputStream());
 			
-			toServer.writeUTF("HOST teatime");
+			toServer.println("HLO swag 9999");
 			toServer.flush();
-			response = fromServer.readUTF();
+			String response = fromServer.readLine();
 			
-			toServer.writeUTF("ROOM");
+			toServer.println("HST teatime");
 			toServer.flush();
-			response = fromServer.readUTF();
+			response = fromServer.readLine();
+			
+			toServer.println("ROM");
+			toServer.flush();
+			response = fromServer.readLine();
 			
 			System.out.println(response);
 			
