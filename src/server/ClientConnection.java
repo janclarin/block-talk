@@ -7,6 +7,7 @@ import java.util.List;
 
 import models.User;
 import models.Message;
+import helpers.MessageReadHelper;
 
 /**
  * This worker class handles a distinct connection and handles their messages to communicate
@@ -80,14 +81,8 @@ public class ClientConnection implements Runnable {
 			InputStream inputStream = socket.getInputStream();
 			Message message;
 			while (!closeConnection) {
-                while(inputStream.available()<Message.HEADER_SIZE){}
-                byte[] header = new byte[Message.HEADER_SIZE];
-                inputStream.read(header);
-                message = new Message(header, new byte[0]);
-                byte[] data = new byte[message.parseSize(header)];
-                while(inputStream.available()<data.length){}
-                inputStream.read(data);
-                message.setData(new String(data));
+                message = MessageReadHelper.readNextMessage(inputStream);
+      
                 parseMessage(message.getData());
             }
 			socket.close();

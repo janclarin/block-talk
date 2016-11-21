@@ -2,6 +2,8 @@ package chatroom;
 
 import models.User;
 
+import helpers.MessageReadHelper;
+
 import java.io.OutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,14 +61,7 @@ public class SocketHandler implements Runnable {
 
             Message message;
             while (continueRunning) {
-                while(incomingStream.available()<Message.HEADER_SIZE){}
-                byte[] header = new byte[Message.HEADER_SIZE];
-                incomingStream.read(header);
-                message = new Message(header, new byte[0]);
-                byte[] data = new byte[message.parseSize(header)];
-                while(incomingStream.available()<data.length){}
-                incomingStream.read(data);
-                message.setData(new String(data));
+                message = MessageReadHelper.readNextMessage(incomingStream);
                 String[] words = message.getData().split(" ");
                 if(words[0].equals("HLO") && !words[1].equals(user.getUsername())){
                     this.user = new User(words[1], socket.getInetAddress(),Integer.parseInt(words[2]));
