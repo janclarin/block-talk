@@ -1,12 +1,13 @@
 package server;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.util.List;
 
 import models.User;
+import models.Message;
+import helpers.MessageReadHelper;
 
 /**
  * This worker class handles a distinct connection and handles their messages to communicate
@@ -77,11 +78,13 @@ public class ClientConnection implements Runnable {
 	@Override
 	public void run() {
 		try{
-			BufferedReader inputStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			String message;
-			while(!closeConnection && ((message = inputStream.readLine()) != null)){
-				parseMessage(message);
-			}
+			InputStream inputStream = socket.getInputStream();
+			Message message;
+			while (!closeConnection) {
+                message = MessageReadHelper.readNextMessage(inputStream);
+      
+                parseMessage(message.getData());
+            }
 			socket.close();
 		}
 		catch(Exception ex){
@@ -125,17 +128,34 @@ public class ClientConnection implements Runnable {
 	 */
 	public void sendMessage(String message){
 		try{
-			if(!message.isEmpty()){
-				PrintWriter outputStream = new PrintWriter (socket.getOutputStream());
-				String outgoing = String.format("ACK %s", message);
-				outputStream.println(outgoing);
-				outputStream.flush();
-			}
+			OutputStream outputStream = socket.getOutputStream();
+			String outgoing = String.format("ACK %s", message);
+			Message msg = new Message(socket.getInetAddress(),socket.getPort(),outgoing);
+			outputStream.write(msg.toByteArray());
+			outputStream.flush();
 		}
 		catch(Exception ex){
 			System.err.println("Error: Exception: " + ex.getMessage());
 			ex.printStackTrace();
-			System.exit(1);
+		}
+	}
+
+	/**
+	 * Send room list
+	 * 
+	 * @param message
+	 */
+	public void sendRoomListMessage(String message){
+		try{
+			OutputStream outputStream = socket.getOutputStream();
+			String outgoing = String.format("LST %s", message);
+			Message msg = new Message(socket.getInetAddress(),socket.getPort(),outgoing);
+			outputStream.write(msg.toByteArray());
+			outputStream.flush();
+		}
+		catch(Exception ex){
+			System.err.println("Error: Exception: " + ex.getMessage());
+			ex.printStackTrace();
 		}
 	}
 	
@@ -150,9 +170,13 @@ public class ClientConnection implements Runnable {
 		StringBuffer roomList = new StringBuffer();
 		for (ChatRoom room : rooms){
 			roomList.append(room.getName());
-			roomList.append("\t");
+			roomList.append(" @ ");
+			roomList.append(room.getHost());
+			roomList.append(":");
+			roomList.append(room.getPort());
+			roomList.append("\n");
 		}
-		sendMessage(roomList.toString());
+		sendRoomListMessage(roomList.toString());
 	}
 	
 	/**

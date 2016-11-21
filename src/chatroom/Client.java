@@ -1,6 +1,7 @@
 package chatroom;
 
 import models.User;
+import models.Message;  
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -70,13 +71,19 @@ public class Client implements Runnable, SocketHandlerListener {
     }
 
     @Override
-    public void messageSent(SocketHandler recipientSocketHandler, User recipient, String message) {
+    public void messageSent(SocketHandler recipientSocketHandler, User recipient, Message message) {
         notifyMessageSent(recipient, message);
     }
 
     @Override
-    public void messageReceived(SocketHandler senderSocketHandler, User sender, String message) {
-        userSocketHandlerMap.putIfAbsent(sender, senderSocketHandler);
+    public void messageReceived(SocketHandler senderSocketHandler, User sender, Message message) {
+        if(true){
+            //REMOVE OLD SENDERSOCKETHANDLER ENTRY FROM HASHMAP
+            //TODO: this relies on username being ignored for equality
+            removeUserFromMap(senderSocketHandler);
+            userSocketHandlerMap.remove(sender);
+            userSocketHandlerMap.put(sender, senderSocketHandler);
+        }
         notifyMessageReceived(sender, message);
 
         // TODO: Remove auto-reply.
@@ -112,7 +119,7 @@ public class Client implements Runnable, SocketHandlerListener {
      *
      * @param message The message as a String.
      */
-    public void sendMessageToAll(String message) {
+    public void sendMessageToAll(Message message) {
         for (User recipient : userSocketHandlerMap.keySet()) {
             sendMessage(message, recipient);
         }
@@ -121,10 +128,10 @@ public class Client implements Runnable, SocketHandlerListener {
     /**
      * Sends a message to the given socket.
      *
-     * @param message   The message as a String.
+     * @param message   The message as a Message object.
      * @param recipient The User to send the message to.
      */
-    public void sendMessage(String message, User recipient) {
+    public void sendMessage(Message message, User recipient) {
         try {
             Thread.sleep(1000); // TODO: Remove delay.
             SocketHandler socketHandler = getSocketHandler(recipient);
@@ -162,7 +169,7 @@ public class Client implements Runnable, SocketHandlerListener {
      * @param recipient The User who received the sent message.
      * @param message   The sent message.
      */
-    private void notifyMessageSent(User recipient, String message) {
+    private void notifyMessageSent(User recipient, Message message) {
         listener.messageSent(recipient, message);
     }
 
@@ -172,7 +179,7 @@ public class Client implements Runnable, SocketHandlerListener {
      * @param sender  The User who sent the received message.
      * @param message The received message.
      */
-    private void notifyMessageReceived(User sender, String message) {
+    private void notifyMessageReceived(User sender, Message message) {
         listener.messageReceived(sender, message);
     }
 
@@ -192,5 +199,43 @@ public class Client implements Runnable, SocketHandlerListener {
      */
     public List<User> getKnownUsersList(){
         return new ArrayList<User>(userSocketHandlerMap.keySet());
+    }
+
+    /**
+     * Removes a user and their socket from known users map
+     *
+     * @return boolean True if the user was removed successfully
+     */
+    public boolean removeUserFromMap(User user){
+        SocketHandler socketHandler = userSocketHandlerMap.remove(user);
+        return socketHandler != null;
+    }
+
+    /**
+     * Removes a user and their socket from known users map
+     *
+     * @return boolean True if the user was removed successfully
+     */
+    public boolean removeUserFromMap(SocketHandler socketHandler){
+        //find the key matching this sh
+        for(Map.Entry<User,SocketHandler> entry : userSocketHandlerMap.entrySet()){
+            if(entry.getValue() == socketHandler)
+            {
+                userSocketHandlerMap.remove(entry.getKey());
+                break;
+            }
+        }
+        return socketHandler != null;
+    }
+
+    /**
+     * Closes connection with user
+     *
+     * @return boolean True if the connection closes
+     */
+    public boolean closeConnection(User user){
+        SocketHandler sh = userSocketHandlerMap.remove(user);
+        sh.shutdown();
+        return sh.isConnectionClosed();
     }
 }

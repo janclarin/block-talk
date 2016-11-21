@@ -1,6 +1,7 @@
 package chatroom;
 
 import models.User;
+import models.Message;
 
 /**
  * Interface to be implemented by classes that should be
@@ -17,7 +18,7 @@ public interface ClientListener {
      * @param recipient  The user who received the message.
      * @param message The sent message.
      */
-    void messageSent(User recipient, String message);
+    void messageSent(User recipient, Message message);
 
     /**
      * To be called when a message is received.
@@ -25,7 +26,7 @@ public interface ClientListener {
      * @param sender  The user who sent the message.
      * @param message The received message.
      */
-    void messageReceived(User sender, String message);
+    void messageReceived(User sender, Message message);
 
     /**
      * To be called when a new models.User has joined.

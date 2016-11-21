@@ -99,12 +99,7 @@ public class Server
 	 * @return List of all ChatRooms
 	 */
 	public List<ChatRoom> getAllRooms(){
-		Iterator<Entry<String, ChatRoom>> iterator = roomMap.entrySet().iterator();
-		List<ChatRoom> allRooms = new ArrayList<ChatRoom>();
-		while(iterator.hasNext()){
-			allRooms.add((ChatRoom)iterator.next().getValue());
-		}
-		return allRooms;
+		return new ArrayList<ChatRoom>(roomMap.values());
 	}
 	
 	/**
@@ -114,10 +109,13 @@ public class Server
 	 */
 	public String getAllRoomsString(){
 		StringBuffer roomList = new StringBuffer();
-		Iterator<Entry<String, ChatRoom>> iterator = roomMap.entrySet().iterator();
-		while(iterator.hasNext()){
-			roomList.append(iterator.next().getValue().getName());
-			roomList.append("\t");
+		for(ChatRoom chatRoom : roomMap.values()){
+			roomList.append(chatRoom.getName());
+			roomList.append(" @ ");
+			roomList.append(chatRoom.getHost());
+			roomList.append(":");
+			roomList.append(chatRoom.getPort());
+			roomList.append("\n");
 		}
 		return roomList.toString();
 	}
@@ -141,9 +139,9 @@ public class Server
 	 * @param roomName
 	 * @param ipAddress
 	 */
-	public void addRoomMap(String roomName, InetAddress ipAddress){
+	public void addRoomMap(String roomName, InetAddress ipAddress, int port){
 		
-		roomMap.put(roomName, new ChatRoom(roomName, ipAddress));
+		roomMap.put(roomName, new ChatRoom(roomName, ipAddress, port));
 	}
 	
 	public void parseMessage(String message){

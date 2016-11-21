@@ -4,9 +4,14 @@ import models.User;
 
 import java.util.List;
 import java.util.Scanner;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+
+import models.Message;
+import protocols.BlockTalkProtocol;
 
 /**
  * Main program for running a Block Talk Client.
@@ -17,13 +22,25 @@ import java.net.UnknownHostException;
  */
 public class BlockTalkClientProgram implements ClientListener {
     @Override
-    public void messageSent(User recipient, String message) {
-        System.out.printf("Successfully sent message: %s\n", message);
+    public void messageSent(User recipient, Message message) {
+        System.out.printf("Successfully sent message: %s\n", message.getData());
     }
 
     @Override
-    public void messageReceived(User sender, String message) {
-        System.out.printf("%s: \"%s\"\n", sender.getUsername(), message);
+    public void messageReceived(User sender, Message message) {
+        System.out.println("MSGINFO: "+message.getIp().toString()+" "+message.getPort()+" "+message.getSize());
+        if(message.getData().startsWith("MSG")){
+            System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData().substring(4));
+        }
+        else if(message.getData().startsWith("LST")){
+            System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData().substring(4));
+        }
+        else if(message.getData().startsWith("ACK")){
+            System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData().substring(4));
+        }
+        else if(message.getData().startsWith("HLO")){
+            System.out.printf("%s: \"%s\"\n", sender.getUsername(), message.getData().substring(4));
+        }
     }
 
     @Override
@@ -47,42 +64,52 @@ public class BlockTalkClientProgram implements ClientListener {
      * @throws UnknownHostException Invalid host.
      */
     public static void main(String[] args) throws UnknownHostException {
-        if (args.length != 2 && args.length != 4) {
+        if (args.length != 2) {
             throw new IllegalArgumentException();
         }
-
-        String clientUsername = args[0]+":"+args;
         int clientPort = Integer.parseInt(args[1]);
+        InetAddress clientAddr = InetAddress.getByName(args[0]);
         BlockTalkClientProgram program = new BlockTalkClientProgram();
+
+        Scanner scan = new Scanner(new BufferedReader(new InputStreamReader(System.in)));
+        System.out.print("Enter your username: ");
+        String clientUsername = scan.nextLine();
+        System.out.print("Enter server address: ");
+        InetAddress serverAddr = InetAddress.getByName(scan.nextLine());
+        System.out.print("Enter server port: ");
+        int serverPort = Integer.parseInt(scan.nextLine());
+
         Client client = new Client(clientUsername, clientPort, program);
         new Thread(client).start();
 
-        // Determine if we should broadcast a message to a specified user immediately.
-        if (args.length == 4) {
-            String otherHost = args[2];
-            int otherHostPort = Integer.parseInt(args[3]);
-            User otherUser = new User("OtherUser:" + otherHostPort, InetAddress.getByName(otherHost), otherHostPort);
-            String message = String.format("Sent from (%s) to (%s)", clientPort, otherUser);
-            client.sendMessage(message, otherUser);
-        }
-
+        //Handshake with the server
+        User server = new User("SERVER", serverAddr, serverPort);
+        client.sendMessage(new Message(clientAddr,clientPort,"HLO "+clientUsername+" "+clientPort),server);
+        System.out.print("Enter message for server: ");
+        client.sendMessage(new Message(clientAddr,clientPort,scan.nextLine()),server);
+        client.sendMessage(new Message(clientAddr,clientPort,"BYE"),server);
+        client.removeUserFromMap(server);
         
         String message = "";
-        Scanner scan = new Scanner(System.in);
         while(!message.equals("/q")){
             message = scan.nextLine();
             //TODO: Move this logic to another class
             if(message.startsWith("/connect ")){
                 User newUser = new User("NewUser", InetAddress.getByName(message.split(" ")[1]), Integer.parseInt(message.split(" ")[2]));
-                client.sendMessage("HLO", newUser);
+                client.sendMessage(new Message(clientAddr,clientPort,"HLO "+clientUsername+" "+clientPort), newUser);
             }
             else if(message.startsWith("/list")){
                 System.out.println("KNOWN USERS");
                 List<User> users = client.getKnownUsersList();
                 for(User u : users){System.out.println(u.toString());}
             }
+            else if(message.startsWith("/HLO")){
+                System.out.println("SEND HLO");
+                client.sendMessageToAll(new Message(clientAddr,clientPort,"HLO "+clientUsername+" "+clientPort));
+            }
+            else if(message.startsWith("/")){}
             else{
-                client.sendMessageToAll(message);
+                client.sendMessageToAll(new Message(clientAddr,clientPort,"MSG "+message));            
             }
         }
     }
