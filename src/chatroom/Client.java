@@ -315,7 +315,7 @@ public class Client implements Runnable, SocketHandlerListener {
      *
      * @return boolean True if the this client is hosting a room
      */
-    public boolean getIsHost(){
+    public boolean isHost(){
         return this.isHost;
     }
 
