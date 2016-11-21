@@ -22,7 +22,6 @@ import protocols.BlockTalkProtocol;
  */
 public class BlockTalkClientProgram implements ClientListener {
     
-    private static boolean isHost = false;
     private static User me;
 
     @Override
@@ -99,7 +98,6 @@ public class BlockTalkClientProgram implements ClientListener {
         {
             client.sendMessage(new Message(clientAddr,clientPort,"HST "+mode.substring(5)),server);
             client.setIsHost(true);
-            isHost = true;
             System.out.println("Hosting room \""+mode.substring(5)+"\"");
         }
         else
