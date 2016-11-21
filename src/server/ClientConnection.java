@@ -3,10 +3,9 @@ package server;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.List;
 
 import models.User;
-import models.Message;
+import models.messages.Message;
 import helpers.MessageReadHelper;
 
 /**

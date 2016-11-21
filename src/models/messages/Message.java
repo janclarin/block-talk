@@ -1,4 +1,4 @@
-package models;
+package models.messages;
 
 import java.nio.ByteBuffer;
 import java.net.InetAddress;

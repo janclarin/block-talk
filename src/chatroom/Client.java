@@ -1,7 +1,7 @@
 package chatroom;
 
 import models.User;
-import models.Message;  
+import models.messages.Message;
 
 import java.io.IOException;
 import java.net.ServerSocket;

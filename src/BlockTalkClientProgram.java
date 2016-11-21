@@ -10,8 +10,7 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import models.Message;
-import protocols.BlockTalkProtocol;
+import models.messages.Message;
 
 /**
  * Main program for running a Block Talk Client.

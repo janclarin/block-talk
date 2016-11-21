@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 
-import models.Message;
+import models.messages.Message;
 
 /**
  * Handles a connection to a chat room socket.

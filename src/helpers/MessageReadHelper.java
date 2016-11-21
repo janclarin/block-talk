@@ -1,5 +1,5 @@
 package helpers;
-import models.Message;
+import models.messages.Message;
 import java.io.InputStream;
 import java.io.IOException;
 
