@@ -18,7 +18,7 @@ public interface ClientConnectionListener {
 	 * 
 	 * @return true if host request succeeded
 	 */
-	public boolean hostRequest(User user, String roomName);
+	public String hostRequest(User user, String roomName);
 	
 	/**
 	 * Request for room list.
@@ -32,5 +32,5 @@ public interface ClientConnectionListener {
 	 * 
 	 * @return true if host successfully updated
 	 */
-	public boolean updateHost();
+	public String updateHost();
 }

@@ -26,25 +26,21 @@ public class testclient {
 			
 			toServer.println("HLO swag 9999");
 			toServer.flush();
-			String response = fromServer.readLine();
+			String response1 = fromServer.readLine();
 			
 			toServer.println("HST teatime");
 			toServer.flush();
-			response = fromServer.readLine();
+			String response = fromServer.readLine();
 			
 			toServer.println("ROM");
 			toServer.flush();
 			response = fromServer.readLine();
 			
 			System.out.println(response);
-			
 			sock.close();
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} 
+		catch(Exception ex){
+			ex.printStackTrace();
 		}
 		
 	}

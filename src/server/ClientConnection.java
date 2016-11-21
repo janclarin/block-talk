@@ -37,7 +37,7 @@ public class ClientConnection implements Runnable {
 		catch(Exception ex){
 			System.err.println("Error: Exception: " + ex.getMessage());
 			ex.printStackTrace();
-			System.exit(1);
+			closeConnection = true;
 		}
 		
 	}
@@ -52,7 +52,6 @@ public class ClientConnection implements Runnable {
 		catch(Exception ex){
 			System.err.println("Error: Exception: " + ex.getMessage());
 			ex.printStackTrace();
-			System.exit(1);
 		}
 	}
 	
@@ -88,7 +87,7 @@ public class ClientConnection implements Runnable {
 		catch(Exception ex){
 			System.err.println("Error: Exception: " + ex.getMessage());
 			ex.printStackTrace();
-			System.exit(1);
+			closeConnection = true;
 		}
 	}
 	
@@ -126,10 +125,12 @@ public class ClientConnection implements Runnable {
 	 */
 	public void sendMessage(String message){
 		try{
-			PrintWriter outputStream = new PrintWriter (socket.getOutputStream());
-			String outgoing = String.format("ACK %s\n", message);
-			outputStream.println(outgoing);
-			outputStream.flush();
+			if(!message.isEmpty()){
+				PrintWriter outputStream = new PrintWriter (socket.getOutputStream());
+				String outgoing = String.format("ACK %s", message);
+				outputStream.println(outgoing);
+				outputStream.flush();
+			}
 		}
 		catch(Exception ex){
 			System.err.println("Error: Exception: " + ex.getMessage());
@@ -159,8 +160,8 @@ public class ClientConnection implements Runnable {
 	 * 
 	 */
 	public void notifyHostRequest(String roomName){
-		boolean result = listener.hostRequest(getUser(), roomName);
-		sendMessage(String.valueOf(result));
+		String reply = listener.hostRequest(getUser(), roomName);
+		sendMessage(reply);
 	}
 	
 	/**

@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -29,9 +30,12 @@ import models.User;
  * @author Jan Clarin
  * @author Riley Lahd
  */
-public class Server implements ClientConnectionListener
+public class Server
 {
 	private static Server instance;
+	
+	private boolean stopServer;
+	private Socket managerSocket;
 	
 	/**
 	 * [RoomName, Chatroom] Hash Map of all existing chatrooms on the server
@@ -60,13 +64,16 @@ public class Server implements ClientConnectionListener
 	public Server(int port){
 		roomMap = new HashMap<String, ChatRoom>();
 		try {
-			while(true){
-				ServerSocket server;
-				server = new ServerSocket(port);
-				Socket manager = server.accept();
-				BufferedReader fromServer = new BufferedReader(new InputStreamReader(manager.getInputStream()));
-				String input = fromServer.readLine();
+			ServerSocket server;
+			server = new ServerSocket(port);
+			managerSocket = server.accept();
+		
+			BufferedReader inputStream = new BufferedReader(new InputStreamReader(managerSocket.getInputStream()));
+			String message;
+			while(!stopServer && ((message = inputStream.readLine()) != null)){
+				parseMessage(message);
 			}
+			managerSocket.close();
 		}
 		catch (IOException e) {
 			e.printStackTrace();
@@ -101,6 +108,21 @@ public class Server implements ClientConnectionListener
 	}
 	
 	/**
+	 * Returns all ChatRoom names as a string.
+	 * 
+	 * @return List of room names
+	 */
+	public String getAllRoomsString(){
+		StringBuffer roomList = new StringBuffer();
+		Iterator<Entry<String, ChatRoom>> iterator = roomMap.entrySet().iterator();
+		while(iterator.hasNext()){
+			roomList.append(iterator.next().getValue().getName());
+			roomList.append("\t");
+		}
+		return roomList.toString();
+	}
+	
+	/**
 	 * Returns the room hosts ip Address. Throws ChatRoomNotFoundException if token does not exist in current map.
 	 * 
 	 * @param roomName
@@ -124,61 +146,36 @@ public class Server implements ClientConnectionListener
 		roomMap.put(roomName, new ChatRoom(roomName, ipAddress));
 	}
 	
-	/**
-	 * Sends host information to requesting client
-	 * 
-	 */
-	public void sendHost(InetAddress hostIp, InetAddress clientIp){
-		
-	}
-
-	/**
-	 * Authenticates token string. If roomName exists, return existing host, else create new room map and return client address.
-	 * 
-	 * 
-	 * @param roomName
-	 */
-	public void authenticate(InetAddress clientIp, String roomName){
-		InetAddress hostIp;
-		try{
-			hostIp = getRoomHost(roomName);
+	public void parseMessage(String message){
+		try{	
+			if(message.startsWith("HST")){
+				String[] incoming = message.substring(4).split(" ");
+				InetAddress hostIp = InetAddress.getByName(incoming[0]);
+				addRoomMap(incoming[1], hostIp);
+				reply("Host Updated");
+			}
+			else if(message.startsWith("ROM")){
+				reply(getAllRoomsString());
+			}
+			else if(message.startsWith("NHS")){
+				String userInfo = message.substring(4);
+				//TODO: set new room host 
+			}
 		}
 		catch(Exception ex){
-			addRoomMap(roomName, clientIp);
-			hostIp = clientIp;
+			ex.printStackTrace();
 		}
-		sendHost(hostIp, clientIp);
 	}
-
-	/**
-	 * On host request, create a new room and return true if success.
-	 */
-	@Override
-	public boolean hostRequest(User user, String roomName) {
-		addRoomMap(roomName, user.getIpAddress());
-		return true;
-	}
-
-	/**
-	 * On room request return current list of active rooms.
-	 */
-	@Override
-	public String roomRequest() {
-		StringBuffer roomList = new StringBuffer();
-		for (ChatRoom room : getAllRooms()){
-			roomList.append(room.getName());
-			roomList.append("\t");
+		
+	public void reply(String message){
+		try{
+			PrintWriter outStream = new PrintWriter(managerSocket.getOutputStream());
+			outStream.println(message);
+			outStream.flush();
 		}
-		return roomList.toString();
-	}
-
-	/**
-	 * On update host, set associated room to new host. 
-	 */
-	@Override
-	public boolean updateHost() {
-		// TODO Auto-generated method stub
-		return false;
+		catch(Exception ex){
+			ex.printStackTrace();
+		}
 	}
 
 }
