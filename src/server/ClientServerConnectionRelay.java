@@ -1,11 +1,15 @@
 package server;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
 
+import helpers.MessageReadHelper;
+import models.Message;
 import models.User;
 
 public class ClientServerConnectionRelay implements ClientConnectionListener {
@@ -16,17 +20,18 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
 		this.serverSockets = serverSockets;
 	}
 
-	public String sendMessage(Socket socket, String outgoing){
+	public String sendMessage(Socket socket, Message outgoing){
 		String response = "";
 		synchronized(socket){
 			try{
-				BufferedReader serverInputStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-				PrintWriter serverOutputStream = new PrintWriter(socket.getOutputStream());
+				InputStream serverInputStream = socket.getInputStream();
+				OutputStream serverOutputStream = socket.getOutputStream();
 				
-				serverOutputStream.println(outgoing);
+				serverOutputStream.write(outgoing.toByteArray());
 				serverOutputStream.flush();
 				
-				response = serverInputStream.readLine();
+				Message incoming = MessageReadHelper.readNextMessage(socket.getInputStream());
+				response = incoming.getData();
 			}
 			catch(Exception ex){
 				ex.printStackTrace();
@@ -39,20 +44,21 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
 	public String hostRequest(User user, String roomName) {
 		String result = "";
 		for(Socket socket : serverSockets){
-			String outgoing = String.format("HST %s %s %s", roomName, user.getIpAddress().getHostAddress(), user.getPort());
+			Message outgoing = new Message(user.getIpAddress(), user.getPort(), String.format("HST %s", user.getUsername()));
 			result = sendMessage(socket, outgoing);
 		}
 		return result;
 	}
 
 	@Override
-	public String roomRequest() {
+	public String roomRequest(User user) {
 		String result = " ";
 		for(Socket socket : serverSockets){
-			String outgoing = String.format("ROM");
+			Message outgoing = new Message(user.getIpAddress(), user.getPort(), "ROM");
 			result = sendMessage(socket, outgoing);
 		}
-		return result;
+		//TODO: change to list of chatroom
+		return null;
 	}
 
 	@Override

@@ -2,6 +2,7 @@ package server;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetAddress;
@@ -16,6 +17,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import exceptions.ChatRoomNotFoundException;
+import helpers.MessageReadHelper;
+import models.Message;
 import models.User;
 
 
@@ -68,10 +71,10 @@ public class Server
 			server = new ServerSocket(port);
 			managerSocket = server.accept();
 		
-			BufferedReader inputStream = new BufferedReader(new InputStreamReader(managerSocket.getInputStream()));
+			InputStream inputStream = managerSocket.getInputStream();
 			String message;
-			while(!stopServer && ((message = inputStream.readLine()) != null)){
-				parseMessage(message);
+			while(!stopServer){
+				parseMessage(MessageReadHelper.readNextMessage(inputStream));
 			}
 			managerSocket.close();
 		}
@@ -144,20 +147,16 @@ public class Server
 		roomMap.put(roomName, new ChatRoom(roomName, ipAddress, port));
 	}
 	
-	public void parseMessage(String message){
+	public void parseMessage(Message message){
 		try{	
-			if(message.startsWith("HST")){
-				String[] incoming = message.substring(4).split(" ");
-				InetAddress hostIp = InetAddress.getByName(incoming[1]);
-				int port = Integer.parseInt(incoming[2]);
-				addRoomMap(incoming[1], hostIp, port);
+			if(message.getData().startsWith("HST")){
+				addRoomMap(message.getData().substring(4), message.getIp(), message.getPort());
 				reply("Host Updated");
 			}
-			else if(message.startsWith("ROM")){
+			else if(message.getData().startsWith("ROM")){
 				reply(getAllRoomsString());
 			}
-			else if(message.startsWith("NHS")){
-				String userInfo = message.substring(4);
+			else if(message.getData().startsWith("NHS")){
 				//TODO: set new room host 
 			}
 		}

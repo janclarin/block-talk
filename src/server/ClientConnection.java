@@ -193,7 +193,7 @@ public class ClientConnection implements Runnable {
 	 * 
 	 */
 	public void notifyRoomRequest(){
-		sendMessage(listener.roomRequest());
+		sendRoomListMessage(listener.roomRequest(getUser()));
 	}
 	
 	/**
