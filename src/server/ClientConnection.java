@@ -11,7 +11,7 @@ import helpers.MessageReadHelper;
 
 /**
  * This worker class handles a distinct connection and handles their messages to communicate
- * with main server. 
+ * with the servers. 
  *
  * @author Clinton Cabiles
  * @author Jan Clarin
@@ -24,7 +24,7 @@ public class ClientConnection implements Runnable {
 	private ClientConnectionListener listener;
 	
 	/**
-	 * Initializes the server and sets the socket and listener.
+	 * Initializes the server and sets the socket and listeners.
 	 * A new User object is created based on socket information.
 	 * 
 	 * @param socket
@@ -38,8 +38,9 @@ public class ClientConnection implements Runnable {
 		catch(Exception ex){
 			System.err.println("Error: Exception: " + ex.getMessage());
 			ex.printStackTrace();
-			System.exit(1);
+			closeConnection = true;
 		}
+		
 	}
 	
 	/**
@@ -52,7 +53,6 @@ public class ClientConnection implements Runnable {
 		catch(Exception ex){
 			System.err.println("Error: Exception: " + ex.getMessage());
 			ex.printStackTrace();
-			System.exit(1);
 		}
 	}
 	
@@ -90,7 +90,7 @@ public class ClientConnection implements Runnable {
 		catch(Exception ex){
 			System.err.println("Error: Exception: " + ex.getMessage());
 			ex.printStackTrace();
-			System.exit(1);
+			closeConnection = true;
 		}
 	}
 	
@@ -138,7 +138,6 @@ public class ClientConnection implements Runnable {
 		catch(Exception ex){
 			System.err.println("Error: Exception: " + ex.getMessage());
 			ex.printStackTrace();
-			System.exit(1);
 		}
 	}
 
@@ -158,28 +157,7 @@ public class ClientConnection implements Runnable {
 		catch(Exception ex){
 			System.err.println("Error: Exception: " + ex.getMessage());
 			ex.printStackTrace();
-			System.exit(1);
 		}
-	}
-	
-	/**
-	 * Send roomlist to client
-	 * 
-	 * TODO: send room message using proper protocol
-	 * 
-	 * @param rooms
-	 */
-	public void sendRoomList(List<ChatRoom> rooms){
-		StringBuffer roomList = new StringBuffer();
-		for (ChatRoom room : rooms){
-			roomList.append(room.getName());
-			roomList.append(" @ ");
-			roomList.append(room.getHost());
-			roomList.append(":");
-			roomList.append(room.getPort());
-			roomList.append("\n");
-		}
-		sendRoomListMessage(roomList.toString());
 	}
 	
 	/**
@@ -187,8 +165,8 @@ public class ClientConnection implements Runnable {
 	 * 
 	 */
 	public void notifyHostRequest(String roomName){
-		boolean result = listener.hostRequest(getUser(), roomName);
-		sendMessage("HST "+String.valueOf(result));
+		String result = listener.hostRequest(getUser(), roomName);
+		sendMessage("HST "+ result);
 	}
 	
 	/**
@@ -196,8 +174,7 @@ public class ClientConnection implements Runnable {
 	 * 
 	 */
 	public void notifyRoomRequest(){
-		List<ChatRoom> rooms = listener.roomRequest();
-		sendRoomList(rooms);
+		sendRoomListMessage(listener.roomRequest(getUser()));
 	}
 	
 	/**

@@ -5,7 +5,7 @@ import java.util.List;
 import models.User;
 
 /**
- * This interface is used to request network functions from the main server
+ * This interface is used to listen to incoming requests from a connected client
  *
  * @author Clinton Cabiles
  * @author Jan Clarin
@@ -18,19 +18,19 @@ public interface ClientConnectionListener {
 	 * 
 	 * @return true if host request succeeded
 	 */
-	public boolean hostRequest(User user, String roomName);
+	public String hostRequest(User user, String roomName);
 	
 	/**
 	 * Request for room list.
 	 * 
 	 * @return List of existing rooms in map
 	 */
-	public List<ChatRoom> roomRequest();
+	public String roomRequest(User user);
 	
 	/**
 	 * Sets new host for existing chatroom
 	 * 
 	 * @return true if host successfully updated
 	 */
-	public boolean updateHost();
+	public String updateHost();
 }

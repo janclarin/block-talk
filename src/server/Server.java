@@ -1,6 +1,15 @@
 package server;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -9,31 +18,72 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import exceptions.ChatRoomNotFoundException;
+import helpers.MessageReadHelper;
+import models.Message;
 import models.User;
 
 
 /**
  * This class represents a head server of the system for exchanging
  * keys and IPs.
+ * 
+ * <p>
+ * e.g. java Server port
  *
  * @author Clinton Cabiles
  * @author Jan Clarin
  * @author Riley Lahd
  */
-public class Server implements ClientConnectionListener
+public class Server
 {
+	private static Server instance;
+	
+	private boolean stopServer;
+	private Socket managerSocket;
+	private int port;
+	private InetAddress ip;
+	
 	/**
 	 * [RoomName, Chatroom] Hash Map of all existing chatrooms on the server
-	 * TODO:
-	 * 	update token to desired variable
+	 * 
+	 * 
 	 */
 	private HashMap<String, ChatRoom> roomMap;
 	
 	/**
+	 * Main function. Requires ip and port to start server
+	 * 
+	 * @param port
+	 */
+	public static void main(String[] args){
+		try{
+			instance = new Server(InetAddress.getByName(args[0]), Integer.parseInt(args[1]));
+		}
+		catch(Exception ex){
+			ex.printStackTrace();
+		}
+	}
+	
+	/**
 	 * Initializes the server and room map
 	 */
-	public Server(){
+	public Server(InetAddress ip, int port){
 		roomMap = new HashMap<String, ChatRoom>();
+		this.ip = ip;
+		this.port = port;
+		try {
+			ServerSocket server = new ServerSocket(port);
+			managerSocket = server.accept();
+			InputStream inputStream = managerSocket.getInputStream();
+			while(!stopServer){
+				parseMessage(MessageReadHelper.readNextMessage(inputStream));
+			}
+			managerSocket.close();
+			server.close();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -56,6 +106,24 @@ public class Server implements ClientConnectionListener
 	 */
 	public List<ChatRoom> getAllRooms(){
 		return new ArrayList<ChatRoom>(roomMap.values());
+	}
+	
+	/**
+	 * Returns all ChatRoom names as a string.
+	 * 
+	 * @return List of room names
+	 */
+	public String getAllRoomsString(){
+		StringBuffer roomList = new StringBuffer();
+		for(ChatRoom chatRoom : roomMap.values()){
+			roomList.append(chatRoom.getName());
+			roomList.append(" @ ");
+			roomList.append(chatRoom.getHost());
+			roomList.append(":");
+			roomList.append(chatRoom.getPort());
+			roomList.append("\n");
+		}
+		return roomList.toString();
 	}
 	
 	/**
@@ -83,55 +151,44 @@ public class Server implements ClientConnectionListener
 	}
 	
 	/**
-	 * Sends host information to requesting client
+	 * Read incoming message and handle it
 	 * 
+	 * @param message
 	 */
-	public void sendHost(InetAddress hostIp, InetAddress clientIp){
-		
-	}
-
-	/**
-	 * Authenticates token string. If roomName exists, return existing host, else create new room map and return client address.
-	 * 
-	 * 
-	 * @param roomName
-	 */
-	public void authenticate(InetAddress clientIp, int port,String roomName){
-		InetAddress hostIp;
-		try{
-			hostIp = getRoomHost(roomName);
+	public void parseMessage(Message message){
+		try{	
+			if(message.getData().startsWith("HST")){
+				addRoomMap(message.getData().substring(4), message.getIp(), message.getPort());
+				sendMessage("Host Updated");
+			}
+			else if(message.getData().startsWith("ROM")){
+				sendMessage(getAllRoomsString());
+			}
+			else if(message.getData().startsWith("NHS")){
+				//TODO: set new room host 
+			}
 		}
 		catch(Exception ex){
-			addRoomMap(roomName, clientIp, port);
-			hostIp = clientIp;
+			ex.printStackTrace();
 		}
-		sendHost(hostIp, clientIp);
+	}
+	
+	/**
+	 * Send reply message
+	 * 
+	 * @param message
+	 */
+	public void sendMessage(String message){
+		try{
+			OutputStream outStream = managerSocket.getOutputStream();
+			String outgoing = String.format("ACK %s", message);
+			Message msg = new Message(ip, port, outgoing);
+			outStream.write(msg.toByteArray());
+			outStream.flush();
+		}
+		catch(Exception ex){
+			ex.printStackTrace();
+		}
 	}
 
-	/**
-	 * On host request, create a new room and return true if success.
-	 */
-	@Override
-	public boolean hostRequest(User user, String roomName) {
-		addRoomMap(roomName, user.getIpAddress(), user.getPort());
-		return true;
-	}
-
-	/**
-	 * On room request return current list of active rooms.
-	 */
-	@Override
-	public List<ChatRoom> roomRequest() {
-		
-		return getAllRooms();
-	}
-
-	/**
-	 * On update host, set associated room to new host. 
-	 */
-	@Override
-	public boolean updateHost() {
-		// TODO Auto-generated method stub
-		return false;
-	}
 }
