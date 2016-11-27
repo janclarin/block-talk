@@ -6,8 +6,10 @@ import java.net.Socket;
 import java.util.List;
 
 import helpers.MessageReadHelper;
+import models.messages.HostRoomMessage;
 import models.messages.Message;
 import models.User;
+import models.messages.RoomListMessage;
 
 public class ClientServerConnectionRelay implements ClientConnectionListener {
 	
@@ -41,7 +43,7 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
 	public String hostRequest(User user, String roomName) {
 		String result = "";
 		for(Socket socket : serverSockets){
-			Message outgoing = new Message(user.getIpAddress(), user.getPort(), String.format("HST %s", user.getUsername()));
+			Message outgoing = new HostRoomMessage(user, String.format("HST %s", user.getUsername()));
 			result = sendMessage(socket, outgoing);
 		}
 		return result;
@@ -51,7 +53,7 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
 	public String roomRequest(User user) {
 		String result ="";
 		for(Socket socket : serverSockets){
-			Message outgoing = new Message(user.getIpAddress(), user.getPort(), "ROM");
+			Message outgoing = new RoomListMessage(user);
 			result = sendMessage(socket, outgoing);
 		}
 		//TODO: change to list of chatroom

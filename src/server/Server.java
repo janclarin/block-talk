@@ -1,5 +1,15 @@
 package server;
 
+import exceptions.ChatRoomNotFoundException;
+import helpers.MessageReadHelper;
+import jdk.nashorn.internal.ir.RuntimeNode;
+import models.ChatRoom;
+import models.User;
+import models.messages.HostRoomMessage;
+import models.messages.ListRoomsMessage;
+import models.messages.Message;
+import models.messages.RequestRoomsMessage;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -8,19 +18,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-
-import exceptions.ChatRoomNotFoundException;
-import helpers.MessageReadHelper;
-import models.messages.Message;
-
 
 /**
  * This class represents a head server of the system for exchanging
  * keys and IPs.
  * 
  * <p>
- * e.g. java Server port
+ * e.g. java Server sourcePort
  *
  * @author Clinton Cabiles
  * @author Jan Clarin
@@ -37,13 +41,11 @@ public class Server
 	
 	/**
 	 * [RoomName, Chatroom] Hash Map of all existing chatrooms on the server
-	 * 
-	 * 
 	 */
 	private HashMap<String, ChatRoom> roomMap;
 	
 	/**
-	 * Main function. Requires ip and port to start server
+	 * Main function. Requires ip and sourcePort to start server
 	 * 
 	 * @param port
 	 */
@@ -90,34 +92,7 @@ public class Server
 		}
 		return roomMap.get(roomName);
 	}
-	
-	/**
-	 * Returns List of all ChatRoom objects in existing room map. 
-	 * 
-	 * @return List of all ChatRooms
-	 */
-	public List<ChatRoom> getAllRooms(){
-		return new ArrayList<ChatRoom>(roomMap.values());
-	}
-	
-	/**
-	 * Returns all ChatRoom names as a string.
-	 * 
-	 * @return List of room names
-	 */
-	public String getAllRoomsString(){
-		StringBuffer roomList = new StringBuffer();
-		for(ChatRoom chatRoom : roomMap.values()){
-			roomList.append(chatRoom.getName());
-			roomList.append(" @ ");
-			roomList.append(chatRoom.getHost());
-			roomList.append(":");
-			roomList.append(chatRoom.getPort());
-			roomList.append("\n");
-		}
-		return roomList.toString();
-	}
-	
+
 	/**
 	 * Returns the room hosts ip Address. Throws ChatRoomNotFoundException if token does not exist in current map.
 	 * 
@@ -147,21 +122,14 @@ public class Server
 	 * 
 	 * @param message
 	 */
-	public void parseMessage(Message message){
-		try{	
-			if(message.getData().startsWith("HST")){
-				addRoomMap(message.getData().substring(4), message.getIp(), message.getPort());
-				sendMessage("Host Updated");
-			}
-			else if(message.getData().startsWith("ROM")){
-				sendMessage(getAllRoomsString());
-			}
-			else if(message.getData().startsWith("NHS")){
-				//TODO: set new room host 
-			}
-		}
-		catch(Exception ex){
-			ex.printStackTrace();
+	public void parseMessage(Message message) {
+		if (message instanceof HostRoomMessage) {
+			HostRoomMessage hostRoomMessage = (HostRoomMessage) message;
+			User host = hostRoomMessage.getSender();
+			addRoomMap(hostRoomMessage.getRoomName(), host.getIpAddress(), host.getPort());
+			sendMessage("Host Updated");
+		} else if (message instanceof RequestRoomsMessage) {
+			sendMessage(new ListRoomsMessage(roomMap.values()));
 		}
 	}
 	
@@ -182,5 +150,4 @@ public class Server
 			ex.printStackTrace();
 		}
 	}
-
 }

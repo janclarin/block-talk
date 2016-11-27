@@ -5,8 +5,11 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 import models.User;
+import models.messages.HelloMessage;
+import models.messages.HostRoomMessage;
 import models.messages.Message;
 import helpers.MessageReadHelper;
+import models.messages.YourInfoMessage;
 
 /**
  * This worker class handles a distinct connection and handles their messages to communicate
@@ -19,9 +22,9 @@ import helpers.MessageReadHelper;
 public class ClientConnection implements Runnable {
 	private Socket socket;
 	private boolean closeConnection;
-	private User user;
+	private User clientUser;
 	private ClientConnectionListener listener;
-	
+
 	/**
 	 * Initializes the server and sets the socket and listeners.
 	 * A new User object is created based on socket information.
@@ -29,7 +32,7 @@ public class ClientConnection implements Runnable {
 	 * @param socket
 	 * @param listener
 	 */
-	public ClientConnection(Socket socket, ClientConnectionListener listener){
+	public ClientConnection(Socket socket, ClientConnectionListener listener) {
 		try{
 			this.socket = socket;
 			this.listener = listener;
@@ -39,28 +42,6 @@ public class ClientConnection implements Runnable {
 			ex.printStackTrace();
 			closeConnection = true;
 		}
-		
-	}
-	
-	/**
-	 * Set distinct user associated with connection.
-	 */
-	public void setUser(String username, String port){
-		try{
-			user = new User(username, socket.getInetAddress(), Integer.parseInt(port));
-		}
-		catch(Exception ex){
-			System.err.println("Error: Exception: " + ex.getMessage());
-			ex.printStackTrace();
-		}
-	}
-	
-	/**
-	 * Return distint user associated with connection
-	 * @return
-	 */
-	public User getUser(){
-		return user;
 	}
 	
 	/**
@@ -81,57 +62,43 @@ public class ClientConnection implements Runnable {
 			Message message;
 			while (!closeConnection) {
                 message = MessageReadHelper.readNextMessage(inputStream);
-      
-                parseMessage(message.getData());
+                handleMessage(message);
             }
 			socket.close();
 		}
 		catch(Exception ex){
 			System.err.println("Error: Exception: " + ex.getMessage());
 			ex.printStackTrace();
-			closeConnection = true;
 		}
 	}
-	
-	/**
-	 * Parse incoming message and send distinct notify event
-	 * 
-	 * @param message
-	 */
-	public void parseMessage(String message){
-		if(message.startsWith("HLO")){
-			String[] messages = message.substring(4).split(" ");
-			setUser(messages[0], messages[1]);
+
+	public void handleMessage(Message message) {
+		if (message instanceof HelloMessage) {
+			HelloMessage helloMessage = (HelloMessage) message;
+			this.clientUser = helloMessage.getSender();
+
+			sendMessage(new YourInfoMessage(message.getSender());
 			sendMessage("YOU "+messages[0] +" "+ socket.getInetAddress() +" "+ messages[1]);
 		}
-		else if(message.startsWith("HST")){
+		else if (message.startsWith("HST")) {
 			String roomName = message.substring(4);
 			notifyHostRequest(roomName);
-		}
-		else if(message.startsWith("ROM")){
+		} else if (message.startsWith("ROM")) {
 			notifyRoomRequest();
-		}
-		else if(message.startsWith("NHS")){
-			String userInfo = message.substring(4);
-			//notify new host
-		}
-		else if(message.startsWith("BYE")){
+		} else if (message.startsWith("BYE")) {
 			closeConnection();
 		}
 	}
-	
+
 	/**
 	 * Send generic ACK message
 	 * 
 	 * @param message
 	 */
-	public void sendMessage(String message){
+	public void sendMessage(Message message) {
 		try{
 			OutputStream outputStream = socket.getOutputStream();
-			//String outgoing = String.format("ACK %s", message);
-			String outgoing = message;
-			Message msg = new Message(socket.getInetAddress(),socket.getPort(),outgoing);
-			outputStream.write(msg.toByteArray());
+			outputStream.write(message.toByteArray());
 			outputStream.flush();
 		}
 		catch(Exception ex){
@@ -164,8 +131,7 @@ public class ClientConnection implements Runnable {
 	 * 
 	 */
 	public void notifyHostRequest(String roomName){
-		String result = listener.hostRequest(getUser(), roomName);
-		sendMessage("HST "+ result);
+		sendMessage(new HostRoomMessage(clientUser, roomName));
 	}
 	
 	/**
@@ -173,7 +139,7 @@ public class ClientConnection implements Runnable {
 	 * 
 	 */
 	public void notifyRoomRequest(){
-		sendRoomListMessage(listener.roomRequest(getUser()));
+		sendRoomListMessage(listener.roomRequest(clientUser));
 	}
 	
 	/**

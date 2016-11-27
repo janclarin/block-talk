@@ -12,7 +12,7 @@ import models.messages.Message;
  * @author Riley Lahd
  */
 public interface SocketHandlerListener {
-    void messageSent(SocketHandler recipientSocketHandler, User recipient, Message message);
+    void messageSent(SocketHandler recipientSocketHandler, Message message);
 
-    void messageReceived(SocketHandler senderSocketHandler, User sender, Message message);
+    void messageReceived(SocketHandler senderSocketHandler, Message message);
 }

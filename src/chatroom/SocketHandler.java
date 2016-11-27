@@ -7,8 +7,10 @@ import helpers.MessageReadHelper;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 
+import models.messages.HelloMessage;
 import models.messages.Message;
 
 /**
@@ -37,11 +39,6 @@ public class SocketHandler implements Runnable {
     private boolean continueRunning = true;
 
     /**
-     * User on the end of this socket.
-     */
-    private User user;
-
-    /**
      * Constructs a SocketHandler with a given Socket.
      *
      * @param socket The socket to manage.
@@ -49,36 +46,17 @@ public class SocketHandler implements Runnable {
     public SocketHandler(final Socket socket, final SocketHandlerListener listener) {
         this.socket = socket;
         this.listener = listener;
-        user = new User("Port" + socket.getPort(), socket.getInetAddress(), socket.getPort());
-
-    }
-
-    /**
-     * Constructs a SocketHandler with a given Socket.
-     *
-     * @param socket The socket to manage.
-     */
-    public SocketHandler(final Socket socket, final SocketHandlerListener listener, User user) {
-        this.socket = socket;
-        this.listener = listener;
-        this.user = user;
 
     }
 
     @Override
     public void run() {
-        InputStream incomingStream = null;
         try {
-            incomingStream = socket.getInputStream();
+            InputStream incomingStream = socket.getInputStream();
 
-            Message message;
             while (continueRunning) {
-                message = MessageReadHelper.readNextMessage(incomingStream);
-                String[] words = message.getData().split(" ");
-                if(words[0].equals("HLO") && !words[1].equals(user.getUsername())){
-                    this.user = new User(words[1], socket.getInetAddress(),Integer.parseInt(words[2]));
-                }
-                notifyMessageReceived(user, message);
+                Message message = MessageReadHelper.readNextMessage(incomingStream);
+                notifyMessageReceived(message);
             }
 
             socket.close();
@@ -111,6 +89,14 @@ public class SocketHandler implements Runnable {
         }
     }
 
+    public InetSocketAddress getRemoteSocketAddress() {
+        return (InetSocketAddress) socket.getRemoteSocketAddress();
+    }
+
+    public InetSocketAddress getLocalSocketAddress() {
+        return (InetSocketAddress) socket.getLocalSocketAddress();
+    }
+
     /**
      * Indicates whether or not the socket has been closed or is disconnected.
      *
@@ -123,44 +109,27 @@ public class SocketHandler implements Runnable {
     /**
      * Notify listener that a message was sent.
      *
-     * @param recipient The recipient of the sent message.
      * @param message The message that was sent.
      */
-    private void notifyMessageSent(User recipient, Message message) {
-        listener.messageSent(this, recipient, message);
+    private void notifyMessageSent(Message message) {
+        listener.messageSent(this, message);
     }
 
     /**
      * Notify listener that a message was received.
      *
-     * @param sender The sender of the received message.
      * @param message The message that was received.
      */
-    private void notifyMessageReceived(User sender, Message message) {
-        listener.messageReceived(this, sender, message);
-    }
-
-    /**
-     * Set the user on the end of this socket.
-     *
-     * @param user The remote user.
-     */
-    private void setUser(User user) {
-        this.user = user;
-    }
-
-    /**
-     * Get the user on the end of this socket.
-     *
-     * @return User the user object of the peer
-     */
-    private User getUser() {
-        return this.user;
+    private void notifyMessageReceived(Message message) {
+        listener.messageReceived(this, message);
     }
 
     public void shutdown(){
         continueRunning = false;
     }
 
-
+    @Override
+    public int hashCode() {
+        return getRemoteSocketAddress().hashCode();
+    }
 }

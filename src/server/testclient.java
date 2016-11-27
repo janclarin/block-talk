@@ -24,7 +24,8 @@ public class testclient {
 			OutputStream toServer = sock.getOutputStream();
 			
 			Message msg;
-			
+
+			/*
 			toServer.write((new Message(InetAddress.getLocalHost(), 9999, "HLO client1 9999").toByteArray()));
 			toServer.flush();
 			String response1 = MessageReadHelper.readNextMessage(fromServer).getData();
@@ -36,8 +37,9 @@ public class testclient {
 			toServer.write((new Message(InetAddress.getLocalHost(), 9999, "ROM").toByteArray()));
 			toServer.flush();
 			String response = MessageReadHelper.readNextMessage(fromServer).getData();
-			
+
 			System.out.println(response);
+			*/
 			sock.close();
 		} 
 		catch(Exception ex){

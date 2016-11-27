@@ -1,4 +1,4 @@
-package server;
+package models;
 import java.net.InetAddress;
 
 /**
@@ -26,7 +26,7 @@ public class ChatRoom {
 	}
 	
 	/**
-	 * Sets host to given ip Address + port
+	 * Sets host to given ip Address + sourcePort
 	 * 
 	 * @param ipAddress
 	 */
@@ -54,7 +54,7 @@ public class ChatRoom {
 	}
 
 	/** 
-	 * Gets the current host port
+	 * Gets the current host sourcePort
 	 * 
 	 * @return
 	 */
