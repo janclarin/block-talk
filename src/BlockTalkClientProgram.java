@@ -76,7 +76,7 @@ public class BlockTalkClientProgram implements ClientListener {
                 System.out.println("SEND HLO");
                 client.sendMessageToAll(new HelloMessage(clientUser));
             } else {
-                client.sendMessageToAll(new ChatMessage(clientUser.getSocketAddress(), message));
+                client.sendMessageToAll(new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), message));
             }
         }
     }
