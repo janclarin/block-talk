@@ -35,6 +35,15 @@ public class ChatRoom {
 	}
 
 	/**
+	 * Gets the host's socket address.
+	 *
+	 * @return SocketAddress of the chat room host.
+	 */
+	public InetSocketAddress getHostSocketAddress() {
+		return hostSocketAddress;
+	}
+
+	/**
 	 * Gets the chat room's name.
 	 *
 	 * @return Chat room name.
