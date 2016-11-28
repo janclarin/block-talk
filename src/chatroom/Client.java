@@ -202,6 +202,7 @@ public class Client implements Runnable, SocketHandlerListener {
      */
     @Override
     public void messageReceived(SocketHandler senderSocketHandler, Message message) {
+        boolean notify = true;
         if (message instanceof HelloMessage) {
             handleHelloMessage(senderSocketHandler, (HelloMessage) message);
         }
@@ -214,10 +215,15 @@ public class Client implements Runnable, SocketHandlerListener {
         else if (message instanceof YourInfoMessage) {
             handleYourInfoMessage((YourInfoMessage) message);
         }
+        else if (message instanceof ChatMessage) {
+            notify = handleChatMessage((ChatMessage) message);
+        }
 
-        // Notify listener that a message was received.
-        User sender = socketHandlerUserMap.get(senderSocketHandler);
-        listener.messageReceived(sender, message);
+        if(notify){
+            // Notify listener that a message was received.
+            User sender = socketHandlerUserMap.get(senderSocketHandler);
+            listener.messageReceived(sender, message);
+        }
     }
 
     /**
@@ -284,6 +290,22 @@ public class Client implements Runnable, SocketHandlerListener {
      */
     private void handleYourInfoMessage(YourInfoMessage message) {
         this.clientUser = message.getUser();
+    }
+
+    /**
+     * Handles ChatMessages.
+     *
+     * Compares timestamp on incoming message with current time.
+     * If message is equal or lower, send as normal. Else put into queue.
+     * @param message
+     * @return boolean True if the message is allowed to continue, false otherwise
+     */
+    private boolean handleChatMessage(ChatMessage message) {
+        if(message.getTimestamp() > peekTimestamp()){
+            //Put it into a queue to be taken off when timestamp is higher
+        }
+        timestamp(); //increment the timestamp
+        return true;
     }
 
     /**
