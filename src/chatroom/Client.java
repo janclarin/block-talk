@@ -27,6 +27,12 @@ import java.util.Comparator;
  * @author Riley Lahd
  */
 public class Client implements Runnable, SocketHandlerListener {
+    
+    /**
+     * Delay that server socket blocks for before messages can dequeue
+     */
+    private final static int SERVER_SOCKET_TIMEOUT = 150;
+    
     /**
      * Maps SocketHandlers to the User of the connection.
      */
@@ -126,7 +132,7 @@ public class Client implements Runnable, SocketHandlerListener {
         try {
             // Server socket for incoming connections.
             ServerSocket serverSocket = new ServerSocket(clientUser.getPort());
-            serverSocket.setSoTimeout(150);
+            serverSocket.setSoTimeout(SERVER_SOCKET_TIMEOUT);
 
             while (continueRunning) {
                 try{
