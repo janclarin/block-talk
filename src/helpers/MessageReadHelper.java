@@ -1,4 +1,5 @@
 package helpers;
+import exceptions.MessageTypeNotSupportedException;
 import models.ChatRoom;
 import models.MessageType;
 import models.User;
@@ -52,7 +53,17 @@ public class MessageReadHelper{
         return buffer.put(header, 8, 4).getInt(0);
     }
 
-    private static Message createMessage(byte[] header, byte[] data) throws UnknownHostException, IllegalArgumentException {
+    /**
+     * Creates a Message from bytes.
+     *
+     * @param header Message header as bytes.
+     * @param data Message data as bytes.
+     *
+     * @return Message based on the header and data protocol.
+     * @throws UnknownHostException
+     * @throws IllegalArgumentException Thrown when the message
+     */
+    private static Message createMessage(byte[] header, byte[] data) throws UnknownHostException, MessageTypeNotSupportedException {
 	    InetAddress headerIpAddress = getHeaderIpAddress(header);
 	    int headerPort = getHeaderPort(header);
         InetSocketAddress senderSocketAddress = new InetSocketAddress(headerIpAddress, headerPort);
@@ -89,7 +100,7 @@ public class MessageReadHelper{
             // TODO: case NEGATIVE_ACKNOWLEDGEMENT:
             // TODO: case ORDER:
             default:
-                throw new IllegalArgumentException(String.format("Message type %s is not supported yet.", messageType.toString()));
+                throw new MessageTypeNotSupportedException();
         }
     }
 
