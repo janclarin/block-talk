@@ -18,22 +18,36 @@ import java.nio.ByteBuffer;
  * @author Riley Lahd
  */
 public abstract class Message {
+	/**
+	 * Number of bytes in the header.
+	 */
 	public static final int BYTE_HEADER_SIZE = 12;
 
+	/**
+	 * The socket address of the message sender.
+	 */
 	protected final InetSocketAddress senderSocketAddress;
 
+	/**
+	 * Shared constructor which handles the senderSocketAddress.
+	 *
+	 * @param senderSocketAddress The socket address of the user.
+	 */
 	protected Message(final InetSocketAddress senderSocketAddress) {
 		this.senderSocketAddress = senderSocketAddress;
 	}
 
+	/**
+     * The data payload of the message as a String. This must be overridden by subclasses to return proper format.
+	 *
+	 * @return Data payload of the message as a String.
+	 */
 	protected abstract String getData();
 
-    public InetSocketAddress getSenderSocketAddress() {
-		return senderSocketAddress;
-	}
-
     /**
-     * @return the byte array representing this message in the prescribed format
+     * Converts the message into its representation in bytes. Relies on getData() returning the proper protocol info.
+	 *
+     * @return Byte array representing the message.
      */
     public byte[] toByteArray() {
         byte[] dataBytes = getData().getBytes();
