@@ -18,6 +18,7 @@ public class MessageReadHelper{
 
     /**
      * Reads the next Message in the input stream.
+     *
      * @param inputStream The input stream to read from.
      * @return The read Message.
      * @throws IOException Thrown when there is an issue reading a message.
@@ -31,6 +32,7 @@ public class MessageReadHelper{
 
     /**
      * Reads the next bytesToRead bytes from the input stream.
+     *
      * @param inputStream The input stream to read from.
      * @param bytesToRead The number of bytes to read from the input stream.
      * @return The read bytes.
@@ -45,6 +47,7 @@ public class MessageReadHelper{
 
     /**
      * Parses the data size (in bytes) from the header.
+     *
      * @param header Message header as bytes.
      * @return Size (in bytes) of the Message's data.
      */
@@ -104,17 +107,36 @@ public class MessageReadHelper{
         }
     }
 
+    /**
+     * Parses the IP address from the header.
+     *
+     * @param header Message header as bytes.
+     * @return InetAddress from the header.
+     * @throws UnknownHostException
+     */
     private static InetAddress getHeaderIpAddress(byte[] header) throws UnknownHostException {
         ByteBuffer inetAddressByteBuffer = ByteBuffer.allocate(4);
         inetAddressByteBuffer.put(header, 0, 4);
         return InetAddress.getByAddress(inetAddressByteBuffer.array());
     }
 
+    /**
+     * Parses the port number from the header.
+     *
+     * @param header Message header as bytes.
+     * @return Port number from the header.
+     */
     private static int getHeaderPort(byte[] header) {
         ByteBuffer portByteBuffer = ByteBuffer.allocate(4);
         return portByteBuffer.put(header, 4, 4).getInt(0);
     }
 
+    /**
+     * Parses the message type from the data.
+     *
+     * @param data Message data as bytes.
+     * @return MessageType based on data protocol.
+     */
     private static MessageType getDataMessageType(byte[] data) {
         String dataString = new String(data);
         for (MessageType messageType : MessageType.values()) {
@@ -127,6 +149,7 @@ public class MessageReadHelper{
 
     /**
      * Ignores the first 4 bytes of the data which is reserved as the message type.
+     *
      * @param data Data bytes.
      * @return Message content.
      */
@@ -139,8 +162,9 @@ public class MessageReadHelper{
      * Creates a user from message content.
      * Expecting the format:
      * <username> <ipAddress> <port>
-     * @param messageContent
-     * @return
+     *
+     * @param messageContent Message content string.
+     * @return User parsed from message content.
      */
     private static User getMessageContentUser(String messageContent) throws UnknownHostException {
         String[] messageContentSplit = messageContent.split(" ");
@@ -159,8 +183,8 @@ public class MessageReadHelper{
      * Expects a format of:
      * <chatroomName> <hostIpAddress> <hostPort>\n<chatroomName> <hostIpAddress> <hostPort>\n ...
      *
-     * @param messageContent
-     * @return
+     * @param messageContent Message content string.
+     * @return List of ChatRooms parsed from message content.
      */
     private static List<ChatRoom> getMessageContentChatRooms(String messageContent) {
         List<ChatRoom> chatRooms = new ArrayList<>();
