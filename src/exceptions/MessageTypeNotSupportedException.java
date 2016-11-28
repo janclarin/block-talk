@@ -1,6 +1,8 @@
 package exceptions;
 
-public class MessageTypeNotSupportedException extends Exception {
+import java.io.IOException;
+
+public class MessageTypeNotSupportedException extends IOException {
     public MessageTypeNotSupportedException() {
         super();
     }
