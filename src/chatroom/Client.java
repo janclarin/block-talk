@@ -14,6 +14,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Comparator;
 
 /**
  * This class represents a client of the system and will
@@ -59,6 +61,22 @@ public class Client implements Runnable, SocketHandlerListener {
      * Lamport timestamp for message ordering
      */
     private int timestamp = 0;
+
+    /**
+     * Comparator for ordering ChatMessages in the message queue
+     */
+    private Comparator<ChatMessage> timestampComparator = new Comparator<ChatMessage>(){
+        @Override
+        public int compare(final ChatMessage a, final ChatMessage b)
+        {
+            return Integer.valueOf(a.getTimestamp()).compareTo(Integer.valueOf(b.getTimestamp()));
+        }
+    };
+
+    /**
+     * Priority queue for later-timestamped messages
+     */
+    private PriorityQueue<ChatMessage> queuedMessages = new PriorityQueue<ChatMessage>(timestampComparator);
 
     /**
      * Creates a new Client with the given models.
@@ -113,6 +131,8 @@ public class Client implements Runnable, SocketHandlerListener {
                 Socket socket = serverSocket.accept();
                 SocketHandler socketHandler = new SocketHandler(socket, this);
                 socketHandlerThreadPool.execute(socketHandler);
+
+                dequeueMessages();
             }
 
             socketHandlerThreadPool.shutdown();
@@ -303,6 +323,7 @@ public class Client implements Runnable, SocketHandlerListener {
     private boolean handleChatMessage(ChatMessage message) {
         if(message.getTimestamp() > peekTimestamp()){
             //Put it into a queue to be taken off when timestamp is higher
+            queuedMessages.offer(message);
             return false;
         }
         timestamp(); //increment the timestamp
@@ -339,5 +360,16 @@ public class Client implements Runnable, SocketHandlerListener {
         int time = timestamp;
         timestamp++;
         return time;
+    }
+
+    public void dequeueMessages(){
+        //Dequeue all messages in the message queue that have a timestamp lower than/equal to current
+        while(queuedMessages.peek() != null && queuedMessages.peek().getTimestamp() <= peekTimestamp())
+        {
+            ChatMessage poppedMessage = queuedMessages.poll();
+            timestamp(); //increment timestamp
+            User sender = null; //TODO: get sender using message.getSenderSocketAddress()
+            listener.messageReceived(sender, poppedMessage);
+        }
     }
 }

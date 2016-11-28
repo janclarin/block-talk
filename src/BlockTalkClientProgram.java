@@ -83,8 +83,9 @@ public class BlockTalkClientProgram implements ClientListener {
                 client.sendMessageToAll(msgC);
                 client.sendMessageToAll(msgB);
                 client.sendMessageToAll(msgA);
-
-
+            } else if (message.startsWith("/DEQ")) {
+                System.out.println("MANUAL DEQUEUE");
+                client.dequeueMessages();
             } else {
                 client.sendMessageToAll(new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), message));
             }
