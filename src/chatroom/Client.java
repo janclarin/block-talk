@@ -126,12 +126,17 @@ public class Client implements Runnable, SocketHandlerListener {
         try {
             // Server socket for incoming connections.
             ServerSocket serverSocket = new ServerSocket(clientUser.getPort());
+            serverSocket.setSoTimeout(150);
 
             while (continueRunning) {
-                Socket socket = serverSocket.accept();
-                SocketHandler socketHandler = new SocketHandler(socket, this);
-                socketHandlerThreadPool.execute(socketHandler);
-
+                try{
+                    Socket socket = serverSocket.accept();
+                    SocketHandler socketHandler = new SocketHandler(socket, this);
+                    socketHandlerThreadPool.execute(socketHandler);
+                }catch (SocketTimeoutException ste){
+                    //simply means no connection came in that time.
+                    // Allow messages to dequeue then resume blocking
+                }
                 dequeueMessages();
             }
 
