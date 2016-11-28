@@ -1,17 +1,13 @@
 package chatroom;
 
-import models.User;
-
 import helpers.MessageReadHelper;
+import models.messages.Message;
 
-import java.io.OutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-
-import models.messages.HelloMessage;
-import models.messages.Message;
 
 /**
  * Handles a connection to a chat room socket.
@@ -126,10 +122,5 @@ public class SocketHandler implements Runnable {
 
     public void shutdown(){
         continueRunning = false;
-    }
-
-    @Override
-    public int hashCode() {
-        return getRemoteSocketAddress().hashCode();
     }
 }
