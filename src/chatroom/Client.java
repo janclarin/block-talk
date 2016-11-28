@@ -3,6 +3,7 @@ package chatroom;
 import models.ChatRoom;
 import models.User;
 import models.messages.*;
+import models.SenderMessageTuple;
 import sockets.SocketHandler;
 import sockets.SocketHandlerListener;
 
@@ -32,7 +33,7 @@ public class Client implements Runnable, SocketHandlerListener {
      * Delay that server socket blocks for before messages can dequeue
      */
     private final static int SERVER_SOCKET_TIMEOUT = 150;
-    
+
     /**
      * Maps SocketHandlers to the User of the connection.
      */
@@ -71,18 +72,18 @@ public class Client implements Runnable, SocketHandlerListener {
     /**
      * Comparator for ordering ChatMessages in the message queue
      */
-    private Comparator<ChatMessage> timestampComparator = new Comparator<ChatMessage>(){
+    private Comparator<SenderMessageTuple> timestampComparator = new Comparator<SenderMessageTuple>(){
         @Override
-        public int compare(final ChatMessage a, final ChatMessage b)
+        public int compare(final SenderMessageTuple a, final SenderMessageTuple b)
         {
-            return Integer.valueOf(a.getTimestamp()).compareTo(Integer.valueOf(b.getTimestamp()));
+            return Integer.valueOf(a.message.getTimestamp()).compareTo(Integer.valueOf(b.message.getTimestamp()));
         }
     };
 
     /**
      * Priority queue for later-timestamped messages
      */
-    private PriorityQueue<ChatMessage> queuedMessages = new PriorityQueue<ChatMessage>(timestampComparator);
+    private PriorityQueue<SenderMessageTuple> queuedMessages = new PriorityQueue<SenderMessageTuple>(timestampComparator);
 
     /**
      * Creates a new Client with the given models.
@@ -234,6 +235,7 @@ public class Client implements Runnable, SocketHandlerListener {
     @Override
     public void messageReceived(SocketHandler senderSocketHandler, Message message) {
         boolean notify = true;
+        User sender = socketHandlerUserMap.get(senderSocketHandler);
         if (message instanceof HelloMessage) {
             handleHelloMessage(senderSocketHandler, (HelloMessage) message);
         }
@@ -247,12 +249,11 @@ public class Client implements Runnable, SocketHandlerListener {
             handleYourInfoMessage((YourInfoMessage) message);
         }
         else if (message instanceof ChatMessage) {
-            notify = handleChatMessage((ChatMessage) message);
+            notify = handleChatMessage((ChatMessage) message, sender);
         }
 
         if(notify){
             // Notify listener that a message was received.
-            User sender = socketHandlerUserMap.get(senderSocketHandler);
             listener.messageReceived(sender, message);
         }
     }
@@ -328,13 +329,14 @@ public class Client implements Runnable, SocketHandlerListener {
      *
      * Compares timestamp on incoming message with current time.
      * If message is equal or lower, send as normal. Else put into queue.
-     * @param message
+     * @param message Incoming message
+     * @param sender Sender of message
      * @return boolean True if the message is allowed to continue, false otherwise
      */
-    private boolean handleChatMessage(ChatMessage message) {
+    private boolean handleChatMessage(ChatMessage message, User sender) {
         if(message.getTimestamp() > peekTimestamp()){
             //Put it into a queue to be taken off when timestamp is higher
-            queuedMessages.offer(message);
+            queuedMessages.offer(new SenderMessageTuple(sender, message));
             return false;
         }
         timestamp(); //increment the timestamp
@@ -356,7 +358,7 @@ public class Client implements Runnable, SocketHandlerListener {
 
     /**
      * Peeks at the current Lamport timestamp without incrementing it.
-     *
+     * @return int The current timestamp
      */
     public int peekTimestamp(){
         return timestamp;
@@ -365,7 +367,7 @@ public class Client implements Runnable, SocketHandlerListener {
     /**
      * Stamps a message with a timestamp, incrementing the timestamp.
      * NOTE: This message must be sent ASAP after it is stamped.
-     *
+     * @return int The timestamp before incremented
      */
     public int timestamp(){
         int time = timestamp;
@@ -373,14 +375,17 @@ public class Client implements Runnable, SocketHandlerListener {
         return time;
     }
 
+    /**
+     * Dequeues all queued messages with a timestamp lower than current timestamp
+     */
     public void dequeueMessages(){
-        //Dequeue all messages in the message queue that have a timestamp lower than/equal to current
-        while(queuedMessages.peek() != null && queuedMessages.peek().getTimestamp() <= peekTimestamp())
+        while(queuedMessages.peek() != null && queuedMessages.peek().message.getTimestamp() <= peekTimestamp())
         {
-            ChatMessage poppedMessage = queuedMessages.poll();
+            SenderMessageTuple popped = queuedMessages.poll();
+            ChatMessage poppedMessage = popped.message;
             timestamp(); //increment timestamp
-            User sender = null; //TODO: get sender using message.getSenderSocketAddress()
-            listener.messageReceived(sender, poppedMessage);
+            User poppedSender = popped.sender; //TODO: get sender using message.getSenderSocketAddress()
+            listener.messageReceived(poppedSender, poppedMessage);
         }
     }
 }
