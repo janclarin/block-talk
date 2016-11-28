@@ -23,16 +23,14 @@ import java.util.List;
  */
 public class Client implements Runnable, SocketHandlerListener {
     /**
-     * User associate with this client.
+     * Maps SocketHandlers to the User of the connection.
      */
-    private User clientUser;
+    private final Map<SocketHandler, User> socketHandlerUserMap = new HashMap<>();
 
     /**
-     * Is this client currently a room host.
+     * Listener for chat room events.
      */
-    private boolean isHost = false;
-
-    private final Map<SocketHandler, User> socketHandlerUserMap = new HashMap<>();
+    private final ClientListener listener;
 
     /**
      * Thread pool for SocketHandlers.
@@ -40,14 +38,14 @@ public class Client implements Runnable, SocketHandlerListener {
     private ExecutorService socketHandlerThreadPool;
 
     /**
-     * Listener for chat room events.
+     * User associated with this client.
      */
-    private ClientListener listener;
+    private User clientUser;
 
     /**
-     * Server socket for incoming connections.
+     * Is this client currently a room host.
      */
-    private ServerSocket serverSocket;
+    private boolean isHost = false;
 
     /**
      * Determines if the Client should continue listening for requests.
@@ -65,86 +63,43 @@ public class Client implements Runnable, SocketHandlerListener {
         this.listener = listener;
     }
 
-    @Override
-    public void messageSent(SocketHandler recipientSocketHandler, Message message) {
-        User recipient = socketHandlerUserMap.get(recipientSocketHandler);
-
-        // Notify listener that a message was sent.
-        listener.messageSent(recipient, message);
-    }
-
-    @Override
-    public void messageReceived(SocketHandler senderSocketHandler, Message message) {
-        if (message instanceof HelloMessage) {
-            handleHelloMessage(senderSocketHandler, (HelloMessage) message);
-        }
-        else if (message instanceof UserInfoMessage) {
-            handleUserInfoMessage((UserInfoMessage) message);
-        }
-        else if (message instanceof ListRoomsMessage) {
-            handleListRoomsMessage((ListRoomsMessage) message);
-        }
-        else if (message instanceof YourInfoMessage) {
-            handleYourInfoMessage((YourInfoMessage) message);
-        }
-
-        // Notify listener that a message was received.
-        User sender = socketHandlerUserMap.get(senderSocketHandler);
-        listener.messageReceived(sender, message);
-    }
-
-    private void handleHelloMessage(SocketHandler senderSocketHandler, HelloMessage message) {
-        User sender = message.getSender();
-        if (isHost) {
-            // Send new client information to all clients.
-            sendMessageToAll(new UserInfoMessage(clientUser, sender));
-            // Send message to the new client.
-            sendMessage(new HelloMessage(clientUser), senderSocketHandler);
-        }
-        socketHandlerUserMap.put(senderSocketHandler, sender);
-    }
-
-    private void handleUserInfoMessage(UserInfoMessage message) {
-        User messageUser = message.getUser();
-        if (!clientUser.equals(messageUser)) {
-            try {
-                SocketHandler newSocketHandler = openConnection(messageUser.getSocketAddress());
-                socketHandlerUserMap.put(newSocketHandler, messageUser);
-                sendMessage(new HelloMessage(clientUser), newSocketHandler);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void handleListRoomsMessage(ListRoomsMessage message) {
-        /*
-        TODO:
-        try{
-            String[] rooms = message.getData().substring(4).split("\n");
-            System.out.println("Joining room: "+rooms[0].split(" @ ")[0]);
-            User newUser = new User("NewUser", InetAddress.getByName(rooms[0].split(" @ ")[1].split(":")[0].replace("/","")), Integer.parseInt(rooms[0].split(":")[1]));
-            sendMessage(new Message(serverSocket.getInetAddress(),clientPort,"HLO "+clientUsername+" "+clientPort), newUser);
-        }catch(UnknownHostException e){
-            System.out.println("FAILED TO JOIN ROOM");
-            e.printStackTrace();
-        }
-        */
-    }
-
-    private void handleYourInfoMessage(YourInfoMessage message) {
-        this.clientUser = message.getUser();
+    /**
+     * Returns the list of known Users.
+     *
+     * @return List of known Users.
+     */
+    public List<User> getKnownUsersList() {
+        return new ArrayList<>(socketHandlerUserMap.values());
     }
 
     /**
-     * Starts listening to serverSocket.
+     * Sets the field indicating whether or not this client is the host of its chat room.
+     *
+     * @param isHost Indicates whether or not this client is the host of its chat room.
+     */
+    public void setIsHost(boolean isHost) {
+        this.isHost = isHost;
+    }
+
+    /**
+     * Returns whether or not this client is the host of its chat room.
+     *
+     * @return boolean True if the this client is hosting a room
+     */
+    public boolean isHost() {
+        return this.isHost;
+    }
+
+    /**
+     * Starts listening for incoming connections. Creates a new SocketHandler for every new connection.
      */
     @Override
     public void run() {
         socketHandlerThreadPool = Executors.newCachedThreadPool();
 
         try {
-            serverSocket = new ServerSocket(clientUser.getPort());
+            // Server socket for incoming connections.
+            ServerSocket serverSocket = new ServerSocket(clientUser.getPort());
 
             while (continueRunning) {
                 Socket socket = serverSocket.accept();
@@ -185,6 +140,14 @@ public class Client implements Runnable, SocketHandlerListener {
         }
     }
 
+    /**
+     * Sends a message to the given socket address.
+     * Tries to find an existing socket handler in the socketHandlerUserMap.
+     * If it does not find one, open a new socket connection.
+     *
+     * @param message The message to send.
+     * @param recipientSocketAddress The recipient's socket address.
+     */
     public void sendMessage(Message message, InetSocketAddress recipientSocketAddress) {
         try {
             SocketHandler recipientSocketHandler = null;
@@ -200,7 +163,7 @@ public class Client implements Runnable, SocketHandlerListener {
 
             // If there was no match, open a new socket handler connection.
             if (recipientSocketHandler == null) {
-                recipientSocketHandler = openConnection(recipientSocketAddress);
+                recipientSocketHandler = openSocketConnection(recipientSocketAddress);
             }
 
             // Send the message with the socket handler pointing to the recipientSocketAddress.
@@ -211,30 +174,106 @@ public class Client implements Runnable, SocketHandlerListener {
     }
 
     /**
-     * Returns a string form of the current known users map
+     * Notifies listener that a message was successfully sent through a SocketHandler.
      *
-     * @return String The list of known users and their SocketHandlers
+     * @param recipientSocketHandler The SocketHandler that the message was sent through.
+     * @param message The sent message.
      */
-    public List<User> getKnownUsersList(){
-        return new ArrayList<>(socketHandlerUserMap.values());
+    @Override
+    public void messageSent(SocketHandler recipientSocketHandler, Message message) {
+        User recipient = socketHandlerUserMap.get(recipientSocketHandler);
+        // Notify listener that a message was sent.
+        listener.messageSent(recipient, message);
     }
 
     /**
-     * Set isHost variable
+     * Responds to different types of received messages and notifies listeners about the message.
      *
-     * @param isHost True if the this client is hosting a room
+     * @param senderSocketHandler The SocketHandler that the message was received from.
+     * @param message The received message.
      */
-    public void setIsHost(boolean isHost){
-        this.isHost = isHost;
+    @Override
+    public void messageReceived(SocketHandler senderSocketHandler, Message message) {
+        if (message instanceof HelloMessage) {
+            handleHelloMessage(senderSocketHandler, (HelloMessage) message);
+        }
+        else if (message instanceof UserInfoMessage) {
+            handleUserInfoMessage((UserInfoMessage) message);
+        }
+        else if (message instanceof ListRoomsMessage) {
+            handleListRoomsMessage((ListRoomsMessage) message);
+        }
+        else if (message instanceof YourInfoMessage) {
+            handleYourInfoMessage((YourInfoMessage) message);
+        }
+
+        // Notify listener that a message was received.
+        User sender = socketHandlerUserMap.get(senderSocketHandler);
+        listener.messageReceived(sender, message);
     }
 
     /**
-     * Get isHost variable
+     * Handles HelloMessages.
+     * Maps the sender of the message to the SocketHandler.
+     * If this client is the host, notify all other clients about the new client. Also, replies to the new client.
      *
-     * @return boolean True if the this client is hosting a room
+     * @param senderSocketHandler The SocketHandler of the sender.
+     * @param message The message to handle.
      */
-    public boolean isHost(){
-        return this.isHost;
+    private void handleHelloMessage(SocketHandler senderSocketHandler, HelloMessage message) {
+        User sender = message.getSender();
+        if (isHost) {
+            // Send new client information to all clients.
+            sendMessageToAll(new UserInfoMessage(clientUser, sender));
+            // Send message to the new client.
+            sendMessage(new HelloMessage(clientUser), senderSocketHandler);
+        }
+        socketHandlerUserMap.put(senderSocketHandler, sender);
+    }
+
+    /**
+     * Handles UserInfoMessages.
+     * Ignores the message if it is from this client.
+     * Otherwise, opens a new connection to the user specified in the message.
+     *
+     * @param message The message to handle.
+     */
+    private void handleUserInfoMessage(UserInfoMessage message) {
+        User messageUser = message.getUser();
+        if (!clientUser.equals(messageUser)) {
+            try {
+                SocketHandler newSocketHandler = openSocketConnection(messageUser.getSocketAddress());
+                socketHandlerUserMap.put(newSocketHandler, messageUser);
+                sendMessage(new HelloMessage(clientUser), newSocketHandler);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void handleListRoomsMessage(ListRoomsMessage message) {
+        /*
+        TODO:
+        try{
+            String[] rooms = message.getData().substring(4).split("\n");
+            System.out.println("Joining room: "+rooms[0].split(" @ ")[0]);
+            User newUser = new User("NewUser", InetAddress.getByName(rooms[0].split(" @ ")[1].split(":")[0].replace("/","")), Integer.parseInt(rooms[0].split(":")[1]));
+            sendMessage(new Message(serverSocket.getInetAddress(),clientPort,"HLO "+clientUsername+" "+clientPort), newUser);
+        }catch(UnknownHostException e){
+            System.out.println("FAILED TO JOIN ROOM");
+            e.printStackTrace();
+        }
+        */
+    }
+
+    /**
+     * Handles YourInfoMessages.
+     * Sets the clientUser of this Client to the received one. This should be the external-facing socket address.
+     *
+     * @param message
+     */
+    private void handleYourInfoMessage(YourInfoMessage message) {
+        this.clientUser = message.getUser();
     }
 
     /**
@@ -242,7 +281,7 @@ public class Client implements Runnable, SocketHandlerListener {
      * @param userSocketAddress The socket address of the user to open a connection with
      * @return SocketHandler The socketHandler connected to that user
      */
-    private SocketHandler openConnection(InetSocketAddress userSocketAddress) throws IOException
+    private SocketHandler openSocketConnection(InetSocketAddress userSocketAddress) throws IOException
     {
         Socket socket = new Socket(userSocketAddress.getAddress(), userSocketAddress.getPort());
         SocketHandler socketHandler = new SocketHandler(socket, this);
