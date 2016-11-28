@@ -1,5 +1,6 @@
 package chatroom;
 
+import models.ChatRoom;
 import models.User;
 import models.messages.*;
 import sockets.SocketHandler;
@@ -203,7 +204,7 @@ public class Client implements Runnable, SocketHandlerListener {
             handleUserInfoMessage((UserInfoMessage) message);
         }
         else if (message instanceof RoomListMessage) {
-            handleListRoomsMessage((RoomListMessage) message);
+            handleRoomListMessage((RoomListMessage) message);
         }
         else if (message instanceof YourInfoMessage) {
             handleYourInfoMessage((YourInfoMessage) message);
@@ -253,19 +254,21 @@ public class Client implements Runnable, SocketHandlerListener {
         }
     }
 
-    private void handleListRoomsMessage(RoomListMessage message) {
-        /*
-        TODO:
-        try{
-            String[] rooms = message.getData().substring(4).split("\n");
-            System.out.println("Joining room: "+rooms[0].split(" @ ")[0]);
-            User newUser = new User("NewUser", InetAddress.getByName(rooms[0].split(" @ ")[1].split(":")[0].replace("/","")), Integer.parseInt(rooms[0].split(":")[1]));
-            sendMessage(new Message(serverSocket.getInetAddress(),clientPort,"HLO "+clientUsername+" "+clientPort), newUser);
-        }catch(UnknownHostException e){
-            System.out.println("FAILED TO JOIN ROOM");
-            e.printStackTrace();
+    /**
+     * Handles RoomListMessages.
+     * Picks the first room it can join and joins it.
+     *
+     * @param message
+     */
+    private void handleRoomListMessage(RoomListMessage message) {
+        List<ChatRoom> chatRooms = message.getChatRooms();
+        if (chatRooms.size() < 1) {
+            System.out.println("No chat rooms to join.");
+            return;
         }
-        */
+        ChatRoom chatRoomToJoin = chatRooms.get(0);
+        System.out.println("Joining room: " + chatRoomToJoin.getName());
+        sendMessage(new HelloMessage(clientUser), chatRoomToJoin.getHostSocketAddress());
     }
 
     /**
