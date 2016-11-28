@@ -76,17 +76,13 @@ public class BlockTalkClientProgram implements ClientListener {
                 System.out.println("SEND HLO");
                 client.sendMessageToAll(new HelloMessage(clientUser));
             } else if (message.startsWith("/ODR")) {
-                System.out.println("CURRENT TIMESTAMP = " + client.peekTimestamp());
                 Message msgA = new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "A");
                 Message msgB = new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "B");
                 Message msgC = new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "C");
                 client.sendMessageToAll(msgC);
                 client.sendMessageToAll(msgB);
                 client.sendMessageToAll(msgA);
-            } else if (message.startsWith("/DEQ")) {
-                System.out.println("MANUAL DEQUEUE");
-                client.dequeueMessages();
-            } else {
+            }else {
                 client.sendMessageToAll(new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), message));
             }
         }
