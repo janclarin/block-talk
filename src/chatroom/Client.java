@@ -56,6 +56,11 @@ public class Client implements Runnable, SocketHandlerListener {
     private boolean continueRunning = true;
 
     /**
+     * Lamport timestamp for message ordering
+     */
+    private int timestamp = 0;
+
+    /**
      * Creates a new Client with the given models.
      *
      * @param clientUser Client user information.
@@ -292,5 +297,24 @@ public class Client implements Runnable, SocketHandlerListener {
         SocketHandler socketHandler = new SocketHandler(socket, this);
         socketHandlerThreadPool.execute(socketHandler);
         return socketHandler;
+    }
+
+    /**
+     * Peeks at the current Lamport timestamp without incrementing it.
+     *
+     */
+    public int peekTimestamp(){
+        return timestamp;
+    }
+
+    /**
+     * Stamps a message with a timestamp, incrementing the timestamp.
+     * NOTE: This message must be sent ASAP after it is stamped.
+     *
+     */
+    public int timestamp(){
+        int time = timestamp;
+        timestamp++;
+        return time;
     }
 }
