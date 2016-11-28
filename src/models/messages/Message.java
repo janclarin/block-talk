@@ -45,6 +45,15 @@ public abstract class Message {
 	protected abstract String getData();
 
     /**
+     * Returns the message sender's socket address.
+     *
+     * @return SocketAddress of the message sender.
+     */
+	public InetSocketAddress getSenderSocketAddress() {
+	    return senderSocketAddress;
+    }
+
+    /**
      * Converts the message into its representation in bytes. Relies on getData() returning the proper protocol info.
 	 *
      * @return Byte array representing the message.

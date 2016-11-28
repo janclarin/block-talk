@@ -1,4 +1,4 @@
-package chatroom;
+package sockets;
 
 import helpers.MessageReadHelper;
 import models.messages.Message;
@@ -8,6 +8,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Handles a connection to a chat room socket.
@@ -22,7 +24,7 @@ public class SocketHandler implements Runnable {
     /**
      * Listener to notify.
      */
-    private final SocketHandlerListener listener;
+    private final List<SocketHandlerListener> listeners = new ArrayList<>();
 
     /**
      * OutputStream of socket
@@ -34,6 +36,10 @@ public class SocketHandler implements Runnable {
      */
     private boolean continueRunning = true;
 
+    public SocketHandler(final Socket socket) {
+        this.socket = socket;
+    }
+
     /**
      * Constructs a SocketHandler with a given Socket.
      *
@@ -41,8 +47,7 @@ public class SocketHandler implements Runnable {
      */
     public SocketHandler(final Socket socket, final SocketHandlerListener listener) {
         this.socket = socket;
-        this.listener = listener;
-
+        this.listeners.add(listener);
     }
 
     @Override
@@ -59,6 +64,16 @@ public class SocketHandler implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Registers the listener to receive notifications.
+     *
+     * @param listener The listener to receive notifications.
+     */
+    public void registerListener(SocketHandlerListener listener) {
+        // TODO: Do not allow registering multiple times.
+        listeners.add(listener);
     }
 
     /**
@@ -109,7 +124,9 @@ public class SocketHandler implements Runnable {
      * @param message The message that was sent.
      */
     private void notifyMessageSent(Message message) {
-        listener.messageSent(this, message);
+        for (SocketHandlerListener listener : listeners) {
+            listener.messageSent(this, message);
+        }
     }
 
     /**
@@ -118,7 +135,9 @@ public class SocketHandler implements Runnable {
      * @param message The message that was received.
      */
     private void notifyMessageReceived(Message message) {
-        listener.messageReceived(this, message);
+        for (SocketHandlerListener listener : listeners) {
+            listener.messageReceived(this, message);
+        }
     }
 
     public void shutdown(){

@@ -1,6 +1,8 @@
 package server;
 
 
+import sockets.SocketHandler;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -71,7 +73,6 @@ public class ServerManager {
 				}
 				catch(Exception ex){
 					ex.printStackTrace();
-					continue;
 				}
 			}
 			

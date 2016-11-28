@@ -2,6 +2,8 @@ package chatroom;
 
 import models.User;
 import models.messages.*;
+import sockets.SocketHandler;
+import sockets.SocketHandlerListener;
 
 import java.io.IOException;
 import java.net.*;
@@ -200,8 +202,8 @@ public class Client implements Runnable, SocketHandlerListener {
         else if (message instanceof UserInfoMessage) {
             handleUserInfoMessage((UserInfoMessage) message);
         }
-        else if (message instanceof ListRoomsMessage) {
-            handleListRoomsMessage((ListRoomsMessage) message);
+        else if (message instanceof RoomListMessage) {
+            handleListRoomsMessage((RoomListMessage) message);
         }
         else if (message instanceof YourInfoMessage) {
             handleYourInfoMessage((YourInfoMessage) message);
@@ -251,7 +253,7 @@ public class Client implements Runnable, SocketHandlerListener {
         }
     }
 
-    private void handleListRoomsMessage(ListRoomsMessage message) {
+    private void handleListRoomsMessage(RoomListMessage message) {
         /*
         TODO:
         try{

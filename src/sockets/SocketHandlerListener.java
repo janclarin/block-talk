@@ -1,6 +1,5 @@
-package chatroom;
+package sockets;
 
-import models.User;
 import models.messages.Message;
 
 /**

@@ -1,7 +1,6 @@
 package models.messages;
 
 import models.MessageType;
-import models.User;
 
 import java.net.InetSocketAddress;
 

@@ -5,18 +5,18 @@ import models.User;
 
 import java.net.InetSocketAddress;
 
-public class RequestRoomsMessage extends Message {
+public class RequestRoomListMessage extends Message {
 
-    public RequestRoomsMessage(final User sender) {
+    public RequestRoomListMessage(final User sender) {
         super(sender.getSocketAddress());
     }
 
-    public RequestRoomsMessage(final InetSocketAddress senderSocketAddress) {
+    public RequestRoomListMessage(final InetSocketAddress senderSocketAddress) {
         super(senderSocketAddress);
     }
 
     @Override
     public String getData() {
-        return MessageType.REQUEST_ROOMS.getProtocolCode();
+        return MessageType.REQUEST_ROOM_LIST.getProtocolCode();
     }
 }

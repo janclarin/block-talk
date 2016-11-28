@@ -1,4 +1,5 @@
 package helpers;
+import models.ChatRoom;
 import models.MessageType;
 import models.User;
 import models.messages.*;
@@ -9,6 +10,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MessageReadHelper{
 
@@ -50,7 +53,9 @@ public class MessageReadHelper{
     }
 
     private static Message createMessage(byte[] header, byte[] data) throws UnknownHostException, IllegalArgumentException {
-        InetSocketAddress senderSocketAddress = new InetSocketAddress(getHeaderIpAddress(header), getHeaderPort(header));
+	    InetAddress headerIpAddress = getHeaderIpAddress(header);
+	    int headerPort = getHeaderPort(header);
+        InetSocketAddress senderSocketAddress = new InetSocketAddress(headerIpAddress, headerPort);
 
         MessageType messageType = getDataMessageType(data);
         String messageContent = getDataMessageContent(data);
@@ -65,6 +70,15 @@ public class MessageReadHelper{
             case HELLO:
                 User sender = getMessageContentUser(messageContent);
                 return new HelloMessage(sender);
+            case HOST_ROOM:
+                // This assumes that the room name is the only thing in the message body.
+                return new HostRoomMessage(senderSocketAddress, messageContent);
+            case REQUEST_ROOM_LIST:
+                return new RequestRoomListMessage(senderSocketAddress);
+            case ROOM_LIST:
+                // TODO: Parse chat rooms out.
+                List<ChatRoom> chatRooms = null;
+                return new RoomListMessage(senderSocketAddress, chatRooms);
             case USER:
                 User contentUser = getMessageContentUser(messageContent);
                 return new UserInfoMessage(senderSocketAddress, contentUser);
@@ -80,10 +94,10 @@ public class MessageReadHelper{
         }
     }
 
-    private static String getHeaderIpAddress(byte[] header) {
+    private static InetAddress getHeaderIpAddress(byte[] header) throws UnknownHostException {
         ByteBuffer inetAddressByteBuffer = ByteBuffer.allocate(4);
         inetAddressByteBuffer.put(header, 0, 4);
-        return new String(inetAddressByteBuffer.array());
+        return InetAddress.getByAddress(inetAddressByteBuffer.array());
     }
 
     private static int getHeaderPort(byte[] header) {
@@ -107,7 +121,8 @@ public class MessageReadHelper{
      * @return Message content.
      */
     private static String getDataMessageContent(byte[] data) {
-        return new String(data).substring(4);
+        String messageContentWithProtocol = new String(data);
+        return messageContentWithProtocol.length() > 4 ? messageContentWithProtocol.substring(4) : "";
     }
 
     /**
@@ -127,5 +142,11 @@ public class MessageReadHelper{
         String ipAddress = messageContentSplit[1];
         int port = Integer.parseInt(messageContentSplit[2]);
         return new User(username, new InetSocketAddress(ipAddress, port));
+    }
+
+    private static List<ChatRoom> getMessageContentChatRooms(String messageContent) {
+        List<ChatRoom> chatRooms = new ArrayList<>();
+        // TODO:
+        return chatRooms;
     }
 }

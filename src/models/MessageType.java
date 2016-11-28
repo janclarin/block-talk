@@ -10,11 +10,11 @@ public enum MessageType {
     HELLO("HLO"),
     HOST_ROOM("HST"),
     LEADER("LDR"),
-    LIST_ROOMS("LST"),
     MESSAGE("MSG"),
     NEGATIVE_ACKNOWLEDGEMENT("NAK"),
     ORDER("ORD"),
-    REQUEST_ROOMS("ROM"),
+    REQUEST_ROOM_LIST("ROM"),
+    ROOM_LIST("LST"),
     USER("USR"),
     YOU("YOU");
 

@@ -1,5 +1,6 @@
 package models;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /**
  * This class represents a chat room and contains the head user
@@ -10,56 +11,53 @@ import java.net.InetAddress;
  * @author Riley Lahd
  */
 public class ChatRoom {
-	private InetAddress hostIp;
-	private String name;
-	private int port;
-	
+	private final String name;
+	private InetSocketAddress hostSocketAddress;
+
 	/**
-	 * Initializes a chat room and sets the current host to given ip
-	 * 
-	 * @param ipAddress
+	 * Initializes a chat room with a name and a host socket address.
+	 *
+	 * @param name Chat room name.
+	 * @param hostSocketAddress SocketAddress of the chat room host.
 	 */
-	public ChatRoom(String name, InetAddress hostIpAddress, int port){
-		hostIp = hostIpAddress;
+	public ChatRoom(final String name, final InetSocketAddress hostSocketAddress) {
 		this.name = name;
-		this.port = port;
+		this.hostSocketAddress = hostSocketAddress;
 	}
 	
 	/**
-	 * Sets host to given ip Address + sourcePort
+	 * Sets host to given socket address.
 	 * 
-	 * @param ipAddress
+	 * @param hostSocketAddress SocketAddress of the chat room host.
 	 */
-	public void setHost(InetAddress ipAddress, int port){
-		hostIp = ipAddress;
-		this.port = port;
+	public void setHostSocketAddress(InetSocketAddress hostSocketAddress) {
+		this.hostSocketAddress = hostSocketAddress;
 	}
-	
-	/** 
-	 * Gets the current host
-	 * 
-	 * @return
+
+	/**
+	 * Gets the chat room's name.
+	 *
+	 * @return Chat room name.
 	 */
-	public InetAddress getHost(){
-		return hostIp;
-	}
-	
-	/** 
-	 * Gets the current host
-	 * 
-	 * @return
-	 */
-	public String getName(){
+	public String getName() {
 		return name;
 	}
 
-	/** 
-	 * Gets the current host sourcePort
+	/**
+	 * Gets the chat room host's IP address.
 	 * 
 	 * @return
 	 */
-	public int getPort(){
-		return port;
+	public InetAddress getHostIpAddress() {
+		return hostSocketAddress.getAddress();
 	}
-	
+
+	/** 
+	 * Gets the chat room host's port.
+	 * 
+	 * @return Port of the current host.
+	 */
+	public int getHostPort() {
+		return hostSocketAddress.getPort();
+	}
 }

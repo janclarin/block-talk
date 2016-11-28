@@ -1,19 +1,17 @@
 package server;
 
 import exceptions.ChatRoomNotFoundException;
+import exceptions.MessageTypeNotSupportedException;
 import helpers.MessageReadHelper;
-import jdk.nashorn.internal.ir.RuntimeNode;
 import models.ChatRoom;
 import models.User;
-import models.messages.HostRoomMessage;
-import models.messages.ListRoomsMessage;
-import models.messages.Message;
-import models.messages.RequestRoomsMessage;
+import models.messages.*;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -30,11 +28,9 @@ import java.util.HashMap;
  * @author Jan Clarin
  * @author Riley Lahd
  */
-public class Server
-{
-	private static Server instance;
-	
+public class Server {
 	private boolean stopServer;
+	private ServerSocket serverSocket;
 	private Socket managerSocket;
 	private int port;
 	private InetAddress ip;
@@ -42,40 +38,38 @@ public class Server
 	/**
 	 * [RoomName, Chatroom] Hash Map of all existing chatrooms on the server
 	 */
-	private HashMap<String, ChatRoom> roomMap;
-	
+	private HashMap<String, ChatRoom> roomMap = new HashMap<>();
+
 	/**
-	 * Main function. Requires ip and sourcePort to start server
-	 * 
-	 * @param port
+	 * Main function. Requires port.
 	 */
-	public static void main(String[] args){
-		try{
-			instance = new Server(InetAddress.getByName(args[0]), Integer.parseInt(args[1]));
-		}
-		catch(Exception ex){
-			ex.printStackTrace();
-		}
+	public static void main(String[] args) throws MessageTypeNotSupportedException {
+	    int port = Integer.parseInt(args[0]);
+	    Server server = new Server(port);
+	    server.run();
 	}
 	
 	/**
 	 * Initializes the server and room map
 	 */
-	public Server(InetAddress ip, int port){
-		roomMap = new HashMap<String, ChatRoom>();
-		this.ip = ip;
+	public Server(int port) {
 		this.port = port;
+	}
+
+	/**
+	 * Runs, listens for incoming requests and responds to requests.
+	 */
+	public void run() throws MessageTypeNotSupportedException {
 		try {
-			ServerSocket server = new ServerSocket(port);
-			managerSocket = server.accept();
+			serverSocket = new ServerSocket(port);
+			managerSocket = serverSocket.accept();
 			InputStream inputStream = managerSocket.getInputStream();
-			while(!stopServer){
+			while (!stopServer) {
 				parseMessage(MessageReadHelper.readNextMessage(inputStream));
 			}
 			managerSocket.close();
-			server.close();
-		}
-		catch (IOException e) {
+			serverSocket.close();
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
@@ -103,18 +97,16 @@ public class Server
 		if(!roomMap.containsKey(roomName)){
 			throw new ChatRoomNotFoundException(); 
 		}
-		return roomMap.get(roomName).getHost();
+		return roomMap.get(roomName).getHostIpAddress();
 	}
 	
 	/**
 	 * Add a new map to room in the hash map with roomName as they key. 
 	 * 
 	 * @param roomName
-	 * @param ipAddress
 	 */
-	public void addRoomMap(String roomName, InetAddress ipAddress, int port){
-		
-		roomMap.put(roomName, new ChatRoom(roomName, ipAddress, port));
+	public void addRoomMap(String roomName, InetSocketAddress hostSocketAddress) {
+		roomMap.put(roomName, new ChatRoom(roomName, hostSocketAddress));
 	}
 	
 	/**
@@ -122,14 +114,19 @@ public class Server
 	 * 
 	 * @param message
 	 */
-	public void parseMessage(Message message) {
+	public void parseMessage(Message message) throws MessageTypeNotSupportedException {
+		InetSocketAddress serverSocketAddress = (InetSocketAddress) serverSocket.getLocalSocketAddress();
 		if (message instanceof HostRoomMessage) {
+			// Maps the chat room to the host room message sender's socket address.
 			HostRoomMessage hostRoomMessage = (HostRoomMessage) message;
-			User host = hostRoomMessage.getSender();
-			addRoomMap(hostRoomMessage.getRoomName(), host.getIpAddress(), host.getPort());
-			sendMessage("Host Updated");
-		} else if (message instanceof RequestRoomsMessage) {
-			sendMessage(new ListRoomsMessage(roomMap.values()));
+			InetSocketAddress hostSocketAddress = hostRoomMessage.getSenderSocketAddress();
+			addRoomMap(hostRoomMessage.getRoomName(), hostSocketAddress);
+			sendMessage(new AckMessage(serverSocketAddress, "Host Updated"));
+		} else if (message instanceof RequestRoomListMessage) {
+			sendMessage(new RoomListMessage(serverSocketAddress, new ArrayList<>(roomMap.values())));
+		} else {
+			// Handle more message types here.
+		    throw new MessageTypeNotSupportedException();
 		}
 	}
 	
@@ -138,12 +135,10 @@ public class Server
 	 * 
 	 * @param message
 	 */
-	public void sendMessage(String message){
+	public void sendMessage(Message message){
 		try{
 			OutputStream outStream = managerSocket.getOutputStream();
-			String outgoing = String.format("ACK %s", message);
-			Message msg = new Message(ip, port, outgoing);
-			outStream.write(msg.toByteArray());
+			outStream.write(message.toByteArray());
 			outStream.flush();
 		}
 		catch(Exception ex){

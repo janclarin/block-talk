@@ -54,9 +54,7 @@ public class BlockTalkClientProgram implements ClientListener {
         Client client = new Client(clientUser, program);
         new Thread(client).start();
 
-        // TODO: Prompt for server when code is fixed.
-        //promptJoinOrHost(scanner, client, clientUser, serverManagerSocketAddress);
-        if (clientUser.getUsername().equals("debug")) client.setIsHost(true);
+        promptJoinOrHost(scanner, client, clientUser, serverManagerSocketAddress);
 
         // Listen for user input.
         String message = "";
@@ -88,9 +86,9 @@ public class BlockTalkClientProgram implements ClientListener {
         System.out.println("\"join\" or \"host\"");
         String mode = scanner.nextLine();
         if(mode.toLowerCase().equals("join")){
-            client.sendMessage(new RequestRoomsMessage(clientUser), serverManagerSocketAddress);
+            client.sendMessage(new RequestRoomListMessage(clientUser), serverManagerSocketAddress);
         }
-        else if(mode.toLowerCase().startsWith("host "))
+        else if(mode.toLowerCase().startsWith("host"))
         {
             System.out.print("Enter room name to host: ");
             String roomName = scanner.nextLine();

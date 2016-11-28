@@ -1,18 +1,29 @@
 package models.messages;
 
 import models.MessageType;
-import models.User;
 
 import java.net.InetSocketAddress;
 
 public class AckMessage extends Message {
 
-    public AckMessage(InetSocketAddress senderSocketAddress) {
+    private final String information;
+
+    public AckMessage(final InetSocketAddress senderSocketAddress) {
         super(senderSocketAddress);
+        this.information = "";
+    }
+
+    public AckMessage(final InetSocketAddress senderSocketAddress, final String information) {
+        super(senderSocketAddress);
+        this.information = information;
+    }
+
+    public String getInformation() {
+        return information;
     }
 
     @Override
     protected String getData() {
-        return MessageType.ACKNOWLEDGEMENT.getProtocolCode();
+        return String.format("%s %s", MessageType.ACKNOWLEDGEMENT.getProtocolCode(), information);
     }
 }

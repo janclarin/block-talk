@@ -3,8 +3,6 @@ package models.messages;
 import models.MessageType;
 import models.User;
 
-import java.net.InetSocketAddress;
-
 /**
  * Hello message to pass the senderUsername and the sourcePort to connect to for communication.
  * HLO <senderUsername> <sourcePort>

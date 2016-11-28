@@ -1,15 +1,16 @@
 package server;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.List;
 
+import models.ChatRoom;
 import models.User;
-import models.messages.HelloMessage;
-import models.messages.HostRoomMessage;
-import models.messages.Message;
+import models.messages.*;
 import helpers.MessageReadHelper;
-import models.messages.YourInfoMessage;
 
 /**
  * This worker class handles a distinct connection and handles their messages to communicate
@@ -22,26 +23,17 @@ import models.messages.YourInfoMessage;
 public class ClientConnection implements Runnable {
 	private Socket socket;
 	private boolean closeConnection;
-	private User clientUser;
 	private ClientConnectionListener listener;
 
 	/**
-	 * Initializes the server and sets the socket and listeners.
+	 * Initializes the server
 	 * A new User object is created based on socket information.
 	 * 
 	 * @param socket
-	 * @param listener
 	 */
 	public ClientConnection(Socket socket, ClientConnectionListener listener) {
-		try{
-			this.socket = socket;
-			this.listener = listener;
-		}
-		catch(Exception ex){
-			System.err.println("Error: Exception: " + ex.getMessage());
-			ex.printStackTrace();
-			closeConnection = true;
-		}
+		this.socket = socket;
+		this.listener = listener;
 	}
 	
 	/**
@@ -57,7 +49,7 @@ public class ClientConnection implements Runnable {
 	 */
 	@Override
 	public void run() {
-		try{
+		try {
 			InputStream inputStream = socket.getInputStream();
 			Message message;
 			while (!closeConnection) {
@@ -65,33 +57,31 @@ public class ClientConnection implements Runnable {
                 handleMessage(message);
             }
 			socket.close();
-		}
-		catch(Exception ex){
-			System.err.println("Error: Exception: " + ex.getMessage());
-			ex.printStackTrace();
-		}
-	}
-
-	public void handleMessage(Message message) {
-		if (message instanceof HelloMessage) {
-			HelloMessage helloMessage = (HelloMessage) message;
-			this.clientUser = helloMessage.getSender();
-
-			sendMessage(new YourInfoMessage(message.getSender());
-			sendMessage("YOU "+messages[0] +" "+ socket.getInetAddress() +" "+ messages[1]);
-		}
-		else if (message.startsWith("HST")) {
-			String roomName = message.substring(4);
-			notifyHostRequest(roomName);
-		} else if (message.startsWith("ROM")) {
-			notifyRoomRequest();
-		} else if (message.startsWith("BYE")) {
-			closeConnection();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
 	/**
-	 * Send generic ACK message
+	 * Handles the messages. This should really be handled by the server.
+	 * @param message
+	 */
+	public void handleMessage(Message message) {
+		if (message instanceof HelloMessage) {
+			HelloMessage helloMessage = (HelloMessage) message;
+			User sender = helloMessage.getSender();
+			sendMessage(new YourInfoMessage((InetSocketAddress) socket.getLocalSocketAddress(), sender));
+		} else if (message instanceof ByeMessage) {
+			closeConnection();
+		} else {
+			// Forward message to listener which forwards them to servers.
+			Message listenerResponse = listener.messageReceived(message);
+			sendMessage(listenerResponse);
+		}
+	}
+
+	/**
+	 * Send a message to the client.
 	 * 
 	 * @param message
 	 */
@@ -105,49 +95,5 @@ public class ClientConnection implements Runnable {
 			System.err.println("Error: Exception: " + ex.getMessage());
 			ex.printStackTrace();
 		}
-	}
-
-	/**
-	 * Send room list
-	 * 
-	 * @param message
-	 */
-	public void sendRoomListMessage(String message){
-		try{
-			OutputStream outputStream = socket.getOutputStream();
-			String outgoing = String.format("LST %s", message);
-			Message msg = new Message(socket.getInetAddress(),socket.getPort(),outgoing);
-			outputStream.write(msg.toByteArray());
-			outputStream.flush();
-		}
-		catch(Exception ex){
-			System.err.println("Error: Exception: " + ex.getMessage());
-			ex.printStackTrace();
-		}
-	}
-	
-	/**
-	 * Notifies listener that a client is requesting a creation of new chatroom
-	 * 
-	 */
-	public void notifyHostRequest(String roomName){
-		sendMessage(new HostRoomMessage(clientUser, roomName));
-	}
-	
-	/**
-	 * Notifies listener that a client is requesting a list of rooms
-	 * 
-	 */
-	public void notifyRoomRequest(){
-		sendRoomListMessage(listener.roomRequest(clientUser));
-	}
-	
-	/**
-	 * Notifies listener that a room is requesting a host update
-	 * 
-	 * TODO: implement notify all servers of new host request for existing room
-	 */
-	public void notifyUpdateHostRequest(){
-		
 	}
 }
