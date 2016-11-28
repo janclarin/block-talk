@@ -82,7 +82,7 @@ public class Client implements Runnable, SocketHandlerListener {
             handleUserInfoMessage((UserInfoMessage) message);
         }
         else if (message instanceof ListRoomsMessage) {
-            // TODO: Handle room list.
+            handleListRoomsMessage((ListRoomsMessage) message);
         }
         else if (message instanceof YourInfoMessage) {
             handleYourInfoMessage((YourInfoMessage) message);
@@ -95,14 +95,13 @@ public class Client implements Runnable, SocketHandlerListener {
 
     private void handleHelloMessage(SocketHandler senderSocketHandler, HelloMessage message) {
         User sender = message.getSender();
-        socketHandlerUserMap.put(senderSocketHandler, sender);
-
         if (isHost) {
             // Send new client information to all clients.
             sendMessageToAll(new UserInfoMessage(clientUser, sender));
             // Send message to the new client.
-            sendMessage(new HelloMessage(clientUser), sender.getSocketAddress());
+            sendMessage(new HelloMessage(clientUser), senderSocketHandler);
         }
+        socketHandlerUserMap.put(senderSocketHandler, sender);
     }
 
     private void handleUserInfoMessage(UserInfoMessage message) {
@@ -118,7 +117,7 @@ public class Client implements Runnable, SocketHandlerListener {
         }
     }
 
-    private void handleRoomListMessage(RequestRoomsMessage message) {
+    private void handleListRoomsMessage(ListRoomsMessage message) {
         /*
         TODO:
         try{
