@@ -75,6 +75,16 @@ public class BlockTalkClientProgram implements ClientListener {
             } else if (message.startsWith("/HLO")) {
                 System.out.println("SEND HLO");
                 client.sendMessageToAll(new HelloMessage(clientUser));
+            } else if (message.startsWith("/ODR")) {
+                System.out.println("CURRENT TIMESTAMP = " + client.peekTimestamp());
+                Message msgA = new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "A");
+                Message msgB = new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "B");
+                Message msgC = new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "C");
+                client.sendMessageToAll(msgC);
+                client.sendMessageToAll(msgB);
+                client.sendMessageToAll(msgA);
+
+
             } else {
                 client.sendMessageToAll(new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), message));
             }

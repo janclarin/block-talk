@@ -303,6 +303,7 @@ public class Client implements Runnable, SocketHandlerListener {
     private boolean handleChatMessage(ChatMessage message) {
         if(message.getTimestamp() > peekTimestamp()){
             //Put it into a queue to be taken off when timestamp is higher
+            return false;
         }
         timestamp(); //increment the timestamp
         return true;
