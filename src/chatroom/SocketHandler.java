@@ -20,14 +20,14 @@ public class SocketHandler implements Runnable {
     private final Socket socket;
 
     /**
-     * OutputStream of socket
-     */
-    private OutputStream out;
-
-    /**
      * Listener to notify.
      */
     private final SocketHandlerListener listener;
+
+    /**
+     * OutputStream of socket
+     */
+    private OutputStream out;
 
     /**
      * Indicates whether or not to streaming input from Socket.
@@ -85,12 +85,13 @@ public class SocketHandler implements Runnable {
         }
     }
 
+    /**
+     * Returns the remote socket address of the socket.
+     *
+     * @return The remote socket address.
+     */
     public InetSocketAddress getRemoteSocketAddress() {
         return (InetSocketAddress) socket.getRemoteSocketAddress();
-    }
-
-    public InetSocketAddress getLocalSocketAddress() {
-        return (InetSocketAddress) socket.getLocalSocketAddress();
     }
 
     /**
