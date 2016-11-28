@@ -46,14 +46,17 @@ public class BlockTalkClientProgram implements ClientListener {
         BlockTalkClientProgram program = new BlockTalkClientProgram();
         Scanner scanner = new Scanner(new BufferedReader(new InputStreamReader(System.in)));
 
-        // Prompt user for information about client and server.
+        // Prompt user for user information
         User clientUser = promptClientInfo(scanner);
-        InetSocketAddress serverManagerSocketAddress = promptServerManagerAddress(scanner);
 
         // Start client.
         Client client = new Client(clientUser, program);
         new Thread(client).start();
 
+        // Prompt user for server information
+        InetSocketAddress serverManagerSocketAddress = promptServerManagerAddress(scanner);
+
+        //Interact with the server - will end with user in a room
         promptJoinOrHost(scanner, client, clientUser, serverManagerSocketAddress);
 
         // Listen for user input.
