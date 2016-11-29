@@ -128,6 +128,7 @@ public class Server {
 		else {
 			QueueMessage queueMessage = (QueueMessage)message;
 			queuedMessages.put(queueMessage.getMessageId(), queueMessage.getMessage());
+			sendMessage(new AckMessage((InetSocketAddress)serverSocket.getLocalSocketAddress(), "Queued Message"));
 		}
 	}
 	

@@ -24,11 +24,8 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
     public Message sendMessage(Socket socket, Message outgoing) throws IOException {
         synchronized (socket) {
             OutputStream serverOutputStream = socket.getOutputStream();
-
             serverOutputStream.write(outgoing.toByteArray());
             serverOutputStream.flush();
-
-            // Return the response.
             return MessageReadHelper.readNextMessage(socket.getInputStream());
         }
     }
