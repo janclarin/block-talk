@@ -16,6 +16,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.UUID;
 
 /**
  * This class represents a head server of the system for exchanging
@@ -34,6 +35,11 @@ public class Server {
 	private Socket managerSocket;
 	private int port;
 	private InetAddress ip;
+	
+	/**
+	 * Messages currently stored in server queue
+	 */
+	private HashMap<UUID, Message> queuedMessages;
 	
 	/**
 	 * [RoomName, Chatroom] Hash Map of all existing chatrooms on the server
@@ -110,11 +116,28 @@ public class Server {
 	}
 	
 	/**
-	 * Read incoming message and handle it
+	 * Queue incoming messages
 	 * 
 	 * @param message
+	 * @throws MessageTypeNotSupportedException
 	 */
 	public void parseMessage(Message message) throws MessageTypeNotSupportedException {
+		if (!(message instanceof QueueMessage)) {
+			processMessage(queuedMessages.get(((ProcessMessage)message).getMessageId()));
+		}
+		else {
+			QueueMessage queueMessage = (QueueMessage)message;
+			queuedMessages.put(queueMessage.getMessageId(), queueMessage.getMessage());
+		}
+	}
+	
+	/**
+	 * Process queued message
+	 * 
+	 * @param message
+	 * @throws MessageTypeNotSupportedException
+	 */
+	public void processMessage(Message message) throws MessageTypeNotSupportedException {
 		InetSocketAddress serverSocketAddress = (InetSocketAddress) serverSocket.getLocalSocketAddress();
 		if (message instanceof HostRoomMessage) {
 			// Maps the chat room to the host room message sender's socket address.
@@ -124,11 +147,11 @@ public class Server {
 			sendMessage(new AckMessage(serverSocketAddress, "Host Updated"));
 		} else if (message instanceof RequestRoomListMessage) {
 			sendMessage(new RoomListMessage(serverSocketAddress, new ArrayList<>(roomMap.values())));
-		} else {
-			// Handle more message types here.
-		    throw new MessageTypeNotSupportedException();
+		} else{
+			throw new MessageTypeNotSupportedException();
 		}
 	}
+	
 	
 	/**
 	 * Send reply message

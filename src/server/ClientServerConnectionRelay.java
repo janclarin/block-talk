@@ -39,12 +39,16 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
         Message responseMessage = null;
         for (Socket serverSocket : serverSockets) {
             try {
-                // TODO: Ensure that every response is the same from every server.
                 responseMessage = sendMessage(serverSocket, message);
             } catch (IOException e) {
                 e.printStackTrace();
+                continue;
             }
-        }
+    	}
         return responseMessage;
+    }
+    
+    public void checkMessage(Message message) {
+    	
     }
 }
