@@ -16,6 +16,8 @@ import models.messages.*;
  * Example class: Interacting with the server
  * 
  * @author Clin
+ * 
+ * TODO: remove this entire class
  *
  */
 public class testclient {
@@ -62,6 +64,11 @@ public class testclient {
 			
 			HostRoomMessage host = new HostRoomMessage(user.getSocketAddress(), "teatime");
 			toServer.write(host.toByteArray());
+			toServer.flush();
+			response1 = MessageReadHelper.readNextMessage(fromServer);
+			
+			RequestRoomListMessage rm = new RequestRoomListMessage(user.getSocketAddress());
+			toServer.write(rm.toByteArray());
 			toServer.flush();
 			response1 = MessageReadHelper.readNextMessage(fromServer);
 
