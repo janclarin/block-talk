@@ -1,6 +1,5 @@
 package server;
 
-import models.User;
 import models.messages.Message;
 
 /**

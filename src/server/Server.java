@@ -4,10 +4,8 @@ import exceptions.ChatRoomNotFoundException;
 import exceptions.MessageTypeNotSupportedException;
 import helpers.MessageReadHelper;
 import models.ChatRoom;
-import models.User;
 import models.messages.*;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
@@ -34,12 +32,11 @@ public class Server {
 	private ServerSocket serverSocket;
 	private Socket managerSocket;
 	private int port;
-	private InetAddress ip;
 	
 	/**
-	 * Messages currently stored in server queue
+	 * [UUID, Message] Map of stored queue messages
 	 */
-	private HashMap<UUID, Message> queuedMessages;
+	private HashMap<UUID, Message> queuedMessages = new HashMap<>();
 	
 	/**
 	 * [RoomName, Chatroom] Hash Map of all existing chatrooms on the server
@@ -75,7 +72,7 @@ public class Server {
 			}
 			managerSocket.close();
 			serverSocket.close();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -125,12 +122,11 @@ public class Server {
 		if (!(message instanceof QueueMessage)) {
 			UUID messageId = ((ProcessMessage)message).getMessageId();
 			processMessage(queuedMessages.get(messageId));
-			queuedMessages.remove(messageId);
 		}
 		else {
 			QueueMessage queueMessage = (QueueMessage)message;
 			queuedMessages.put(queueMessage.getMessageId(), queueMessage.getMessage());
-			sendMessage(new AckMessage((InetSocketAddress)serverSocket.getLocalSocketAddress(), String.format("Queued %s", queueMessage.getMessageId().toString())));
+			sendMessage(new ProcessMessage((InetSocketAddress)serverSocket.getLocalSocketAddress(), queueMessage.getMessageId()));
 		}
 	}
 	

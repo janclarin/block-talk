@@ -2,7 +2,6 @@ package models.messages;
 
 import java.net.InetSocketAddress;
 import java.util.UUID;
-
 import models.MessageType;
 
 public class QueueMessage extends Message {
@@ -24,7 +23,14 @@ public class QueueMessage extends Message {
 	}
 
 	@Override
-	protected String getData() {
-		return MessageType.QUEUE.getProtocolCode();
+	public String getData() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(MessageType.QUEUE.getProtocolCode());
+        stringBuilder.append(" ");
+        stringBuilder.append(messageId.toString());
+        stringBuilder.append("\n");
+        stringBuilder.append(queuedMessage.getData());
+        return stringBuilder.toString();
 	}
+	
 }

@@ -1,19 +1,11 @@
 package server;
 
 import helpers.MessageReadHelper;
-import models.User;
-import models.messages.AckMessage;
-import models.messages.HostRoomMessage;
 import models.messages.Message;
 import models.messages.ProcessMessage;
 import models.messages.QueueMessage;
-import models.messages.RequestRoomListMessage;
-
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,34 +36,32 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
     		do{
         		try{
             		reply = sendMessage(serverSocket, message);
-        		}
-        		catch (Exception ex){
+        		} catch (Exception ex){
+        			reply = null;
         			ex.printStackTrace();
         		}
-    		}
-    		while (checkMessageId(reply, messageId));
+    		} while (!checkMessageId(reply, messageId));
     		replies.add(reply);	
     	}
-    	replies.removeAll(Collections.singleton(null));
     	return replies.iterator().next();
     }
 
     @Override
     public Message messageReceived(Message message) {
         Message responseMessage = null;
-        List<Message> replies = null;
         UUID queueId =  UUID.randomUUID();
-        responseMessage = sendToServers(new QueueMessage(null, message, queueId), queueId);
-        responseMessage = sendToServers(new ProcessMessage(null, queueId), queueId);
+        responseMessage = sendToServers(new QueueMessage(message.getSenderSocketAddress(), message, queueId), queueId);
+        responseMessage = sendToServers(new ProcessMessage(message.getSenderSocketAddress(), queueId), queueId);
         return responseMessage;
     }
     
     public boolean checkMessageId(Message message, UUID messageId) {
-		if(message instanceof AckMessage
-				&& !((AckMessage) message).getInformation().substring(7).equals(messageId.toString())){
+    	if(message == null){
+    		return false;
+    	} else if(message instanceof ProcessMessage
+				&& !((ProcessMessage)message).getMessageId().equals(messageId)){
 			return false;
-		}
-		else{
+		} else{
 			return true;
 		}
     }

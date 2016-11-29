@@ -19,6 +19,10 @@ public class ProcessMessage extends Message {
 
     @Override
     protected String getData() {
-        return MessageType.PROCESSDATA.getProtocolCode();
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(MessageType.PROCESSDATA.getProtocolCode());
+        stringBuilder.append("\n");
+        stringBuilder.append(messageId.toString());
+        return stringBuilder.toString();
     }
 }
