@@ -9,7 +9,7 @@ public class QueueMessage extends Message {
 	private Message queuedMessage;
 	private UUID messageId;
 	
-	protected QueueMessage(InetSocketAddress senderSocketAddress, Message message, UUID messageId) {
+	public QueueMessage(InetSocketAddress senderSocketAddress, Message message, UUID messageId) {
 		super(senderSocketAddress);
 		queuedMessage = message;
 		this.messageId = messageId;

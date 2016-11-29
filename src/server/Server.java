@@ -123,12 +123,14 @@ public class Server {
 	 */
 	public void parseMessage(Message message) throws MessageTypeNotSupportedException {
 		if (!(message instanceof QueueMessage)) {
-			processMessage(queuedMessages.get(((ProcessMessage)message).getMessageId()));
+			UUID messageId = ((ProcessMessage)message).getMessageId();
+			processMessage(queuedMessages.get(messageId));
+			queuedMessages.remove(messageId);
 		}
 		else {
 			QueueMessage queueMessage = (QueueMessage)message;
 			queuedMessages.put(queueMessage.getMessageId(), queueMessage.getMessage());
-			sendMessage(new AckMessage((InetSocketAddress)serverSocket.getLocalSocketAddress(), "Queued Message"));
+			sendMessage(new AckMessage((InetSocketAddress)serverSocket.getLocalSocketAddress(), String.format("Queued %s", queueMessage.getMessageId().toString())));
 		}
 	}
 	
