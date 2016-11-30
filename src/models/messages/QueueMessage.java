@@ -4,6 +4,9 @@ import java.net.InetSocketAddress;
 import java.util.UUID;
 import models.MessageType;
 
+/**
+ * Message class to be sent to server when a message should be stored in queue to await processing.
+ */
 public class QueueMessage extends Message {
 	private Message queuedMessage;
 	private UUID messageId;

@@ -17,7 +17,7 @@ public enum MessageType {
     ROOM_LIST("LST"),
     USER("USR"),
     YOU("YOU"),
-    PROCESSDATA("PRC"),
+    PROCESS("PRC"),
     QUEUE("QUE");
 
     private final String protocolCode;

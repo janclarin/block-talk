@@ -29,18 +29,28 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
         }
     }
     
-    public Message sendToServers(Message message, UUID messageId){
+    /**
+     * Send messages to server sockets until a valid reply is received. Returns first message in the list.
+     * 
+     * @param message
+     * @param messageId
+     * @return
+     */
+    public Message sendMessageToServerSockets(Message message, UUID messageId){
     	List<Message> replies = new ArrayList<Message>();
     	for(Socket serverSocket : serverSockets){
     		Message reply = null;
     		do{
         		try{
             		reply = sendMessage(serverSocket, message);
-        		} catch (Exception ex){
+            		if(reply instanceof ProcessMessage){
+            			reply = ((ProcessMessage)reply).hasMessageId(messageId) ? reply : null;
+            		}
+        		} catch (IOException ex){
         			reply = null;
         			ex.printStackTrace();
         		}
-    		} while (!checkMessageId(reply, messageId));
+    		} while (reply != null);
     		replies.add(reply);	
     	}
     	return replies.iterator().next();
@@ -50,20 +60,8 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
     public Message messageReceived(Message message) {
         Message responseMessage = null;
         UUID queueId =  UUID.randomUUID();
-        responseMessage = sendToServers(new QueueMessage(message.getSenderSocketAddress(), message, queueId), queueId);
-        responseMessage = sendToServers(new ProcessMessage(message.getSenderSocketAddress(), queueId), queueId);
+        responseMessage = sendMessageToServerSockets(new QueueMessage(message.getSenderSocketAddress(), message, queueId), queueId);
+        responseMessage = sendMessageToServerSockets(new ProcessMessage(message.getSenderSocketAddress(), queueId), queueId);
         return responseMessage;
-    }
-    
-    public boolean checkMessageId(Message message, UUID messageId) {
-    	if(message == null){
-    		return false;
-    	} else if(message instanceof ProcessMessage
-				&& !((ProcessMessage)message).getMessageId().equals(messageId)){
-			return false;
-		} else{
-			return true;
-		}
-    }
-    
+    }    
 }

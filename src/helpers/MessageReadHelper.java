@@ -107,7 +107,7 @@ public class MessageReadHelper{
 	        case YOU:
 	            User yourContentUser = getMessageContentUser(messageContent);
 	            return new YourInfoMessage(senderSocketAddress, yourContentUser);
-	        case PROCESSDATA:
+	        case PROCESS:
 	        	UUID messageId = getMessageContentId(messageContent);
 	        	return new ProcessMessage(senderSocketAddress, messageId);
 	        case QUEUE:
