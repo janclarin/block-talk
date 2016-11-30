@@ -119,7 +119,7 @@ public class Server {
 	 * @throws MessageTypeNotSupportedException
 	 */
 	public void parseMessage(Message message) throws MessageTypeNotSupportedException {
-		if (!(message instanceof QueueMessage)) {
+		if (message instanceof ProcessMessage) {
 			UUID messageId = ((ProcessMessage)message).getMessageId();
 			processMessage(queuedMessages.get(messageId));
 		}
@@ -144,9 +144,11 @@ public class Server {
 			InetSocketAddress hostSocketAddress = hostRoomMessage.getSenderSocketAddress();
 			addRoomMap(hostRoomMessage.getRoomName(), hostSocketAddress);
 			sendMessage(new AckMessage(serverSocketAddress, "Host Updated"));
-		} else if (message instanceof RequestRoomListMessage) {
+		} 
+		else if (message instanceof RequestRoomListMessage) {
 			sendMessage(new RoomListMessage(serverSocketAddress, new ArrayList<>(roomMap.values())));
-		} else{
+		} 
+		else{
 			throw new MessageTypeNotSupportedException();
 		}
 	}

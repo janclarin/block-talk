@@ -225,7 +225,6 @@ public class MessageReadHelper{
      * @return
      */
     private static UUID getMessageContentId(String messageContent) {
-    	UUID id = UUID.fromString(messageContent);
-    	return id;
+    	return UUID.fromString(messageContent);
     }
 }
