@@ -111,10 +111,13 @@ public class MessageReadHelper{
 	        	UUID messageId = getMessageContentId(messageContent);
 	        	return new ProcessMessage(senderSocketAddress, messageId);
 	        case QUEUE:
-	        	UUID queueMessageId = getMessageContentId(messageContent.split("\n")[0]);
+	        	String idString = messageContent.split("\n")[0];
+	        	String dataMessageString = messageContent.split("\n")[1];
+	        	byte[] dataMessageBytes = dataMessageString.getBytes();
+	        	UUID queueMessageId = getMessageContentId(idString);
 	        	Message message = createMessage(senderSocketAddress, 
-	        			getDataMessageType(messageContent.split("\n")[1].getBytes()), 
-	        			getDataMessageContent(messageContent.split("\n")[1].getBytes()));
+	        			getDataMessageType(dataMessageBytes), 
+	        			getDataMessageContent(dataMessageBytes));
 	        	return new QueueMessage(senderSocketAddress, message, queueMessageId);
 	        // TODO: case DISCONNECTED:
 	        // TODO: case LEADER:

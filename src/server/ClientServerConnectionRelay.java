@@ -42,10 +42,10 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
     		Message reply = null;
     		do{
         		try{
-            		reply = sendMessage(serverSocket, message);
-            		if(reply instanceof ProcessMessage){
-            			reply = ((ProcessMessage)reply).hasMessageId(messageId) ? reply : null;
-            		}
+					reply = sendMessage(serverSocket, message);
+					if(reply instanceof ProcessMessage){
+						reply = ((ProcessMessage)reply).hasMessageId(messageId) ? reply : null;
+					}
         		} catch (IOException ex){
         			reply = null;
         			ex.printStackTrace();
