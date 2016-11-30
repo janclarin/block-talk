@@ -66,7 +66,7 @@ public class MessageReadHelper{
      * @throws UnknownHostException
      * @throws IllegalArgumentException Thrown when the message
      */
-    private static Message createMessage(byte[] header, byte[] data) throws UnknownHostException, MessageTypeNotSupportedException {
+    private static Message createMessage(byte[] header, byte[] data) throws UnknownHostException, MessageTypeNotSupportedException, IllegalArgumentException{
 	    InetAddress headerIpAddress = getHeaderIpAddress(header);
 	    int headerPort = getHeaderPort(header);
         InetSocketAddress senderSocketAddress = new InetSocketAddress(headerIpAddress, headerPort);
@@ -167,7 +167,7 @@ public class MessageReadHelper{
      * @param messageContent Message content string.
      * @return User parsed from message content.
      */
-    private static User getMessageContentUser(String messageContent) throws UnknownHostException {
+    private static User getMessageContentUser(String messageContent) throws UnknownHostException, IllegalArgumentException {
         String[] messageContentSplit = messageContent.split(" ");
         if (messageContentSplit.length != 3) {
             throw new IllegalArgumentException("Argument must be of the form: <username> <ipAddress> <port>.");
@@ -209,7 +209,7 @@ public class MessageReadHelper{
      * @param messageContent Message content string.
      * @return String[] Containing {timestamp, content}
      */
-    private static String[] splitChatMessage(String messageContent){
+    private static String[] splitChatMessage(String messageContent) throws IllegalArgumentException{
         //Split at first space (should be after the timestamp)
         String[] splitContent = messageContent.split(" ",2);
         if (Integer.parseInt(splitContent[0]) < 0) {

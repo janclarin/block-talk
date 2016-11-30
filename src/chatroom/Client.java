@@ -359,9 +359,7 @@ public class Client implements Runnable, SocketHandlerListener {
      * @return int The timestamp before incremented
      */
     public int timestamp(){
-        int time = timestamp;
-        timestamp++;
-        return time;
+        return timestamp++; //Post increment the timestampg
     }
 
     /**
