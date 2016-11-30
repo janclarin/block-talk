@@ -26,7 +26,7 @@ public class ChatMessage extends Message {
 
     @Override
     protected String getData() {
-        return String.format("%s %x %s", MessageType.MESSAGE.getProtocolCode(),timestamp, message);
+        return String.format("%s %d %s", MessageType.MESSAGE.getProtocolCode(),timestamp, message);
     }
 
     @Override
