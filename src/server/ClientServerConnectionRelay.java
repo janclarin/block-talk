@@ -1,11 +1,13 @@
 package server;
 
 import helpers.MessageReadHelper;
+import models.messages.ByeMessage;
 import models.messages.Message;
 import models.messages.ProcessMessage;
 import models.messages.QueueMessage;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,8 +40,8 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
      */
     public Message sendMessageToServerSockets(Message message, UUID messageId){
     	List<Message> replies = new ArrayList<Message>();
+		Message reply = null;
     	for(Socket serverSocket : serverSockets){
-    		Message reply = null;
     		do{
         		try{
 					reply = sendMessage(serverSocket, message);
@@ -47,12 +49,18 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
 						reply = ((ProcessMessage)reply).hasMessageId(messageId) ? reply : null;
 					}
         		} catch (IOException ex){
-        			reply = null;
+        			reply = new ByeMessage((InetSocketAddress) serverSocket.getLocalSocketAddress());
         			ex.printStackTrace();
         		}
     		} while (reply == null);
     		replies.add(reply);	
     	}
+    	replies.removeIf(listMessage -> {
+    		if (listMessage instanceof ByeMessage) {
+    			return true;
+    		}
+    		return false;
+    	});
     	return replies.iterator().next();
     }
 

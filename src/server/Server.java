@@ -122,11 +122,13 @@ public class Server {
 		if (message instanceof ProcessMessage) {
 			UUID messageId = ((ProcessMessage)message).getMessageId();
 			processMessage(queuedMessages.get(messageId));
+			System.out.println(String.format("DEBUG: Processing Message ID: %s", messageId.toString()));
 		}
 		else {
 			QueueMessage queueMessage = (QueueMessage)message;
 			queuedMessages.put(queueMessage.getMessageId(), queueMessage.getMessage());
 			sendMessage(new ProcessMessage((InetSocketAddress)serverSocket.getLocalSocketAddress(), queueMessage.getMessageId()));
+			System.out.println(String.format("DEBUG: Queued Message ID: %s", queueMessage.getMessageId()));
 		}
 	}
 	
