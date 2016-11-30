@@ -67,20 +67,19 @@ public class MessageReadHelper{
      * @throws UnknownHostException
      * @throws IllegalArgumentException Thrown when the message
      */
-    private static Message createMessage(byte[] header, byte[] data) throws UnknownHostException, MessageTypeNotSupportedException {
+    private static Message createMessage(byte[] header, byte[] data) throws UnknownHostException, MessageTypeNotSupportedException, IllegalArgumentException{
 	    InetAddress headerIpAddress = getHeaderIpAddress(header);
 	    int headerPort = getHeaderPort(header);
         InetSocketAddress senderSocketAddress = new InetSocketAddress(headerIpAddress, headerPort);
 
         MessageType messageType = getDataMessageType(data);
         String messageContent = getDataMessageContent(data);
-
         return createMessage(senderSocketAddress, messageType, messageContent);
     }
     
     private static Message createMessage(InetSocketAddress senderSocketAddress, MessageType messageType, String messageContent) 
-    		throws UnknownHostException, MessageTypeNotSupportedException {
-	        switch (messageType) {
+		throws UnknownHostException, MessageTypeNotSupportedException {
+        switch (messageType) {
 	        case ACKNOWLEDGEMENT:
 	        	if(messageContent.length() > 1){
 	        		return new AckMessage(senderSocketAddress, messageContent);
@@ -89,7 +88,8 @@ public class MessageReadHelper{
 	        case BYE:
 	            return new ByeMessage(senderSocketAddress);
 	        case MESSAGE:
-	            return new ChatMessage(senderSocketAddress, messageContent);
+                String[] content = splitChatMessage(messageContent);
+                return new ChatMessage(senderSocketAddress, Integer.parseInt(content[0]),content[1]);
 	        case HELLO:
 	            User sender = getMessageContentUser(messageContent);
 	            return new HelloMessage(sender);
@@ -187,7 +187,7 @@ public class MessageReadHelper{
      * @param messageContent Message content string.
      * @return User parsed from message content.
      */
-    private static User getMessageContentUser(String messageContent) throws UnknownHostException {
+    private static User getMessageContentUser(String messageContent) throws UnknownHostException, IllegalArgumentException {
         String[] messageContentSplit = messageContent.split(" ");
         if (messageContentSplit.length != 3) {
             throw new IllegalArgumentException("Argument must be of the form: <username> <ipAddress> <port>.");
@@ -219,6 +219,23 @@ public class MessageReadHelper{
             chatRooms.add(new ChatRoom(chatRoomName, chatRoomHostSocketAddress));
         }
         return chatRooms;
+    }
+
+    /**
+     * Split timestamp and chat message content
+     * Expecting the format:
+     * <timestamp> <message>
+     *
+     * @param messageContent Message content string.
+     * @return String[] Containing {timestamp, content}
+     */
+    private static String[] splitChatMessage(String messageContent) throws IllegalArgumentException{
+        //Split at first space (should be after the timestamp)
+        String[] splitContent = messageContent.split(" ",2);
+        if (Integer.parseInt(splitContent[0]) < 0) {
+           throw new IllegalArgumentException("Argument must be of the form: <timestamp> <content>.");
+        }
+        return splitContent;
     }
     
     /**
