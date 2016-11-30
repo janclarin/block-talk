@@ -80,7 +80,8 @@ public class MessageReadHelper{
             case BYE:
                 return new ByeMessage(senderSocketAddress);
             case MESSAGE:
-                return new ChatMessage(senderSocketAddress, messageContent);
+                String[] content = splitChatMessage(messageContent);
+                return new ChatMessage(senderSocketAddress, Integer.parseInt(content[0]),content[1]);
             case HELLO:
                 User sender = getMessageContentUser(messageContent);
                 return new HelloMessage(sender);
@@ -198,5 +199,22 @@ public class MessageReadHelper{
             chatRooms.add(new ChatRoom(chatRoomName, chatRoomHostSocketAddress));
         }
         return chatRooms;
+    }
+
+    /**
+     * Split timestamp and chat message content
+     * Expecting the format:
+     * <timestamp> <message>
+     *
+     * @param messageContent Message content string.
+     * @return String[] Containing {timestamp, content}
+     */
+    private static String[] splitChatMessage(String messageContent){
+        //Split at first space (should be after the timestamp)
+        String[] splitContent = messageContent.split(" ",2);
+        if (Integer.parseInt(splitContent[0]) < 0) {
+           throw new IllegalArgumentException("Argument must be of the form: <timestamp> <content>.");
+        }
+        return splitContent;
     }
 }
