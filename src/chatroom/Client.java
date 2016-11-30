@@ -70,20 +70,9 @@ public class Client implements Runnable, SocketHandlerListener {
     private int timestamp = 0;
 
     /**
-     * Comparator for ordering ChatMessages in the message queue
-     */
-    private Comparator<SenderMessageTuple> timestampComparator = new Comparator<SenderMessageTuple>(){
-        @Override
-        public int compare(final SenderMessageTuple a, final SenderMessageTuple b)
-        {
-            return Integer.valueOf(a.message.getTimestamp()).compareTo(Integer.valueOf(b.message.getTimestamp()));
-        }
-    };
-
-    /**
      * Priority queue for later-timestamped messages
      */
-    private PriorityQueue<SenderMessageTuple> queuedMessages = new PriorityQueue<SenderMessageTuple>(timestampComparator);
+    private PriorityQueue<SenderMessageTuple> queuedMessages = new PriorityQueue<SenderMessageTuple>();
 
     /**
      * Creates a new Client with the given models.
