@@ -13,6 +13,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class MessageReadHelper{
 
@@ -74,37 +75,57 @@ public class MessageReadHelper{
         MessageType messageType = getDataMessageType(data);
         String messageContent = getDataMessageContent(data);
 
-        switch (messageType) {
-            case ACKNOWLEDGEMENT:
-                return new AckMessage(senderSocketAddress);
-            case BYE:
-                return new ByeMessage(senderSocketAddress);
-            case MESSAGE:
-                return new ChatMessage(senderSocketAddress, messageContent);
-            case HELLO:
-                User sender = getMessageContentUser(messageContent);
-                return new HelloMessage(sender);
-            case HOST_ROOM:
-                // This assumes that the room name is the only thing in the message body.
-                return new HostRoomMessage(senderSocketAddress, messageContent);
-            case REQUEST_ROOM_LIST:
-                return new RequestRoomListMessage(senderSocketAddress);
-            case ROOM_LIST:
-                List<ChatRoom> chatRooms = getMessageContentChatRooms(messageContent);
-                return new RoomListMessage(senderSocketAddress, chatRooms);
-            case USER:
-                User contentUser = getMessageContentUser(messageContent);
-                return new UserInfoMessage(senderSocketAddress, contentUser);
-            case YOU:
-                User yourContentUser = getMessageContentUser(messageContent);
-                return new YourInfoMessage(senderSocketAddress, yourContentUser);
-            // TODO: case DISCONNECTED:
-            // TODO: case LEADER:
-            // TODO: case NEGATIVE_ACKNOWLEDGEMENT:
-            // TODO: case ORDER:
-            default:
-                throw new MessageTypeNotSupportedException();
-        }
+        return createMessage(senderSocketAddress, messageType, messageContent);
+    }
+    
+    private static Message createMessage(InetSocketAddress senderSocketAddress, MessageType messageType, String messageContent) 
+    		throws UnknownHostException, MessageTypeNotSupportedException {
+	        switch (messageType) {
+	        case ACKNOWLEDGEMENT:
+	        	if(messageContent.length() > 1){
+	        		return new AckMessage(senderSocketAddress, messageContent);
+	        	}
+	            return new AckMessage(senderSocketAddress);
+	        case BYE:
+	            return new ByeMessage(senderSocketAddress);
+	        case MESSAGE:
+	            return new ChatMessage(senderSocketAddress, messageContent);
+	        case HELLO:
+	            User sender = getMessageContentUser(messageContent);
+	            return new HelloMessage(sender);
+	        case HOST_ROOM:
+	            // This assumes that the room name is the only thing in the message body.
+	            return new HostRoomMessage(senderSocketAddress, messageContent);
+	        case REQUEST_ROOM_LIST:
+	            return new RequestRoomListMessage(senderSocketAddress);
+	        case ROOM_LIST:
+	            List<ChatRoom> chatRooms = getMessageContentChatRooms(messageContent);
+	            return new RoomListMessage(senderSocketAddress, chatRooms);
+	        case USER:
+	            User contentUser = getMessageContentUser(messageContent);
+	            return new UserInfoMessage(senderSocketAddress, contentUser);
+	        case YOU:
+	            User yourContentUser = getMessageContentUser(messageContent);
+	            return new YourInfoMessage(senderSocketAddress, yourContentUser);
+	        case PROCESS:
+	        	UUID messageId = getMessageContentId(messageContent);
+	        	return new ProcessMessage(senderSocketAddress, messageId);
+	        case QUEUE:
+	        	String idString = messageContent.split("\n")[0];
+	        	String dataMessageString = messageContent.split("\n")[1];
+	        	byte[] dataMessageBytes = dataMessageString.getBytes();
+	        	UUID queueMessageId = getMessageContentId(idString);
+	        	Message message = createMessage(senderSocketAddress, 
+	        			getDataMessageType(dataMessageBytes), 
+	        			getDataMessageContent(dataMessageBytes));
+	        	return new QueueMessage(senderSocketAddress, message, queueMessageId);
+	        // TODO: case DISCONNECTED:
+	        // TODO: case LEADER:
+	        // TODO: case NEGATIVE_ACKNOWLEDGEMENT:
+	        // TODO: case ORDER:
+	        default:
+	            throw new MessageTypeNotSupportedException();
+	    }
     }
 
     /**
@@ -198,5 +219,15 @@ public class MessageReadHelper{
             chatRooms.add(new ChatRoom(chatRoomName, chatRoomHostSocketAddress));
         }
         return chatRooms;
+    }
+    
+    /**
+     * Creates a UUID from given message content
+     * 
+     * @param messageContent
+     * @return
+     */
+    private static UUID getMessageContentId(String messageContent) {
+    	return UUID.fromString(messageContent);
     }
 }
