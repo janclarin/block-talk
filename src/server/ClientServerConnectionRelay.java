@@ -50,7 +50,7 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
         			reply = null;
         			ex.printStackTrace();
         		}
-    		} while (reply != null);
+    		} while (reply == null);
     		replies.add(reply);	
     	}
     	return replies.iterator().next();
