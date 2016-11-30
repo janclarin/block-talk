@@ -1,20 +1,19 @@
 package chatroom;
 
+import models.ChatRoom;
 import models.User;
-import models.Message;  
+import models.messages.*;
+import sockets.SocketHandler;
+import sockets.SocketHandlerListener;
 
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.ArrayList;
 import java.util.List;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 /**
  * This class represents a client of the system and will
@@ -27,17 +26,22 @@ import java.net.UnknownHostException;
  */
 public class Client implements Runnable, SocketHandlerListener {
     /**
-     * Username used for sending messages.
+     * Maps SocketHandlers to the User of the connection.
      */
-    private final String clientUsername;
+    private final Map<SocketHandler, User> socketHandlerUserMap = new HashMap<>();
 
     /**
-     * Port used for incoming requests.
+     * Listener for chat room events.
      */
-    private final int clientPort;
+    private final ClientListener listener;
 
     /**
-     * User associate with this client.
+     * Thread pool for SocketHandlers.
+     */
+    private ExecutorService socketHandlerThreadPool;
+
+    /**
+     * User associated with this client.
      */
     private User clientUser;
 
@@ -47,73 +51,58 @@ public class Client implements Runnable, SocketHandlerListener {
     private boolean isHost = false;
 
     /**
-     * Socket map for retrieving the socket handler for a models.User.
-     */
-    private final Map<User, SocketHandler> userSocketHandlerMap = new HashMap<>();
-
-    /**
-     * Thread pool for SocketHandlers.
-     */
-    private ExecutorService socketHandlerThreadPool;
-
-    /**
-     * Listener for chat room events.
-     */
-    private ClientListener listener;
-
-    /**
-     * Server socket for incoming connections.
-     */
-    private ServerSocket serverSocket;
-
-    /**
      * Determines if the Client should continue listening for requests.
      */
     private boolean continueRunning = true;
 
     /**
-     * Creates a new Client with the given models.User info.
+     * Creates a new Client with the given models.
      *
-     * @param clientPort Port that other Users will connect to.
+     * @param clientUser Client user information.
      * @param listener   Listener to notify when certain events occur.
      */
-    public Client(final String clientUsername, final int clientPort, final ClientListener listener) {
-        this.clientUsername = clientUsername;
-        this.clientPort = clientPort;
+    public Client(final User clientUser, final ClientListener listener) {
+        this.clientUser = clientUser;
         this.listener = listener;
     }
 
-    @Override
-    public void messageSent(SocketHandler recipientSocketHandler, User recipient, Message message) {
-        notifyMessageSent(recipient, message);
-    }
-
-    @Override
-    public void messageReceived(SocketHandler senderSocketHandler, User sender, Message message) {
-        if(true){
-            //REMOVE OLD SENDERSOCKETHANDLER ENTRY FROM HASHMAP
-            //TODO: this relies on username being ignored for equality
-            removeUserFromMap(senderSocketHandler);
-            userSocketHandlerMap.remove(sender);
-            userSocketHandlerMap.put(sender, senderSocketHandler);
-        }
-        notifyMessageReceived(sender, message);
-
-        // TODO: Remove auto-reply.
-        //sendMessage("Hello from " + clientUsername, sender);
+    /**
+     * Returns the list of known Users.
+     *
+     * @return List of known Users.
+     */
+    public List<User> getKnownUsersList() {
+        return new ArrayList<>(socketHandlerUserMap.values());
     }
 
     /**
-     * Starts listening to incomingSocket. Replies to every received message with the port number.
+     * Sets the field indicating whether or not this client is the host of its chat room.
+     *
+     * @param isHost Indicates whether or not this client is the host of its chat room.
+     */
+    public void setIsHost(boolean isHost) {
+        this.isHost = isHost;
+    }
+
+    /**
+     * Returns whether or not this client is the host of its chat room.
+     *
+     * @return boolean True if the this client is hosting a room
+     */
+    public boolean isHost() {
+        return this.isHost;
+    }
+
+    /**
+     * Starts listening for incoming connections. Creates a new SocketHandler for every new connection.
      */
     @Override
     public void run() {
         socketHandlerThreadPool = Executors.newCachedThreadPool();
 
         try {
-            serverSocket = new ServerSocket(clientPort);
-            //TODO - figure out how to get external ip - from server??
-            this.clientUser = new User(clientUsername, InetAddress.getLocalHost(), clientPort);
+            // Server socket for incoming connections.
+            ServerSocket serverSocket = new ServerSocket(clientUser.getPort());
 
             while (continueRunning) {
                 Socket socket = serverSocket.accept();
@@ -135,8 +124,8 @@ public class Client implements Runnable, SocketHandlerListener {
      * @param message The message as a String.
      */
     public void sendMessageToAll(Message message) {
-        for (User recipient : userSocketHandlerMap.keySet()) {
-            sendMessage(message, recipient);
+        for (SocketHandler recipientSocketHandler : socketHandlerUserMap.keySet()) {
+            sendMessage(message, recipientSocketHandler);
         }
     }
 
@@ -144,208 +133,164 @@ public class Client implements Runnable, SocketHandlerListener {
      * Sends a message to the given socket.
      *
      * @param message   The message as a Message object.
-     * @param recipient The User to send the message to.
+     * @param recipientSocketHandler The recipient's SocketHandler.
      */
-    public void sendMessage(Message message, User recipient) {
+    public void sendMessage(Message message, SocketHandler recipientSocketHandler) {
         try {
-            Thread.sleep(1000); // TODO: Remove delay.
-            SocketHandler socketHandler = getSocketHandler(recipient);
-            socketHandler.sendMessage(message);
+            recipientSocketHandler.sendMessage(message);
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (InterruptedException e) {
+        }
+    }
+
+    /**
+     * Sends a message to the given socket address.
+     * Tries to find an existing socket handler in the socketHandlerUserMap.
+     * If it does not find one, open a new socket connection.
+     *
+     * @param message The message to send.
+     * @param recipientSocketAddress The recipient's socket address.
+     */
+    public void sendMessage(Message message, InetSocketAddress recipientSocketAddress) {
+        try {
+            SocketHandler recipientSocketHandler = null;
+
+            // Find matching socket handler with the recipientSocketAddress.
+            for (SocketHandler socketHandler : socketHandlerUserMap.keySet()) {
+                // Compare IP address and ports.
+                if (socketHandler.getRemoteSocketAddress().equals(recipientSocketAddress)) {
+                    recipientSocketHandler = socketHandler;
+                    break;
+                }
+            }
+
+            // If there was no match, open a new socket handler connection.
+            if (recipientSocketHandler == null) {
+                recipientSocketHandler = openSocketConnection(recipientSocketAddress);
+            }
+
+            // Send the message with the socket handler pointing to the recipientSocketAddress.
+            sendMessage(message, recipientSocketHandler);
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     /**
-     * Finds the SocketHandler for a User if it exists.
+     * Notifies listener that a message was successfully sent through a SocketHandler.
      *
-     * @param user The User to find the SocketHandler for.
-     * @return The SocketHandler for a given user.
-     * @throws IOException Thrown when there is an issue creating a new Socket if the User does not have one.
+     * @param recipientSocketHandler The SocketHandler that the message was sent through.
+     * @param message The sent message.
      */
-    private SocketHandler getSocketHandler(User user) throws IOException {
-        SocketHandler socketHandler = userSocketHandlerMap.get(user);
-
-        if (socketHandler == null || socketHandler.isConnectionClosed()) {
-            Socket socket = new Socket(user.getIpAddress(), user.getPort());
-            socketHandler = new SocketHandler(socket, this);
-            userSocketHandlerMap.put(user, socketHandler);
-            socketHandlerThreadPool.execute(socketHandler);
-        }
-
-        return socketHandler;
-    }
-
-    /**
-     * Notifies all listeners about the sent message.
-     *
-     * @param recipient The User who received the sent message.
-     * @param message   The sent message.
-     */
-    private void notifyMessageSent(User recipient, Message message) {
+    @Override
+    public void messageSent(SocketHandler recipientSocketHandler, Message message) {
+        User recipient = socketHandlerUserMap.get(recipientSocketHandler);
+        // Notify listener that a message was sent.
         listener.messageSent(recipient, message);
     }
 
     /**
-     * Notifies all listeners about the received message.
+     * Responds to different types of received messages and notifies listeners about the message.
      *
-     * @param sender  The User who sent the received message.
+     * @param senderSocketHandler The SocketHandler that the message was received from.
      * @param message The received message.
      */
-    private void notifyMessageReceived(User sender, Message message) {
+    @Override
+    public void messageReceived(SocketHandler senderSocketHandler, Message message) {
+        if (message instanceof HelloMessage) {
+            handleHelloMessage(senderSocketHandler, (HelloMessage) message);
+        }
+        else if (message instanceof UserInfoMessage) {
+            handleUserInfoMessage((UserInfoMessage) message);
+        }
+        else if (message instanceof RoomListMessage) {
+            handleRoomListMessage((RoomListMessage) message);
+        }
+        else if (message instanceof YourInfoMessage) {
+            handleYourInfoMessage((YourInfoMessage) message);
+        }
+
+        // Notify listener that a message was received.
+        User sender = socketHandlerUserMap.get(senderSocketHandler);
         listener.messageReceived(sender, message);
-        if(message.getData().startsWith("MSG")){}
-        else if(message.getData().startsWith("ACK")){}
-        else if(message.getData().startsWith("HLO")){
-            if(isHost)
-            {
-                sendMessageToAll(new Message(serverSocket.getInetAddress(),clientPort,"USR "+sender.getUsername()+" "+sender.getIpAddress()+":"+sender.getPort()));
-                sendMessage(new Message(serverSocket.getInetAddress(),clientPort,"HLO "+clientUsername+" "+clientPort), sender);
-            }
+    }
+
+    /**
+     * Handles HelloMessages.
+     * Maps the sender of the message to the SocketHandler.
+     * If this client is the host, notify all other clients about the new client. Also, replies to the new client.
+     *
+     * @param senderSocketHandler The SocketHandler of the sender.
+     * @param message The message to handle.
+     */
+    private void handleHelloMessage(SocketHandler senderSocketHandler, HelloMessage message) {
+        User sender = message.getSender();
+        if (isHost) {
+            // Send new client information to all clients.
+            sendMessageToAll(new UserInfoMessage(clientUser, sender));
+            // Send message to the new client.
+            sendMessage(new HelloMessage(clientUser), senderSocketHandler);
         }
-        else if(message.getData().startsWith("USR")){
-            try{
-                String[] words = message.getData().split("[ :]");
-                User newUser = new User(words[1], InetAddress.getByName(words[2].replace("/","")), Integer.parseInt(words[3]));
-                if(!clientUser.equals(newUser)){
-                    SocketHandler newSocketHandler = openConnection(newUser);
-                    userSocketHandlerMap.put(newUser, newSocketHandler);
-                    sendMessage(new Message(serverSocket.getInetAddress(),serverSocket.getLocalPort(),"HLO "+clientUsername+" "+serverSocket.getLocalPort()),newUser);
-                }
-            }catch(IOException e){
-                //could not creat given usr
-                System.out.println("FAILED TO CREATE GIVEN USR");
-                e.printStackTrace();
-            }
-            
-        }
-        else if(message.getData().startsWith("LST")){
-            try{
-                String[] rooms = message.getData().substring(4).split("\n");
-                System.out.println("Joining room: "+rooms[0].split(" @ ")[0]);
-                User newUser = new User("NewUser", InetAddress.getByName(rooms[0].split(" @ ")[1].split(":")[0].replace("/","")), Integer.parseInt(rooms[0].split(":")[1]));
-                sendMessage(new Message(serverSocket.getInetAddress(),clientPort,"HLO "+clientUsername+" "+clientPort), newUser);
-            }catch(UnknownHostException e){
-                //could not creat given usr
-                System.out.println("FAILED TO JOIN ROOM");
-                e.printStackTrace();
-            }
-        }
-        else if(message.getData().startsWith("YOU"))
-        {
-            try{
-                String[] words = message.getData().substring(4).split(" ");
-                clientUser = new User(words[0], InetAddress.getByName(words[1].replace("/","")), Integer.parseInt(words[2]));
-            }catch(UnknownHostException e){
-                //could not creat self
-                System.out.println("FAILED TO PARSE USER INFO");
+        socketHandlerUserMap.put(senderSocketHandler, sender);
+    }
+
+    /**
+     * Handles UserInfoMessages.
+     * Ignores the message if it is from this client.
+     * Otherwise, opens a new connection to the user specified in the message.
+     *
+     * @param message The message to handle.
+     */
+    private void handleUserInfoMessage(UserInfoMessage message) {
+        User messageUser = message.getUser();
+        if (!clientUser.equals(messageUser)) {
+            try {
+                SocketHandler newSocketHandler = openSocketConnection(messageUser.getSocketAddress());
+                socketHandlerUserMap.put(newSocketHandler, messageUser);
+                sendMessage(new HelloMessage(clientUser), newSocketHandler);
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
     /**
-     * Notifies all listeners about the new user who has joined.
+     * Handles RoomListMessages.
+     * Picks the first room it can join and joins it.
      *
-     * @param newUser The new user who has joined.
+     * @param message
      */
-    private void notifyUserHasJoined(User newUser) {
-        listener.userHasJoined(newUser);
-    }
-
-    /**
-     * Returns a string form of the current known users map
-     *
-     * @return String The list of known users and their SocketHandlers
-     */
-    public List<User> getKnownUsersList(){
-        return new ArrayList<User>(userSocketHandlerMap.keySet());
-    }
-
-    /**
-     * Removes a user and their socket from known users map
-     *
-     * @return boolean True if the user was removed successfully
-     */
-    public boolean removeUserFromMap(User user){
-        SocketHandler socketHandler = userSocketHandlerMap.remove(user);
-        return socketHandler != null;
-    }
-
-    /**
-     * Removes a user and their socket from known users map
-     *
-     * @return boolean True if the user was removed successfully
-     */
-    public boolean removeUserFromMap(SocketHandler socketHandler){
-        //find the key matching this sh
-        for(Map.Entry<User,SocketHandler> entry : userSocketHandlerMap.entrySet()){
-            if(entry.getValue() == socketHandler){
-                userSocketHandlerMap.remove(entry.getKey());
-                break;
-            }
+    private void handleRoomListMessage(RoomListMessage message) {
+        List<ChatRoom> chatRooms = message.getChatRooms();
+        if (chatRooms.size() < 1) {
+            System.out.println("No chat rooms to join.");
+            return;
         }
-        return socketHandler != null;
+        ChatRoom chatRoomToJoin = chatRooms.get(0);
+        System.out.println("Joining room: " + chatRoomToJoin.getName());
+        sendMessage(new HelloMessage(clientUser), chatRoomToJoin.getHostSocketAddress());
     }
 
     /**
-     * Closes connection with user
+     * Handles YourInfoMessages.
+     * Sets the clientUser of this Client to the received one. This should be the external-facing socket address.
      *
-     * @return boolean True if the connection closes
+     * @param message
      */
-    public boolean closeConnection(User user){
-        SocketHandler sh = userSocketHandlerMap.remove(user);
-        sh.shutdown();
-        return sh.isConnectionClosed();
-    }
-
-    /**
-     * Set isHost variable
-     *
-     * @param isHost True if the this client is hosting a room
-     */
-    public void setIsHost(boolean isHost){
-        this.isHost = isHost;
-    }
-
-    /**
-     * Get isHost variable
-     *
-     * @return boolean True if the this client is hosting a room
-     */
-    public boolean isHost(){
-        return this.isHost;
+    private void handleYourInfoMessage(YourInfoMessage message) {
+        this.clientUser = message.getUser();
     }
 
     /**
      * Opens a connection with given user and sends a HLO
-     * @param user The user to open a connection to
+     * @param userSocketAddress The socket address of the user to open a connection with
      * @return SocketHandler The socketHandler connected to that user
      */
-    private SocketHandler openConnection(User user) throws IOException
+    private SocketHandler openSocketConnection(InetSocketAddress userSocketAddress) throws IOException
     {
-        Socket socket = new Socket(user.getIpAddress(), user.getPort());
-        SocketHandler socketHandler = new SocketHandler(socket, this, user);
+        Socket socket = new Socket(userSocketAddress.getAddress(), userSocketAddress.getPort());
+        SocketHandler socketHandler = new SocketHandler(socket, this);
         socketHandlerThreadPool.execute(socketHandler);
         return socketHandler;
-    }
-
-    /**
-     * Set clientUser
-     *
-     * @param user The user object representing the local user
-     */
-    public void setLocalUser(User user){
-        clientUser = user;
-    }
-
-    /**
-     *
-     * @return user The user object representing the local user
-     */
-    public User getLocalUser(){
-        return this.clientUser;
     }
 }

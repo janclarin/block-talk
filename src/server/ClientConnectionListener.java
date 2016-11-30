@@ -1,8 +1,7 @@
 package server;
 
-import java.util.List;
-
 import models.User;
+import models.messages.Message;
 
 /**
  * This interface is used to listen to incoming requests from a connected client
@@ -12,25 +11,6 @@ import models.User;
  * @author Riley Lahd
  */
 public interface ClientConnectionListener {
-	
-	/**
-	 * Requests a room and sets the host to the room
-	 * 
-	 * @return true if host request succeeded
-	 */
-	public String hostRequest(User user, String roomName);
-	
-	/**
-	 * Request for room list.
-	 * 
-	 * @return List of existing rooms in map
-	 */
-	public String roomRequest(User user);
-	
-	/**
-	 * Sets new host for existing chatroom
-	 * 
-	 * @return true if host successfully updated
-	 */
-	public String updateHost();
+
+    public Message messageReceived(Message message);
 }

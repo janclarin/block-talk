@@ -1,6 +1,8 @@
 package server;
 
 
+import sockets.SocketHandler;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -42,7 +44,7 @@ public class ServerManager {
 			listen = true;
 			
 			Scanner input = new Scanner(System.in);
-			System.out.println("Enter a server ip and port to connect to, or c to continue:");
+			System.out.println("Enter a server ip and sourcePort to connect to, or c to continue:");
 			boolean findServers = true;
 			while(findServers){
 				try{
@@ -71,7 +73,6 @@ public class ServerManager {
 				}
 				catch(Exception ex){
 					ex.printStackTrace();
-					continue;
 				}
 			}
 			

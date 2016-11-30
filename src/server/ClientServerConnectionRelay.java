@@ -1,70 +1,50 @@
 package server;
 
-import java.io.BufferedReader;
+import helpers.MessageReadHelper;
+import models.User;
+import models.messages.HostRoomMessage;
+import models.messages.Message;
+import models.messages.RequestRoomListMessage;
+
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintWriter;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
 
-import helpers.MessageReadHelper;
-import models.Message;
-import models.User;
-
 public class ClientServerConnectionRelay implements ClientConnectionListener {
-	
-	private List<Socket> serverSockets;
-	
-	public ClientServerConnectionRelay(List<Socket> serverSockets){
-		this.serverSockets = serverSockets;
-	}
 
-	public String sendMessage(Socket socket, Message outgoing){
-		String response = "";
-		synchronized(socket){
-			try{
-				InputStream serverInputStream = socket.getInputStream();
-				OutputStream serverOutputStream = socket.getOutputStream();
-				
-				serverOutputStream.write(outgoing.toByteArray());
-				serverOutputStream.flush();
-				
-				Message incoming = MessageReadHelper.readNextMessage(socket.getInputStream());
-				response = incoming.getData().substring(4);
-			}
-			catch(Exception ex){
-				ex.printStackTrace();
-			}
-		}
-		return response;
-	}
-	
-	@Override
-	public String hostRequest(User user, String roomName) {
-		String result = "";
-		for(Socket socket : serverSockets){
-			Message outgoing = new Message(user.getIpAddress(), user.getPort(), String.format("HST %s", user.getUsername()));
-			result = sendMessage(socket, outgoing);
-		}
-		return result;
-	}
+    private List<Socket> serverSockets;
 
-	@Override
-	public String roomRequest(User user) {
-		String result ="";
-		for(Socket socket : serverSockets){
-			Message outgoing = new Message(user.getIpAddress(), user.getPort(), "ROM");
-			result = sendMessage(socket, outgoing);
-		}
-		//TODO: change to list of chatroom
-		return result;
-	}
+    public ClientServerConnectionRelay(List<Socket> serverSockets) {
+        this.serverSockets = serverSockets;
+    }
 
-	@Override
-	public String updateHost() {
-		// TODO: eventually make this update the host
-		return "";
-	}
+    public Message sendMessage(Socket socket, Message outgoing) throws IOException {
+        synchronized (socket) {
+            OutputStream serverOutputStream = socket.getOutputStream();
 
+            serverOutputStream.write(outgoing.toByteArray());
+            serverOutputStream.flush();
+
+            // Return the response.
+            return MessageReadHelper.readNextMessage(socket.getInputStream());
+        }
+    }
+
+    @Override
+    public Message messageReceived(Message message) {
+        // Forward received message to each server.
+        Message responseMessage = null;
+        for (Socket serverSocket : serverSockets) {
+            try {
+                // TODO: Ensure that every response is the same from every server.
+                responseMessage = sendMessage(serverSocket, message);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return responseMessage;
+    }
 }

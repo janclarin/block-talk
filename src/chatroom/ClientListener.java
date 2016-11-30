@@ -1,7 +1,7 @@
 package chatroom;
 
 import models.User;
-import models.Message;
+import models.messages.Message;
 
 /**
  * Interface to be implemented by classes that should be

@@ -1,15 +1,15 @@
-package chatroom;
-
-import models.User;
+package sockets;
 
 import helpers.MessageReadHelper;
+import models.messages.Message;
 
-import java.io.OutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
-
-import models.Message;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Handles a connection to a chat room socket.
@@ -22,24 +22,23 @@ public class SocketHandler implements Runnable {
     private final Socket socket;
 
     /**
+     * Listener to notify.
+     */
+    private final List<SocketHandlerListener> listeners = new ArrayList<>();
+
+    /**
      * OutputStream of socket
      */
     private OutputStream out;
-
-    /**
-     * Listener to notify.
-     */
-    private final SocketHandlerListener listener;
 
     /**
      * Indicates whether or not to streaming input from Socket.
      */
     private boolean continueRunning = true;
 
-    /**
-     * User on the end of this socket.
-     */
-    private User user;
+    public SocketHandler(final Socket socket) {
+        this.socket = socket;
+    }
 
     /**
      * Constructs a SocketHandler with a given Socket.
@@ -48,43 +47,33 @@ public class SocketHandler implements Runnable {
      */
     public SocketHandler(final Socket socket, final SocketHandlerListener listener) {
         this.socket = socket;
-        this.listener = listener;
-        user = new User("Port" + socket.getPort(), socket.getInetAddress(), socket.getPort());
-
-    }
-
-    /**
-     * Constructs a SocketHandler with a given Socket.
-     *
-     * @param socket The socket to manage.
-     */
-    public SocketHandler(final Socket socket, final SocketHandlerListener listener, User user) {
-        this.socket = socket;
-        this.listener = listener;
-        this.user = user;
-
+        this.listeners.add(listener);
     }
 
     @Override
     public void run() {
-        InputStream incomingStream = null;
         try {
-            incomingStream = socket.getInputStream();
+            InputStream incomingStream = socket.getInputStream();
 
-            Message message;
             while (continueRunning) {
-                message = MessageReadHelper.readNextMessage(incomingStream);
-                String[] words = message.getData().split(" ");
-                if(words[0].equals("HLO") && !words[1].equals(user.getUsername())){
-                    this.user = new User(words[1], socket.getInetAddress(),Integer.parseInt(words[2]));
-                }
-                notifyMessageReceived(user, message);
+                Message message = MessageReadHelper.readNextMessage(incomingStream);
+                notifyMessageReceived(message);
             }
 
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Registers the listener to receive notifications.
+     *
+     * @param listener The listener to receive notifications.
+     */
+    public void registerListener(SocketHandlerListener listener) {
+        // TODO: Do not allow registering multiple times.
+        listeners.add(listener);
     }
 
     /**
@@ -112,6 +101,15 @@ public class SocketHandler implements Runnable {
     }
 
     /**
+     * Returns the remote socket address of the socket.
+     *
+     * @return The remote socket address.
+     */
+    public InetSocketAddress getRemoteSocketAddress() {
+        return (InetSocketAddress) socket.getRemoteSocketAddress();
+    }
+
+    /**
      * Indicates whether or not the socket has been closed or is disconnected.
      *
      * @return Boolean indicating if the socket has been closed or disconnected.
@@ -123,44 +121,26 @@ public class SocketHandler implements Runnable {
     /**
      * Notify listener that a message was sent.
      *
-     * @param recipient The recipient of the sent message.
      * @param message The message that was sent.
      */
-    private void notifyMessageSent(User recipient, Message message) {
-        listener.messageSent(this, recipient, message);
+    private void notifyMessageSent(Message message) {
+        for (SocketHandlerListener listener : listeners) {
+            listener.messageSent(this, message);
+        }
     }
 
     /**
      * Notify listener that a message was received.
      *
-     * @param sender The sender of the received message.
      * @param message The message that was received.
      */
-    private void notifyMessageReceived(User sender, Message message) {
-        listener.messageReceived(this, sender, message);
-    }
-
-    /**
-     * Set the user on the end of this socket.
-     *
-     * @param user The remote user.
-     */
-    private void setUser(User user) {
-        this.user = user;
-    }
-
-    /**
-     * Get the user on the end of this socket.
-     *
-     * @return User the user object of the peer
-     */
-    private User getUser() {
-        return this.user;
+    private void notifyMessageReceived(Message message) {
+        for (SocketHandlerListener listener : listeners) {
+            listener.messageReceived(this, message);
+        }
     }
 
     public void shutdown(){
         continueRunning = false;
     }
-
-
 }
