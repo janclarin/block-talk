@@ -1,17 +1,16 @@
 package server;
 
 import helpers.MessageReadHelper;
-import models.User;
-import models.messages.HostRoomMessage;
 import models.messages.Message;
-import models.messages.RequestRoomListMessage;
-
+import models.messages.ProcessMessage;
+import models.messages.QueueMessage;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 public class ClientServerConnectionRelay implements ClientConnectionListener {
 
@@ -24,27 +23,47 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
     public Message sendMessage(Socket socket, Message outgoing) throws IOException {
         synchronized (socket) {
             OutputStream serverOutputStream = socket.getOutputStream();
-
             serverOutputStream.write(outgoing.toByteArray());
             serverOutputStream.flush();
-
-            // Return the response.
             return MessageReadHelper.readNextMessage(socket.getInputStream());
         }
+    }
+    
+    public Message sendToServers(Message message, UUID messageId){
+    	List<Message> replies = new ArrayList<Message>();
+    	for(Socket serverSocket : serverSockets){
+    		Message reply = null;
+    		do{
+        		try{
+            		reply = sendMessage(serverSocket, message);
+        		} catch (Exception ex){
+        			reply = null;
+        			ex.printStackTrace();
+        		}
+    		} while (!checkMessageId(reply, messageId));
+    		replies.add(reply);	
+    	}
+    	return replies.iterator().next();
     }
 
     @Override
     public Message messageReceived(Message message) {
-        // Forward received message to each server.
         Message responseMessage = null;
-        for (Socket serverSocket : serverSockets) {
-            try {
-                // TODO: Ensure that every response is the same from every server.
-                responseMessage = sendMessage(serverSocket, message);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        UUID queueId =  UUID.randomUUID();
+        responseMessage = sendToServers(new QueueMessage(message.getSenderSocketAddress(), message, queueId), queueId);
+        responseMessage = sendToServers(new ProcessMessage(message.getSenderSocketAddress(), queueId), queueId);
         return responseMessage;
     }
+    
+    public boolean checkMessageId(Message message, UUID messageId) {
+    	if(message == null){
+    		return false;
+    	} else if(message instanceof ProcessMessage
+				&& !((ProcessMessage)message).getMessageId().equals(messageId)){
+			return false;
+		} else{
+			return true;
+		}
+    }
+    
 }
