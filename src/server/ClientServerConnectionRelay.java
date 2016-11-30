@@ -53,9 +53,10 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
         			ex.printStackTrace();
         		}
     		} while (reply == null);
-    		replies.add(reply);	
+    		if(!(reply instanceof ByeMessage)){
+        		replies.add(reply);	
+    		}
     	}
-    	replies.removeIf(listMessage -> { return listMessage instanceof ByeMessage; });
     	return replies.iterator().next();
     }
 
