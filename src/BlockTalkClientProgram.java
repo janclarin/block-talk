@@ -104,6 +104,7 @@ public class BlockTalkClientProgram implements ClientListener {
             String roomName = scanner.nextLine();
             client.sendMessage(new HostRoomMessage(clientUser.getSocketAddress(), roomName), serverManagerSocketAddress);
             client.setIsHost(true);
+            client.setKey(roomName);
             System.out.println("Hosting room \""+ roomName +"\"");
         }
         else

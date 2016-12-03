@@ -6,6 +6,7 @@ import models.messages.*;
 import models.SenderMessageTuple;
 import sockets.SocketHandler;
 import sockets.SocketHandlerListener;
+import cryptography.*;
 
 import java.io.IOException;
 import java.net.*;
@@ -16,7 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.Comparator;
+import java.util.Comparator;;
 
 /**
  * This class represents a client of the system and will
@@ -73,6 +74,11 @@ public class Client implements Runnable, SocketHandlerListener {
      * Priority queue for later-timestamped messages
      */
     private PriorityQueue<SenderMessageTuple> queuedMessages = new PriorityQueue<SenderMessageTuple>();
+    
+    /**
+     * Encryption engine for encryption protocol
+     */
+    private EncryptionEngine encryptionEngine = new EncryptionEngine("");
 
     /**
      * Creates a new Client with the given models.
@@ -300,6 +306,7 @@ public class Client implements Runnable, SocketHandlerListener {
         }
         ChatRoom chatRoomToJoin = chatRooms.get(0);
         System.out.println("Joining room: " + chatRoomToJoin.getName());
+        setKey(chatRoomToJoin.getName());
         sendMessage(new HelloMessage(clientUser), chatRoomToJoin.getHostSocketAddress());
     }
 
@@ -374,5 +381,9 @@ public class Client implements Runnable, SocketHandlerListener {
             User poppedSender = popped.sender; //TODO: get sender using message.getSenderSocketAddress()
             listener.messageReceived(poppedSender, poppedMessage);
         }
+    }
+
+    public void setKey(String key){
+        this.encryptionEngine = new EncryptionEngine(key);
     }
 }
