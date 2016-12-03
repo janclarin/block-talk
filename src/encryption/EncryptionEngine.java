@@ -61,10 +61,22 @@ public class EncryptionEngine {
         decryptionCipher.init(Cipher.DECRYPT_MODE, key, iv);
     }
 
+    /**
+     * Takes in a byte array and returns it after encrypting it with the set key
+     * @param plaintext the bytes to encrypt
+     * @return byte[] the bytes after encryption
+     * @throws GeneralSecurityException if there is a failure within the encyption process
+     */
     public byte[] encrypt(byte[] plaintext) throws GeneralSecurityException {
         return encryptionCipher.doFinal(plaintext);
     }
 
+    /**
+     * Takes in an encrypted byte array and returns it after decrypting it with the set key
+     * @param plaintext the bytes to decrypt
+     * @return byte[] the bytes after decryption
+     * @throws GeneralSecurityException if there is a failure within the decryption process
+     */
     public byte[] decrypt(byte[] ciphertext) throws GeneralSecurityException {
         return decryptionCipher.doFinal(ciphertext);
     }
