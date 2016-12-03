@@ -11,6 +11,9 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import java.security.GeneralSecurityException;
+import java.io.IOException;
+
 import models.messages.*;
 
 /**
@@ -42,7 +45,7 @@ public class BlockTalkClientProgram implements ClientListener {
      * @param args Command line arguments.
      * @throws UnknownHostException Invalid host.
      */
-    public static void main(String[] args) throws UnknownHostException {
+    public static void main(String[] args) throws UnknownHostException, IOException, GeneralSecurityException {
         BlockTalkClientProgram program = new BlockTalkClientProgram();
         Scanner scanner = new Scanner(new BufferedReader(new InputStreamReader(System.in)));
 
@@ -67,42 +70,42 @@ public class BlockTalkClientProgram implements ClientListener {
             if(message.startsWith("/connect ")){
                 String[] messageSplit = message.split(" ");
                 InetSocketAddress newUserSocketAddress = new InetSocketAddress(messageSplit[1], Integer.parseInt(messageSplit[2]));
-                client.sendMessage(new HelloMessage(clientUser), newUserSocketAddress);
+                client.sendMessage(client.encryptMessage(new HelloMessage(clientUser)), newUserSocketAddress);
             } else if (message.startsWith("/list")) {
                 System.out.println("KNOWN USERS");
                 List<User> users = client.getKnownUsersList();
                 for(User u : users){System.out.println(u.toString());}
             } else if (message.startsWith("/HLO")) {
                 System.out.println("SEND HLO");
-                client.sendMessageToAll(new HelloMessage(clientUser));
+                client.sendMessageToAll(client.encryptMessage(new HelloMessage(clientUser)));
             } else if (message.startsWith("/ODR")) {
-                Message msgA = new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "A");
-                Message msgB = new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "B");
-                Message msgC = new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "C");
+                Message msgA = client.encryptMessage(new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "A"));
+                Message msgB = client.encryptMessage(new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "B"));
+                Message msgC = client.encryptMessage(new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "C"));
                 client.sendMessageToAll(msgC);
                 client.sendMessageToAll(msgB);
                 client.sendMessageToAll(msgA);
             }else {
-                client.sendMessageToAll(new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), message));
+                client.sendMessageToAll(client.encryptMessage(new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), message)));
             }
         }
     }
 
-    private static void promptJoinOrHost(Scanner scanner, Client client, User clientUser, InetSocketAddress serverManagerSocketAddress) {
+    private static void promptJoinOrHost(Scanner scanner, Client client, User clientUser, InetSocketAddress serverManagerSocketAddress) throws IOException, GeneralSecurityException{
         // Contact server manager.
-        client.sendMessage(new HelloMessage(clientUser), serverManagerSocketAddress);
+        client.sendMessage(new HelloMessage(clientUser), serverManagerSocketAddress, true);
 
         // Join or host a room.
         System.out.println("\"join\" or \"host\"");
         String mode = scanner.nextLine();
         if(mode.toLowerCase().equals("join")){
-            client.sendMessage(new RequestRoomListMessage(clientUser), serverManagerSocketAddress);
+            client.sendMessage(new RequestRoomListMessage(clientUser), serverManagerSocketAddress, true);
         }
         else if(mode.toLowerCase().startsWith("host"))
         {
             System.out.print("Enter room name to host: ");
             String roomName = scanner.nextLine();
-            client.sendMessage(new HostRoomMessage(clientUser.getSocketAddress(), roomName), serverManagerSocketAddress);
+            client.sendMessage(new HostRoomMessage(clientUser.getSocketAddress(), roomName), serverManagerSocketAddress, true);
             client.setIsHost(true);
             client.setKey(roomName);
             System.out.println("Hosting room \""+ roomName +"\"");
@@ -112,7 +115,7 @@ public class BlockTalkClientProgram implements ClientListener {
             System.exit(0);
         }
 
-        client.sendMessage(new ByeMessage(clientUser.getSocketAddress()), serverManagerSocketAddress);
+        client.sendMessage(new ByeMessage(clientUser.getSocketAddress()), serverManagerSocketAddress, true);
     }
 
     /**

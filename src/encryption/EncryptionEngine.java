@@ -67,8 +67,13 @@ public class EncryptionEngine {
      * @return byte[] the bytes after encryption
      * @throws GeneralSecurityException if there is a failure within the encyption process
      */
-    public byte[] encrypt(byte[] plaintext) throws GeneralSecurityException {
-        return encryptionCipher.doFinal(plaintext);
+    public byte[] encrypt(byte[] plaintext){
+        try{
+            return encryptionCipher.doFinal(plaintext);
+        } catch (GeneralSecurityException gse){
+            gse.printStackTrace();
+            return new byte[0];
+        }
     }
 
     /**
@@ -77,8 +82,13 @@ public class EncryptionEngine {
      * @return byte[] the bytes after decryption
      * @throws GeneralSecurityException if there is a failure within the decryption process
      */
-    public byte[] decrypt(byte[] ciphertext) throws GeneralSecurityException {
-        return decryptionCipher.doFinal(ciphertext);
+    public byte[] decrypt(byte[] ciphertext){
+        try {
+            return decryptionCipher.doFinal(ciphertext);
+        } catch (GeneralSecurityException gse){
+        gse.printStackTrace();
+        return new byte[0];
+        }
     }
  
 }

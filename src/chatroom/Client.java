@@ -6,7 +6,7 @@ import models.messages.*;
 import models.SenderMessageTuple;
 import sockets.SocketHandler;
 import sockets.SocketHandlerListener;
-import cryptography.*;
+import encryption.*;
 
 import java.io.IOException;
 import java.net.*;
@@ -17,7 +17,8 @@ import java.util.concurrent.Executors;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.Comparator;;
+import java.util.Comparator;
+import java.security.GeneralSecurityException;
 
 /**
  * This class represents a client of the system and will
@@ -78,7 +79,7 @@ public class Client implements Runnable, SocketHandlerListener {
     /**
      * Encryption engine for encryption protocol
      */
-    private EncryptionEngine encryptionEngine = new EncryptionEngine("");
+    private EncryptionEngine encryptionEngine;
 
     /**
      * Creates a new Client with the given models.
@@ -133,7 +134,7 @@ public class Client implements Runnable, SocketHandlerListener {
             while (continueRunning) {
                 try{
                     Socket socket = serverSocket.accept();
-                    SocketHandler socketHandler = new SocketHandler(socket, this);
+                    SocketHandler socketHandler = new SocketHandler(socket, this, encryptionEngine);
                     socketHandlerThreadPool.execute(socketHandler);
                 }catch (SocketTimeoutException ste){
                     //simply means no connection came in that time.
@@ -184,6 +185,10 @@ public class Client implements Runnable, SocketHandlerListener {
      * @param recipientSocketAddress The recipient's socket address.
      */
     public void sendMessage(Message message, InetSocketAddress recipientSocketAddress) {
+        sendMessage(message, recipientSocketAddress, false);
+    }
+
+    public void sendMessage(Message message, InetSocketAddress recipientSocketAddress, boolean serverMode) {
         try {
             SocketHandler recipientSocketHandler = null;
 
@@ -198,7 +203,7 @@ public class Client implements Runnable, SocketHandlerListener {
 
             // If there was no match, open a new socket handler connection.
             if (recipientSocketHandler == null) {
-                recipientSocketHandler = openSocketConnection(recipientSocketAddress);
+                recipientSocketHandler = openSocketConnection(recipientSocketAddress, serverMode);
             }
 
             // Send the message with the socket handler pointing to the recipientSocketAddress.
@@ -265,9 +270,9 @@ public class Client implements Runnable, SocketHandlerListener {
         User sender = message.getSender();
         if (isHost) {
             // Send new client information to all clients.
-            sendMessageToAll(new UserInfoMessage(clientUser, sender));
+            sendMessageToAll(encryptMessage(new UserInfoMessage(clientUser, sender)));
             // Send message to the new client.
-            sendMessage(new HelloMessage(clientUser), senderSocketHandler);
+            sendMessage(encryptMessage(new HelloMessage(clientUser)), senderSocketHandler);
         }
         socketHandlerUserMap.put(senderSocketHandler, sender);
     }
@@ -283,9 +288,9 @@ public class Client implements Runnable, SocketHandlerListener {
         User messageUser = message.getUser();
         if (!clientUser.equals(messageUser)) {
             try {
-                SocketHandler newSocketHandler = openSocketConnection(messageUser.getSocketAddress());
+                SocketHandler newSocketHandler = openSocketConnection(messageUser.getSocketAddress(), false);
                 socketHandlerUserMap.put(newSocketHandler, messageUser);
-                sendMessage(new HelloMessage(clientUser), newSocketHandler);
+                sendMessage(encryptMessage(new HelloMessage(clientUser)), newSocketHandler);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -306,8 +311,14 @@ public class Client implements Runnable, SocketHandlerListener {
         }
         ChatRoom chatRoomToJoin = chatRooms.get(0);
         System.out.println("Joining room: " + chatRoomToJoin.getName());
-        setKey(chatRoomToJoin.getName());
-        sendMessage(new HelloMessage(clientUser), chatRoomToJoin.getHostSocketAddress());
+        try{
+            setKey(chatRoomToJoin.getName());
+            sendMessage(encryptMessage(new HelloMessage(clientUser)), chatRoomToJoin.getHostSocketAddress());
+        } catch (GeneralSecurityException gse) {
+            System.out.println("Failed to join room.");
+        } catch (IOException ioe) {
+            System.out.println("Failed to join room.");
+        } 
     }
 
     /**
@@ -342,12 +353,14 @@ public class Client implements Runnable, SocketHandlerListener {
     /**
      * Opens a connection with given user and sends a HLO
      * @param userSocketAddress The socket address of the user to open a connection with
+     * @param serverMode True if this connection will be with the server
      * @return SocketHandler The socketHandler connected to that user
      */
-    private SocketHandler openSocketConnection(InetSocketAddress userSocketAddress) throws IOException
+    private SocketHandler openSocketConnection(InetSocketAddress userSocketAddress, boolean serverMode) throws IOException
     {
         Socket socket = new Socket(userSocketAddress.getAddress(), userSocketAddress.getPort());
-        SocketHandler socketHandler = new SocketHandler(socket, this);
+        SocketHandler socketHandler = new SocketHandler(socket, this, encryptionEngine);
+        socketHandler.setServerMode(serverMode);
         socketHandlerThreadPool.execute(socketHandler);
         return socketHandler;
     }
@@ -383,7 +396,15 @@ public class Client implements Runnable, SocketHandlerListener {
         }
     }
 
-    public void setKey(String key){
+    public void setKey(String key) throws GeneralSecurityException, IOException{
         this.encryptionEngine = new EncryptionEngine(key);
+    }
+
+    public EncryptedMessage encryptMessage(Message message) {
+        byte[] plaintext = new byte[message.toByteArray().length - Message.BYTE_HEADER_SIZE];
+        System.arraycopy(message.toByteArray(),Message.BYTE_HEADER_SIZE, plaintext,0,plaintext.length);
+        byte[] data;
+        data = encryptionEngine.encrypt(plaintext);
+        return new EncryptedMessage(message.getSenderSocketAddress(), data);
     }
 }

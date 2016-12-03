@@ -2,6 +2,7 @@ package sockets;
 
 import helpers.MessageReadHelper;
 import models.messages.Message;
+import encryption.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,18 +37,25 @@ public class SocketHandler implements Runnable {
      */
     private boolean continueRunning = true;
 
-    public SocketHandler(final Socket socket) {
-        this.socket = socket;
-    }
+    /**
+     * Indicates whether or not to this SocketHandler is in server mode
+     */
+    private boolean serverMode = false;
+
+    /**
+     * The encryption engine for decrypting recieved messages
+     */
+    private final EncryptionEngine encryptionEngine;
 
     /**
      * Constructs a SocketHandler with a given Socket.
      *
      * @param socket The socket to manage.
      */
-    public SocketHandler(final Socket socket, final SocketHandlerListener listener) {
+    public SocketHandler(final Socket socket, final SocketHandlerListener listener, final EncryptionEngine encryptionEngine) {
         this.socket = socket;
         this.listeners.add(listener);
+        this.encryptionEngine = encryptionEngine;
     }
 
     @Override
@@ -56,7 +64,13 @@ public class SocketHandler implements Runnable {
             InputStream incomingStream = socket.getInputStream();
 
             while (continueRunning) {
-                Message message = MessageReadHelper.readNextMessage(incomingStream);
+                Message message;
+                if(serverMode){
+                    message = MessageReadHelper.readNextMessage(incomingStream);
+                }
+                else {
+                    message = MessageReadHelper.readNextEncryptedMessage(incomingStream, encryptionEngine);
+                }
                 notifyMessageReceived(message);
             }
 
@@ -142,5 +156,13 @@ public class SocketHandler implements Runnable {
 
     public void shutdown(){
         continueRunning = false;
+    }
+
+    public void setServerMode(boolean serverMode){
+        this.serverMode = serverMode;
+    }
+
+    public boolean getServerMode(){
+        return this.serverMode;
     }
 }
