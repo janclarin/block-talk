@@ -42,9 +42,4 @@ public class EncryptedMessage extends Message {
     protected String getData() {
         return new String(Base64.getEncoder().encode(ciphertext));
     }
-
-    @Override
-    public String toString() {
-        return new String(Base64.getEncoder().encode(ciphertext));
-    }
 }
