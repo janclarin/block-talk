@@ -107,7 +107,7 @@ public class BlockTalkClientProgram implements ClientListener {
             String roomName = scanner.nextLine();
             client.sendMessage(new HostRoomMessage(clientUser.getSocketAddress(), roomName), serverManagerSocketAddress, true);
             client.setIsHost(true);
-            client.setKey(roomName);
+            client.setKey(roomName); //Set encryption key to use with peers
             System.out.println("Hosting room \""+ roomName +"\"");
         }
         else

@@ -51,6 +51,8 @@ public class SocketHandler implements Runnable {
      * Constructs a SocketHandler with a given Socket.
      *
      * @param socket The socket to manage.
+     * @param listener The Client listening to this SocketHandler
+     * @param encryptionEngine The encryptionEngine to decrypt messages with
      */
     public SocketHandler(final Socket socket, final SocketHandlerListener listener, final EncryptionEngine encryptionEngine) {
         this.socket = socket;
@@ -154,14 +156,25 @@ public class SocketHandler implements Runnable {
         }
     }
 
+    /**
+     * Safely disconnect and end this SocketHandler
+     */
     public void shutdown(){
         continueRunning = false;
     }
 
+    /**
+     * Sets the serverMode flag which indicates if this conection is with a ServerManager
+     * @param serverMode The new serverMode state
+     */
     public void setServerMode(boolean serverMode){
         this.serverMode = serverMode;
     }
 
+    /**
+     * Return true if this socketHandler is connected to a ServerManager
+     * @return boolean the serverMode variable
+     */
     public boolean getServerMode(){
         return this.serverMode;
     }

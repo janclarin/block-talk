@@ -188,6 +188,15 @@ public class Client implements Runnable, SocketHandlerListener {
         sendMessage(message, recipientSocketAddress, false);
     }
 
+    /**
+     * Sends a message to the given socket address.
+     * Tries to find an existing socket handler in the socketHandlerUserMap.
+     * If it does not find one, open a new socket connection.
+     *
+     * @param message The message to send.
+     * @param recipientSocketAddress The recipient's socket address.
+     * @param serverMode True if this message is going to a ServerManager
+     */
     public void sendMessage(Message message, InetSocketAddress recipientSocketAddress, boolean serverMode) {
         try {
             SocketHandler recipientSocketHandler = null;
@@ -396,10 +405,23 @@ public class Client implements Runnable, SocketHandlerListener {
         }
     }
 
+    /**
+     * Creates an encryptionEngine that encrypts and decrypts with the given key.
+     * This should not be done while any connections are open.
+     * @param key The encryption key seed to use to generate a large key
+     * @throws GeneralSecurityException Thrown if there is a fatal error in building the engine
+     * @throws IOException Thrown if there is a fatal error in building the engine
+     */
     public void setKey(String key) throws GeneralSecurityException, IOException{
         this.encryptionEngine = new EncryptionEngine(key);
     }
 
+    /**
+     * Transforms a message into an EncryptedMessage. First the message body is encrypted,
+     * then the bytes are turned into a Base64 encoded string.
+     * @param message The message to encrypt
+     * @return EncryptedMessage The encrypted message ready to send
+     */    
     public EncryptedMessage encryptMessage(Message message) {
         byte[] plaintext = new byte[message.toByteArray().length - Message.BYTE_HEADER_SIZE];
         System.arraycopy(message.toByteArray(),Message.BYTE_HEADER_SIZE, plaintext,0,plaintext.length);

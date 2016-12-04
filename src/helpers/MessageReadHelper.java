@@ -93,6 +93,15 @@ public class MessageReadHelper{
         return createMessage(senderSocketAddress, messageType, messageContent);
     }
     
+    /**
+     * Creates a Message from bytes.
+     *
+     * @param header Message header as bytes.
+     * @param data Message data as bytes.
+     *
+     * @return Message based on the header and data protocol.
+     * @throws UnknownHostException
+     */
     private static Message createMessage(InetSocketAddress senderSocketAddress, MessageType messageType, String messageContent) 
 		throws UnknownHostException, MessageTypeNotSupportedException {
         switch (messageType) {
@@ -144,7 +153,20 @@ public class MessageReadHelper{
 	    }
     }
 
-    private static Message createMessageFromEncrypted(byte[] header, byte[] data, EncryptionEngine encryptionEngine)  throws UnknownHostException, MessageTypeNotSupportedException, IllegalArgumentException{
+    /**
+     * Creates a Message from bytes which are encrypted with a matching EncryptionEngine.
+     *
+     * @param header Message header as bytes.
+     * @param data Message data as bytes.
+     * @param encryptionEngine The EncryptionEngine to decrypt with
+     *
+     * @return Message based on the header and data protocol.
+     * @throws UnknownHostException
+     * @throws IllegalArgumentException Thrown when the message
+     * @throws MessageTypeNotSupportedException If the message does not match a known format
+     */
+    private static Message createMessageFromEncrypted(byte[] header, byte[] data, EncryptionEngine encryptionEngine) 
+    throws UnknownHostException, MessageTypeNotSupportedException, IllegalArgumentException{
         InetAddress headerIpAddress = getHeaderIpAddress(header);
         int headerPort = getHeaderPort(header);
         InetSocketAddress senderSocketAddress = new InetSocketAddress(headerIpAddress, headerPort);
