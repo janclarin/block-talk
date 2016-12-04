@@ -70,23 +70,23 @@ public class BlockTalkClientProgram implements ClientListener {
             if(message.startsWith("/connect ")){
                 String[] messageSplit = message.split(" ");
                 InetSocketAddress newUserSocketAddress = new InetSocketAddress(messageSplit[1], Integer.parseInt(messageSplit[2]));
-                client.sendMessage(client.encryptMessage(new HelloMessage(clientUser)), newUserSocketAddress);
+                client.sendMessage(new HelloMessage(clientUser), newUserSocketAddress, true);
             } else if (message.startsWith("/list")) {
                 System.out.println("KNOWN USERS");
                 List<User> users = client.getKnownUsersList();
                 for(User u : users){System.out.println(u.toString());}
             } else if (message.startsWith("/HLO")) {
                 System.out.println("SEND HLO");
-                client.sendMessageToAll(client.encryptMessage(new HelloMessage(clientUser)));
+                client.sendMessageToAll(new HelloMessage(clientUser));
             } else if (message.startsWith("/ODR")) {
-                Message msgA = client.encryptMessage(new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "A"));
-                Message msgB = client.encryptMessage(new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "B"));
-                Message msgC = client.encryptMessage(new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "C"));
+                Message msgA = new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "A");
+                Message msgB = new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "B");
+                Message msgC = new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "C");
                 client.sendMessageToAll(msgC);
                 client.sendMessageToAll(msgB);
                 client.sendMessageToAll(msgA);
             }else {
-                client.sendMessageToAll(client.encryptMessage(new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), message)));
+                client.sendMessageToAll(new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), message));
             }
         }
     }

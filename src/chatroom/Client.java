@@ -158,7 +158,7 @@ public class Client implements Runnable, SocketHandlerListener {
      */
     public void sendMessageToAll(Message message) {
         for (SocketHandler recipientSocketHandler : socketHandlerUserMap.keySet()) {
-            sendMessage(message, recipientSocketHandler);
+            sendMessage(message, recipientSocketHandler, true);
         }
     }
 
@@ -167,9 +167,11 @@ public class Client implements Runnable, SocketHandlerListener {
      *
      * @param message   The message as a Message object.
      * @param recipientSocketHandler The recipient's SocketHandler.
+     * @param encrypt True if the message should be encrypted first
      */
-    public void sendMessage(Message message, SocketHandler recipientSocketHandler) {
+    public void sendMessage(Message message, SocketHandler recipientSocketHandler, boolean encrypt) {
         try {
+            if(encrypt){message = encryptMessage(message);}
             recipientSocketHandler.sendMessage(message);
         } catch (IOException e) {
             e.printStackTrace();
@@ -184,8 +186,8 @@ public class Client implements Runnable, SocketHandlerListener {
      * @param message The message to send.
      * @param recipientSocketAddress The recipient's socket address.
      */
-    public void sendMessage(Message message, InetSocketAddress recipientSocketAddress) {
-        sendMessage(message, recipientSocketAddress, false);
+    public void sendMessage(Message message, InetSocketAddress recipientSocketAddress, boolean encrypt) {
+        sendMessage(message, recipientSocketAddress, false, encrypt);
     }
 
     /**
@@ -197,7 +199,7 @@ public class Client implements Runnable, SocketHandlerListener {
      * @param recipientSocketAddress The recipient's socket address.
      * @param serverMode True if this message is going to a ServerManager
      */
-    public void sendMessage(Message message, InetSocketAddress recipientSocketAddress, boolean serverMode) {
+    public void sendMessage(Message message, InetSocketAddress recipientSocketAddress, boolean serverMode, boolean encrypt) {
         try {
             SocketHandler recipientSocketHandler = null;
 
@@ -216,7 +218,7 @@ public class Client implements Runnable, SocketHandlerListener {
             }
 
             // Send the message with the socket handler pointing to the recipientSocketAddress.
-            sendMessage(message, recipientSocketHandler);
+            sendMessage(message, recipientSocketHandler, encrypt);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -279,9 +281,9 @@ public class Client implements Runnable, SocketHandlerListener {
         User sender = message.getSender();
         if (isHost) {
             // Send new client information to all clients.
-            sendMessageToAll(encryptMessage(new UserInfoMessage(clientUser, sender)));
+            sendMessageToAll(new UserInfoMessage(clientUser, sender));
             // Send message to the new client.
-            sendMessage(encryptMessage(new HelloMessage(clientUser)), senderSocketHandler);
+            sendMessage(new HelloMessage(clientUser), senderSocketHandler, true);
         }
         socketHandlerUserMap.put(senderSocketHandler, sender);
     }
@@ -299,7 +301,7 @@ public class Client implements Runnable, SocketHandlerListener {
             try {
                 SocketHandler newSocketHandler = openSocketConnection(messageUser.getSocketAddress(), false);
                 socketHandlerUserMap.put(newSocketHandler, messageUser);
-                sendMessage(encryptMessage(new HelloMessage(clientUser)), newSocketHandler);
+                sendMessage(new HelloMessage(clientUser), newSocketHandler, true);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -322,7 +324,7 @@ public class Client implements Runnable, SocketHandlerListener {
         System.out.println("Joining room: " + chatRoomToJoin.getName());
         try{
             setKey(chatRoomToJoin.getName());
-            sendMessage(encryptMessage(new HelloMessage(clientUser)), chatRoomToJoin.getHostSocketAddress());
+            sendMessage(new HelloMessage(clientUser), chatRoomToJoin.getHostSocketAddress(), true);
         } catch (GeneralSecurityException gse) {
             System.out.println("Failed to join room.");
         } catch (IOException ioe) {
