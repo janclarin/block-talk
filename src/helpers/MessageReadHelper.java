@@ -4,6 +4,7 @@ import models.ChatRoom;
 import models.MessageType;
 import models.User;
 import models.messages.*;
+import encryption.*;
 
 import java.io.InputStream;
 import java.io.IOException;
@@ -14,6 +15,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.Base64;
 
 public class MessageReadHelper{
 
@@ -30,6 +32,20 @@ public class MessageReadHelper{
         byte[] data = readNextBytes(inputStream, dataSize);
         return createMessage(header, data);
 	}
+
+    /**
+     * Reads the next Encrypted Message in the input stream.
+     *
+     * @param inputStream The input stream to read from.
+     * @return The read Message.
+     * @throws IOException Thrown when there is an issue reading a message.
+     */
+    public static Message readNextEncryptedMessage(InputStream inputStream, EncryptionEngine encryptionEngine) throws IOException{
+        byte[] header = readNextBytes(inputStream, Message.BYTE_HEADER_SIZE);
+        int dataSize = parseHeaderDataSize(header);
+        byte[] data = readNextBytes(inputStream, dataSize);
+        return createMessageFromEncrypted(header, data, encryptionEngine);
+    }
 
     /**
      * Reads the next bytesToRead bytes from the input stream.
@@ -77,6 +93,15 @@ public class MessageReadHelper{
         return createMessage(senderSocketAddress, messageType, messageContent);
     }
     
+    /**
+     * Creates a Message from bytes.
+     *
+     * @param header Message header as bytes.
+     * @param data Message data as bytes.
+     *
+     * @return Message based on the header and data protocol.
+     * @throws UnknownHostException
+     */
     private static Message createMessage(InetSocketAddress senderSocketAddress, MessageType messageType, String messageContent) 
 		throws UnknownHostException, MessageTypeNotSupportedException {
         switch (messageType) {
@@ -126,6 +151,29 @@ public class MessageReadHelper{
 	        default:
 	            throw new MessageTypeNotSupportedException();
 	    }
+    }
+
+    /**
+     * Creates a Message from bytes which are encrypted with a matching EncryptionEngine.
+     *
+     * @param header Message header as bytes.
+     * @param data Message data as bytes.
+     * @param encryptionEngine The EncryptionEngine to decrypt with
+     *
+     * @return Message based on the header and data protocol.
+     * @throws UnknownHostException
+     * @throws IllegalArgumentException Thrown when the message
+     * @throws MessageTypeNotSupportedException If the message does not match a known format
+     */
+    private static Message createMessageFromEncrypted(byte[] header, byte[] data, EncryptionEngine encryptionEngine) 
+    throws UnknownHostException, MessageTypeNotSupportedException, IllegalArgumentException{
+        InetAddress headerIpAddress = getHeaderIpAddress(header);
+        int headerPort = getHeaderPort(header);
+        InetSocketAddress senderSocketAddress = new InetSocketAddress(headerIpAddress, headerPort);
+
+        EncryptedMessage encryptedMessage = new EncryptedMessage(senderSocketAddress, new String(data));
+        data = encryptionEngine.decrypt(encryptedMessage.getCiphertext());
+        return createMessage(header, data);
     }
 
     /**

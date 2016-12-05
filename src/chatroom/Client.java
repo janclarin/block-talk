@@ -6,6 +6,7 @@ import models.messages.*;
 import models.SenderMessageTuple;
 import sockets.SocketHandler;
 import sockets.SocketHandlerListener;
+import encryption.*;
 
 import java.io.IOException;
 import java.net.*;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Comparator;
+import java.security.GeneralSecurityException;
 
 /**
  * This class represents a client of the system and will
@@ -73,6 +75,11 @@ public class Client implements Runnable, SocketHandlerListener {
      * Priority queue for later-timestamped messages
      */
     private PriorityQueue<SenderMessageTuple> queuedMessages = new PriorityQueue<SenderMessageTuple>();
+    
+    /**
+     * Encryption engine for encryption protocol
+     */
+    private EncryptionEngine encryptionEngine;
 
     /**
      * Creates a new Client with the given models.
@@ -127,7 +134,7 @@ public class Client implements Runnable, SocketHandlerListener {
             while (continueRunning) {
                 try{
                     Socket socket = serverSocket.accept();
-                    SocketHandler socketHandler = new SocketHandler(socket, this);
+                    SocketHandler socketHandler = new SocketHandler(socket, this, encryptionEngine);
                     socketHandlerThreadPool.execute(socketHandler);
                 }catch (SocketTimeoutException ste){
                     //simply means no connection came in that time.
@@ -151,7 +158,7 @@ public class Client implements Runnable, SocketHandlerListener {
      */
     public void sendMessageToAll(Message message) {
         for (SocketHandler recipientSocketHandler : socketHandlerUserMap.keySet()) {
-            sendMessage(message, recipientSocketHandler);
+            sendMessage(message, recipientSocketHandler, true);
         }
     }
 
@@ -160,9 +167,11 @@ public class Client implements Runnable, SocketHandlerListener {
      *
      * @param message   The message as a Message object.
      * @param recipientSocketHandler The recipient's SocketHandler.
+     * @param encrypt True if the message should be encrypted first
      */
-    public void sendMessage(Message message, SocketHandler recipientSocketHandler) {
+    public void sendMessage(Message message, SocketHandler recipientSocketHandler, boolean encrypt) {
         try {
+            if(encrypt){message = encryptMessage(message);}
             recipientSocketHandler.sendMessage(message);
         } catch (IOException e) {
             e.printStackTrace();
@@ -176,8 +185,9 @@ public class Client implements Runnable, SocketHandlerListener {
      *
      * @param message The message to send.
      * @param recipientSocketAddress The recipient's socket address.
+     * @param encrypt True if this message should be encrypted (is to a client)
      */
-    public void sendMessage(Message message, InetSocketAddress recipientSocketAddress) {
+    public void sendMessage(Message message, InetSocketAddress recipientSocketAddress, boolean encrypt) {
         try {
             SocketHandler recipientSocketHandler = null;
 
@@ -192,11 +202,11 @@ public class Client implements Runnable, SocketHandlerListener {
 
             // If there was no match, open a new socket handler connection.
             if (recipientSocketHandler == null) {
-                recipientSocketHandler = openSocketConnection(recipientSocketAddress);
+                recipientSocketHandler = openSocketConnection(recipientSocketAddress, !encrypt);
             }
 
             // Send the message with the socket handler pointing to the recipientSocketAddress.
-            sendMessage(message, recipientSocketHandler);
+            sendMessage(message, recipientSocketHandler, encrypt);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -261,7 +271,7 @@ public class Client implements Runnable, SocketHandlerListener {
             // Send new client information to all clients.
             sendMessageToAll(new UserInfoMessage(clientUser, sender));
             // Send message to the new client.
-            sendMessage(new HelloMessage(clientUser), senderSocketHandler);
+            sendMessage(new HelloMessage(clientUser), senderSocketHandler, true);
         }
         socketHandlerUserMap.put(senderSocketHandler, sender);
     }
@@ -277,9 +287,9 @@ public class Client implements Runnable, SocketHandlerListener {
         User messageUser = message.getUser();
         if (!clientUser.equals(messageUser)) {
             try {
-                SocketHandler newSocketHandler = openSocketConnection(messageUser.getSocketAddress());
+                SocketHandler newSocketHandler = openSocketConnection(messageUser.getSocketAddress(), false);
                 socketHandlerUserMap.put(newSocketHandler, messageUser);
-                sendMessage(new HelloMessage(clientUser), newSocketHandler);
+                sendMessage(new HelloMessage(clientUser), newSocketHandler, true);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -300,7 +310,14 @@ public class Client implements Runnable, SocketHandlerListener {
         }
         ChatRoom chatRoomToJoin = chatRooms.get(0);
         System.out.println("Joining room: " + chatRoomToJoin.getName());
-        sendMessage(new HelloMessage(clientUser), chatRoomToJoin.getHostSocketAddress());
+        try{
+            setKey(chatRoomToJoin.getName());
+            sendMessage(new HelloMessage(clientUser), chatRoomToJoin.getHostSocketAddress(), true);
+        } catch (GeneralSecurityException gse) {
+            System.out.println("Failed to join room.");
+        } catch (IOException ioe) {
+            System.out.println("Failed to join room.");
+        } 
     }
 
     /**
@@ -335,12 +352,14 @@ public class Client implements Runnable, SocketHandlerListener {
     /**
      * Opens a connection with given user and sends a HLO
      * @param userSocketAddress The socket address of the user to open a connection with
+     * @param serverMode True if this connection will be with the server
      * @return SocketHandler The socketHandler connected to that user
      */
-    private SocketHandler openSocketConnection(InetSocketAddress userSocketAddress) throws IOException
+    private SocketHandler openSocketConnection(InetSocketAddress userSocketAddress, boolean serverMode) throws IOException
     {
         Socket socket = new Socket(userSocketAddress.getAddress(), userSocketAddress.getPort());
-        SocketHandler socketHandler = new SocketHandler(socket, this);
+        SocketHandler socketHandler = new SocketHandler(socket, this, encryptionEngine);
+        socketHandler.setServerMode(serverMode);
         socketHandlerThreadPool.execute(socketHandler);
         return socketHandler;
     }
@@ -374,5 +393,30 @@ public class Client implements Runnable, SocketHandlerListener {
             User poppedSender = popped.sender; //TODO: get sender using message.getSenderSocketAddress()
             listener.messageReceived(poppedSender, poppedMessage);
         }
+    }
+
+    /**
+     * Creates an encryptionEngine that encrypts and decrypts with the given key.
+     * This should not be done while any connections are open.
+     * @param key The encryption key seed to use to generate a large key
+     * @throws GeneralSecurityException Thrown if there is a fatal error in building the engine
+     * @throws IOException Thrown if there is a fatal error in building the engine
+     */
+    public void setKey(String key) throws GeneralSecurityException, IOException{
+        this.encryptionEngine = new EncryptionEngine(key);
+    }
+
+    /**
+     * Transforms a message into an EncryptedMessage. First the message body is encrypted,
+     * then the bytes are turned into a Base64 encoded string.
+     * @param message The message to encrypt
+     * @return EncryptedMessage The encrypted message ready to send
+     */    
+    public EncryptedMessage encryptMessage(Message message) {
+        byte[] plaintext = new byte[message.toByteArray().length - Message.BYTE_HEADER_SIZE];
+        System.arraycopy(message.toByteArray(),Message.BYTE_HEADER_SIZE, plaintext,0,plaintext.length);
+        byte[] data;
+        data = encryptionEngine.encrypt(plaintext);
+        return new EncryptedMessage(message.getSenderSocketAddress(), data);
     }
 }
