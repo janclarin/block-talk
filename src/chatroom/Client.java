@@ -185,21 +185,9 @@ public class Client implements Runnable, SocketHandlerListener {
      *
      * @param message The message to send.
      * @param recipientSocketAddress The recipient's socket address.
+     * @param encrypt True if this message should be encrypted (is to a client)
      */
     public void sendMessage(Message message, InetSocketAddress recipientSocketAddress, boolean encrypt) {
-        sendMessage(message, recipientSocketAddress, false, encrypt);
-    }
-
-    /**
-     * Sends a message to the given socket address.
-     * Tries to find an existing socket handler in the socketHandlerUserMap.
-     * If it does not find one, open a new socket connection.
-     *
-     * @param message The message to send.
-     * @param recipientSocketAddress The recipient's socket address.
-     * @param serverMode True if this message is going to a ServerManager
-     */
-    public void sendMessage(Message message, InetSocketAddress recipientSocketAddress, boolean serverMode, boolean encrypt) {
         try {
             SocketHandler recipientSocketHandler = null;
 
@@ -214,7 +202,7 @@ public class Client implements Runnable, SocketHandlerListener {
 
             // If there was no match, open a new socket handler connection.
             if (recipientSocketHandler == null) {
-                recipientSocketHandler = openSocketConnection(recipientSocketAddress, serverMode);
+                recipientSocketHandler = openSocketConnection(recipientSocketAddress, !encrypt);
             }
 
             // Send the message with the socket handler pointing to the recipientSocketAddress.
