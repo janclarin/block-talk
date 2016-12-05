@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,6 +49,8 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
 					if(reply instanceof ProcessMessage){
 						reply = ((ProcessMessage)reply).hasMessageId(messageId) ? reply : null;
 					}
+        		} catch (SocketException ex){
+        			System.out.printf("Server @%s has diconnected", serverSocket.getLocalSocketAddress().toString());
         		} catch (IOException ex){
         			reply = new ByeMessage((InetSocketAddress) serverSocket.getLocalSocketAddress());
         			ex.printStackTrace();
@@ -67,5 +70,6 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
         responseMessage = sendMessageToServerSockets(new QueueMessage(message.getSenderSocketAddress(), message, queueId), queueId);
         responseMessage = sendMessageToServerSockets(new ProcessMessage(message.getSenderSocketAddress(), queueId), queueId);
         return responseMessage;
-    }    
+    }  
+    
 }
