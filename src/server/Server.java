@@ -40,9 +40,9 @@ public class Server {
 	private HashMap<UUID, Message> queuedMessages = new HashMap<>();
 	
 	/**
-	 * [RoomName, Chatroom] Hash Map of all existing chatrooms on the server
+	 * [UUID, byte[]] Hash Map of all existing chatrooms on the server
 	 */
-	private HashMap<Integer, byte[]> roomMap = new HashMap<>();
+	private HashMap<UUID, byte[]> roomMap = new HashMap<>();
 
 	/**
 	 * Main function. Requires port.
@@ -84,7 +84,7 @@ public class Server {
 	 * @param roomName
 	 * @return host ip Address. 
 	 */
-	public byte[] getRoom(int token) throws ChatRoomNotFoundException{
+	public byte[] getRoom(UUID token) throws ChatRoomNotFoundException{
 		if(!roomMap.containsKey(token)){
 			throw new ChatRoomNotFoundException(); 
 		}
@@ -96,7 +96,7 @@ public class Server {
 	 * 
 	 * @param roomName
 	 */
-	public void addRoomMap(int token, byte[] roomData) {
+	public void addRoomMap(UUID token, byte[] roomData) {
 		roomMap.put(token, roomData);
 	}
 	
@@ -109,7 +109,7 @@ public class Server {
 	public void parseMessage(Message message) throws MessageTypeNotSupportedException {
 		if (message instanceof ProcessMessage) {
 			UUID messageId = ((ProcessMessage)message).getMessageId();
-			processMessage(queuedMessages.get(messageId));
+			processMessage(queuedMessages.get(messageId), ((ProcessMessage)message).getMessageId());
 			System.out.printf("DEBUG: Processing Message ID: %s\n", messageId.toString());
 		}
 		else {
@@ -126,15 +126,14 @@ public class Server {
 	 * @param message
 	 * @throws MessageTypeNotSupportedException
 	 */
-	public void processMessage(Message message) throws MessageTypeNotSupportedException {
+	public void processMessage(Message message, UUID token) throws MessageTypeNotSupportedException {
 		InetSocketAddress serverSocketAddress = (InetSocketAddress) serverSocket.getLocalSocketAddress();
 		if (message instanceof HostRoomMessage) {
 			// Maps the chat room to the host room message sender's socket address.
 			HostRoomMessage hostRoomMessage = (HostRoomMessage) message;
 			byte[] hostData = hostRoomMessage.getRoomData();
-			int token = generateToken(hostData);
 			addRoomMap(token, hostData);
-			sendMessage(new AckMessage(serverSocketAddress, String.format("Host Updated %s", token)));
+			sendMessage(new AckMessage(serverSocketAddress, String.format("Host Updated %s", token.toString())));
 		} 
 		else if (message instanceof RequestRoomListMessage) {
 			sendMessage(new RoomListMessage(serverSocketAddress, new ArrayList<>(roomMap.values())));
@@ -159,15 +158,5 @@ public class Server {
 		catch(Exception ex){
 			ex.printStackTrace();
 		}
-	}
-	
-	/**
-	 * Use byte array to return random integer(10000).
-	 * 
-	 * @param data
-	 * @return
-	 */
-	public int generateToken(byte[] data){
-		return new Random(data.hashCode()).nextInt(10000);
 	}
 }
