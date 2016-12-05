@@ -8,15 +8,15 @@ import java.util.List;
 
 public class RoomListMessage extends Message {
 
-    private final List<ChatRoom> chatRooms;
+    private final List<byte[]> roomBytesList;
 
-    public RoomListMessage(final InetSocketAddress senderSocketAddress, final List<ChatRoom> chatRooms) {
+    public RoomListMessage(final InetSocketAddress senderSocketAddress, final List<byte[]> roomBytesList) {
         super(senderSocketAddress);
-        this.chatRooms = chatRooms;
+        this.roomBytesList = roomBytesList;
     }
 
-    public List<ChatRoom> getChatRooms() {
-        return chatRooms;
+    public List<byte[]> getChatRooms() {
+        return roomBytesList;
     }
 
     @Override
@@ -24,12 +24,8 @@ public class RoomListMessage extends Message {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(MessageType.ROOM_LIST.getProtocolCode());
         stringBuilder.append(" ");
-        for (ChatRoom chatRoom : chatRooms) {
-            stringBuilder.append(chatRoom.getName());
-            stringBuilder.append(" ");
-            stringBuilder.append(chatRoom.getHostIpAddress().getHostAddress());
-            stringBuilder.append(" ");
-            stringBuilder.append(chatRoom.getHostPort());
+        for (byte[] roomBytes : roomBytesList) {
+            stringBuilder.append(roomBytes);
             stringBuilder.append("\n");
         }
         return stringBuilder.toString();

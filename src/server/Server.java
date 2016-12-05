@@ -14,6 +14,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -41,7 +42,7 @@ public class Server {
 	/**
 	 * [RoomName, Chatroom] Hash Map of all existing chatrooms on the server
 	 */
-	private HashMap<String, ChatRoom> roomMap = new HashMap<>();
+	private HashMap<Integer, byte[]> roomMap = new HashMap<>();
 
 	/**
 	 * Main function. Requires port.
@@ -76,40 +77,27 @@ public class Server {
 			e.printStackTrace();
 		}
 	}
-	
-	/**
-	 * Returns room associated with token. Throws ChatRoomNotFoundException if token does not exist in current map. 
-	 * 
-	 * @param roomName
-	 * @return
-	 */
-	public ChatRoom getRoom(String roomName) throws ChatRoomNotFoundException{
-		if(!roomMap.containsKey(roomName)){
-			throw new ChatRoomNotFoundException(); 
-		}
-		return roomMap.get(roomName);
-	}
 
 	/**
-	 * Returns the room hosts ip Address. Throws ChatRoomNotFoundException if token does not exist in current map.
+	 * Returns specified room data for given token.
 	 * 
 	 * @param roomName
 	 * @return host ip Address. 
 	 */
-	public InetAddress getRoomHost(String roomName) throws ChatRoomNotFoundException{
-		if(!roomMap.containsKey(roomName)){
+	public byte[] getRoom(int token) throws ChatRoomNotFoundException{
+		if(!roomMap.containsKey(token)){
 			throw new ChatRoomNotFoundException(); 
 		}
-		return roomMap.get(roomName).getHostIpAddress();
+		return roomMap.get(token);
 	}
 	
 	/**
-	 * Add a new map to room in the hash map with roomName as they key. 
+	 * Add a new map to room in the hash map with token as the key.
 	 * 
 	 * @param roomName
 	 */
-	public void addRoomMap(String roomName, InetSocketAddress hostSocketAddress) {
-		roomMap.put(roomName, new ChatRoom(roomName, hostSocketAddress));
+	public void addRoomMap(int token, byte[] roomData) {
+		roomMap.put(token, roomData);
 	}
 	
 	/**
@@ -143,9 +131,10 @@ public class Server {
 		if (message instanceof HostRoomMessage) {
 			// Maps the chat room to the host room message sender's socket address.
 			HostRoomMessage hostRoomMessage = (HostRoomMessage) message;
-			InetSocketAddress hostSocketAddress = hostRoomMessage.getSenderSocketAddress();
-			addRoomMap(hostRoomMessage.getRoomName(), hostSocketAddress);
-			sendMessage(new AckMessage(serverSocketAddress, "Host Updated"));
+			byte[] hostData = hostRoomMessage.getRoomData();
+			int token = generateToken(hostData);
+			addRoomMap(token, hostData);
+			sendMessage(new AckMessage(serverSocketAddress, String.format("Host Updated %s", token)));
 		} 
 		else if (message instanceof RequestRoomListMessage) {
 			sendMessage(new RoomListMessage(serverSocketAddress, new ArrayList<>(roomMap.values())));
@@ -170,5 +159,15 @@ public class Server {
 		catch(Exception ex){
 			ex.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Use byte array to return random integer(10000).
+	 * 
+	 * @param data
+	 * @return
+	 */
+	public int generateToken(byte[] data){
+		return new Random(data.hashCode()).nextInt(10000);
 	}
 }
