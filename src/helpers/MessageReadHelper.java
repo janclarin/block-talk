@@ -120,7 +120,7 @@ public class MessageReadHelper{
 	            return new HelloMessage(sender);
 	        case HOST_ROOM:
 	            // This assumes that the room name is the only thing in the message body.
-	            return new HostRoomMessage(senderSocketAddress, messageContent);
+	            return new HostRoomMessage(senderSocketAddress, messageContent.getBytes());
 	        case REQUEST_ROOM_LIST:
 	            return new RequestRoomListMessage(senderSocketAddress);
 	        case ROOM_LIST:

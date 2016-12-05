@@ -37,7 +37,7 @@ public class testclient {
 			toServer.flush();
 			Message response1 = MessageReadHelper.readNextMessage(fromServer);	
 			
-			HostRoomMessage host = new HostRoomMessage(user.getSocketAddress(), "teatime");
+			HostRoomMessage host = new HostRoomMessage(user.getSocketAddress(), "teatime".getBytes());
 			toServer.write(host.toByteArray());
 			toServer.flush();
 			response1 = MessageReadHelper.readNextMessage(fromServer);

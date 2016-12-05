@@ -5,19 +5,11 @@ import models.MessageType;
 import java.net.InetSocketAddress;
 
 public class HostRoomMessage extends Message {
-
-    private final String roomName;
-    //TODO: set roomBytes to encrypted data through constructor
     private byte[] encryptedHostInformation;
 
-    public HostRoomMessage(final InetSocketAddress senderSocketAddress, final String roomName) {
+    public HostRoomMessage(final InetSocketAddress senderSocketAddress, byte[] encryptedHostInformation) {
         super(senderSocketAddress);
-        this.roomName = roomName;
-    }
-    
-
-    public String getRoomName() {
-        return roomName;
+        this.encryptedHostInformation = encryptedHostInformation;
     }
     
     public byte[] getRoomData() {
@@ -26,6 +18,6 @@ public class HostRoomMessage extends Message {
     
     @Override
     protected String getData() {
-        return String.format("%s %s", MessageType.HOST_ROOM.getProtocolCode(), roomName);
+        return String.format("%s %s", MessageType.HOST_ROOM.getProtocolCode(), encryptedHostInformation);
     }
 }
