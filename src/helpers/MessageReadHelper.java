@@ -124,7 +124,7 @@ public class MessageReadHelper{
 	        case REQUEST_ROOM_LIST:
 	            return new RequestRoomListMessage(senderSocketAddress);
 	        case ROOM_LIST:
-	            List<ChatRoom> chatRooms = getMessageContentChatRooms(messageContent);
+	            List<byte[]> chatRooms = getMessageContentChatRooms(messageContent);
 	            return new RoomListMessage(senderSocketAddress, chatRooms);
 	        case USER:
 	            User contentUser = getMessageContentUser(messageContent);
@@ -255,16 +255,11 @@ public class MessageReadHelper{
      * @param messageContent Message content string.
      * @return List of ChatRooms parsed from message content.
      */
-    private static List<ChatRoom> getMessageContentChatRooms(String messageContent) {
-        List<ChatRoom> chatRooms = new ArrayList<>();
+    private static List<byte[]> getMessageContentChatRooms(String messageContent) {
+        List<byte[]> chatRooms = new ArrayList<>();
         String[] messageContentSplitByNewLines = messageContent.split("\n");
-        for (String chatRoomString : messageContentSplitByNewLines) {
-            String[] chatRoomStringSplit = chatRoomString.split(" ");
-            String chatRoomName = chatRoomStringSplit[0];
-            String chatRoomHostIpAddress = chatRoomStringSplit[1];
-            int chatRoomHostPort = Integer.parseInt(chatRoomStringSplit[2]);
-            InetSocketAddress chatRoomHostSocketAddress = new InetSocketAddress(chatRoomHostIpAddress, chatRoomHostPort);
-            chatRooms.add(new ChatRoom(chatRoomName, chatRoomHostSocketAddress));
+        for (String chatRoomBytes : messageContentSplitByNewLines) {
+            chatRooms.add(chatRoomBytes.getBytes());
         }
         return chatRooms;
     }

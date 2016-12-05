@@ -70,5 +70,6 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
         responseMessage = sendMessageToServerSockets(new QueueMessage(message.getSenderSocketAddress(), message, queueId), queueId);
         responseMessage = sendMessageToServerSockets(new ProcessMessage(message.getSenderSocketAddress(), queueId), queueId);
         return responseMessage;
-    }    
+    }  
+    
 }
