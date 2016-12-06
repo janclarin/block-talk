@@ -19,6 +19,9 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Comparator;
 import java.security.GeneralSecurityException;
+import javax.crypto.IllegalBlockSizeException;
+
+import java.util.Base64;
 
 /**
  * This class represents a client of the system and will
@@ -80,6 +83,16 @@ public class Client implements Runnable, SocketHandlerListener {
      * Encryption engine for encryption protocol
      */
     private EncryptionEngine encryptionEngine;
+
+    /**
+     * Room token of the room currently in
+     */
+    private String roomToken;
+
+    /**
+     * InetSocketAddress of the serverManager
+     */
+    private InetSocketAddress serverManagerAddress;
 
     /**
      * Creates a new Client with the given models.
@@ -250,6 +263,10 @@ public class Client implements Runnable, SocketHandlerListener {
         else if (message instanceof ChatMessage) {
             notify = handleChatMessage((ChatMessage) message, sender);
         }
+        else if (message instanceof AckMessage) {
+            //get token from server
+            handleAckMessage((AckMessage) message);
+        }
 
         if(notify){
             // Notify listener that a message was received.
@@ -303,21 +320,28 @@ public class Client implements Runnable, SocketHandlerListener {
      * @param message
      */
     private void handleRoomListMessage(RoomListMessage message) {
-        List<ChatRoom> chatRooms = message.getChatRooms();
-        if (chatRooms.size() < 1) {
-            System.out.println("No chat rooms to join.");
-            return;
+        List<byte[]> entries = message.getEntries();
+        String decryptedEntry = "";
+        for(byte[] entry : entries){
+            System.out.println("HOST ENTRY: "+new String(Base64.getEncoder().encode(entry)));
+            decryptedEntry = new String(encryptionEngine.decrypt(entry));
+            if(decryptedEntry.length() > 0){break;}
+            System.out.println("Non matching room");
         }
-        ChatRoom chatRoomToJoin = chatRooms.get(0);
-        System.out.println("Joining room: " + chatRoomToJoin.getName());
-        try{
-            setKey(chatRoomToJoin.getName());
-            sendMessage(new HelloMessage(clientUser), chatRoomToJoin.getHostSocketAddress(), true);
-        } catch (GeneralSecurityException gse) {
-            System.out.println("Failed to join room.");
-        } catch (IOException ioe) {
-            System.out.println("Failed to join room.");
-        } 
+        if(decryptedEntry.isEmpty()) {
+            createNewRoom();
+            listener.listProcessed(true);
+        }
+        else {
+            String[] splitString = decryptedEntry.replace("/","").split(":");
+            String decryptedInetAddress = splitString[0];
+            int decryptedPort = Integer.parseInt(splitString[1]);
+            System.out.println(decryptedInetAddress+":"+decryptedPort);
+            InetSocketAddress roomAddress = new InetSocketAddress(decryptedInetAddress, decryptedPort);
+            sendMessage(new HelloMessage(clientUser), roomAddress, true);
+            disconnectFromServer();
+            listener.listProcessed(false);
+        }
     }
 
     /**
@@ -350,7 +374,25 @@ public class Client implements Runnable, SocketHandlerListener {
     }
 
     /**
-     * Opens a connection with given user and sends a HLO
+     * Handles AckMessage.
+     *
+     * Checks if this contains the room token. If so, trigger bye message to server.
+     * @param message Incoming message
+     * @param sender Sender of message
+     * @return boolean True if the message is allowed to continue, false otherwise
+     */
+    private boolean handleAckMessage(AckMessage message) {
+        String[] splitMessage = message.getInformation().split(" ");
+        if(splitMessage[0].equals("TOKEN")){
+            roomToken = splitMessage[1];
+            disconnectFromServer();
+            System.out.println("Token updated: "+roomToken);
+        }
+        return true;
+    }
+
+    /**
+     * Opens a connection with given user
      * @param userSocketAddress The socket address of the user to open a connection with
      * @param serverMode True if this connection will be with the server
      * @return SocketHandler The socketHandler connected to that user
@@ -418,5 +460,50 @@ public class Client implements Runnable, SocketHandlerListener {
         byte[] data;
         data = encryptionEngine.encrypt(plaintext);
         return new EncryptedMessage(message.getSenderSocketAddress(), data);
+    }
+
+    /**
+     * Sends a host message to the server
+     */   
+    private void createNewRoom() {
+        setIsHost(true);
+        System.out.println("SENDING HST MESSAGE.");
+        byte[] encryptedInfo = encryptionEngine.encrypt(clientUser.getSocketAddress().toString().getBytes());
+        System.out.println("ENCODED HOST INFO: "+new String(Base64.getEncoder().encode(encryptedInfo)));
+        sendMessage(new HostRoomMessage(clientUser.getSocketAddress(), encryptedInfo), serverManagerAddress, false);
+    }
+
+    /**
+     * Sends a bye message to the server
+     */  
+    private void disconnectFromServer() {
+        SocketHandler serverSocketHandler = null;
+        System.out.println("SENDING BYE MESSAGE.");
+        for(SocketHandler socketHandler : socketHandlerUserMap.keySet()) {
+            if(socketHandler.getRemoteSocketAddress().equals(serverManagerAddress)) {
+                serverSocketHandler = socketHandler;
+                break;
+            }
+        }
+        if(serverSocketHandler == null){return;}
+        disconnectFromSocketHandler(serverSocketHandler);
+    }
+
+    /**
+     * Sends a bye message and disconnects from given SocketHandler
+     * @param serverSocketAddress The SocketHandler to be shutdown
+     */  
+    private void disconnectFromSocketHandler(SocketHandler socketHandler) {
+        sendMessage(new ByeMessage(clientUser.getSocketAddress()), socketHandler, socketHandler.getServerMode());
+        socketHandler.shutdown();
+        socketHandlerUserMap.remove(socketHandler);
+    }
+
+    /**
+     * Sets the address of the server manager
+     * @param serverSocketAddress The address of the server
+     */  
+    public void setServerManagerAddress(InetSocketAddress serverManagerAddress) {
+        this.serverManagerAddress = serverManagerAddress;
     }
 }

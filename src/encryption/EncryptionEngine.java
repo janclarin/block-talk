@@ -7,6 +7,8 @@ import java.security.Key;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.BadPaddingException;
 import java.security.GeneralSecurityException;
 import java.io.IOException;
 
@@ -96,9 +98,12 @@ public class EncryptionEngine {
     public byte[] decrypt(byte[] ciphertext){
         try {
             return decryptionCipher.doFinal(ciphertext);
-        } catch (GeneralSecurityException gse){
-        gse.printStackTrace();
-        return new byte[0];
+        } catch (IllegalBlockSizeException ibse){
+            ibse.printStackTrace();
+            return new byte[0];
+        } catch (BadPaddingException bpe){
+            bpe.printStackTrace();
+            return new byte[0];
         }
     }
  

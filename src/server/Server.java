@@ -14,6 +14,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -39,9 +40,9 @@ public class Server {
 	private HashMap<UUID, Message> queuedMessages = new HashMap<>();
 	
 	/**
-	 * [RoomName, Chatroom] Hash Map of all existing chatrooms on the server
+	 * [UUID, byte[]] Hash Map of all existing chatrooms on the server
 	 */
-	private HashMap<String, ChatRoom> roomMap = new HashMap<>();
+	private HashMap<UUID, byte[]> roomMap = new HashMap<>();
 
 	/**
 	 * Main function. Requires port.
@@ -76,40 +77,27 @@ public class Server {
 			e.printStackTrace();
 		}
 	}
-	
-	/**
-	 * Returns room associated with token. Throws ChatRoomNotFoundException if token does not exist in current map. 
-	 * 
-	 * @param roomName
-	 * @return
-	 */
-	public ChatRoom getRoom(String roomName) throws ChatRoomNotFoundException{
-		if(!roomMap.containsKey(roomName)){
-			throw new ChatRoomNotFoundException(); 
-		}
-		return roomMap.get(roomName);
-	}
 
 	/**
-	 * Returns the room hosts ip Address. Throws ChatRoomNotFoundException if token does not exist in current map.
+	 * Returns specified room data for given token.
 	 * 
 	 * @param roomName
 	 * @return host ip Address. 
 	 */
-	public InetAddress getRoomHost(String roomName) throws ChatRoomNotFoundException{
-		if(!roomMap.containsKey(roomName)){
+	public byte[] getRoom(UUID token) throws ChatRoomNotFoundException{
+		if(!roomMap.containsKey(token)){
 			throw new ChatRoomNotFoundException(); 
 		}
-		return roomMap.get(roomName).getHostIpAddress();
+		return roomMap.get(token);
 	}
 	
 	/**
-	 * Add a new map to room in the hash map with roomName as they key. 
+	 * Add a new map to room in the hash map with token as the key.
 	 * 
 	 * @param roomName
 	 */
-	public void addRoomMap(String roomName, InetSocketAddress hostSocketAddress) {
-		roomMap.put(roomName, new ChatRoom(roomName, hostSocketAddress));
+	public void addRoomMap(UUID token, byte[] roomData) {
+		roomMap.put(token, roomData);
 	}
 	
 	/**
@@ -121,7 +109,7 @@ public class Server {
 	public void parseMessage(Message message) throws MessageTypeNotSupportedException {
 		if (message instanceof ProcessMessage) {
 			UUID messageId = ((ProcessMessage)message).getMessageId();
-			processMessage(queuedMessages.get(messageId));
+			processMessage(queuedMessages.get(messageId), ((ProcessMessage)message).getMessageId());
 			System.out.printf("DEBUG: Processing Message ID: %s\n", messageId.toString());
 		}
 		else {
@@ -138,14 +126,14 @@ public class Server {
 	 * @param message
 	 * @throws MessageTypeNotSupportedException
 	 */
-	public void processMessage(Message message) throws MessageTypeNotSupportedException {
+	public void processMessage(Message message, UUID token) throws MessageTypeNotSupportedException {
 		InetSocketAddress serverSocketAddress = (InetSocketAddress) serverSocket.getLocalSocketAddress();
 		if (message instanceof HostRoomMessage) {
 			// Maps the chat room to the host room message sender's socket address.
 			HostRoomMessage hostRoomMessage = (HostRoomMessage) message;
-			InetSocketAddress hostSocketAddress = hostRoomMessage.getSenderSocketAddress();
-			addRoomMap(hostRoomMessage.getRoomName(), hostSocketAddress);
-			sendMessage(new AckMessage(serverSocketAddress, "Host Updated"));
+			byte[] hostData = hostRoomMessage.getRoomData();
+			addRoomMap(token, hostData);
+			sendMessage(new AckMessage(serverSocketAddress, String.format("TOKEN %s", token.toString())));
 		} 
 		else if (message instanceof RequestRoomListMessage) {
 			sendMessage(new RoomListMessage(serverSocketAddress, new ArrayList<>(roomMap.values())));
