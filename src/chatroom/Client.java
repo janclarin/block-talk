@@ -188,14 +188,12 @@ public class Client implements Runnable, SocketHandlerListener {
      * @param encrypt True if the message should be encrypted first
      */
     public void sendMessage(Message message, SocketHandler recipientSocketHandler, boolean encrypt) {
-        try {
-            if(encrypt){message = encryptMessage(message);}
+        if(encrypt){message = encryptMessage(message);}
+        try{
             recipientSocketHandler.sendMessage(message);
-            if(!recipientSocketHandler.getRemoteSocketAddress().isReachable()) {
-                handleDeadUser(recipientSocketHandler, true);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ioe) {
+            System.out.println("User "+socketHandlerUserMap.get(recipientSocketHandler).toString()+" is dead!");
+            handleDeadUser(recipientSocketHandler, true);
         }
     }
 
@@ -414,6 +412,7 @@ public class Client implements Runnable, SocketHandlerListener {
      */
     private boolean handleDeadUserMessage(DeadUserMessage message) {
         handleDeadUser(message.getDeadUser().getSocketAddress(), false);
+        return true;
     }
 
     /**
@@ -425,6 +424,7 @@ public class Client implements Runnable, SocketHandlerListener {
     private boolean handleByeMessage(ByeMessage message, User sender) {
         //Replicates a dead user message
         handleDeadUser(sender.getSocketAddress(), false);
+        return true;
     }
 
     /**
@@ -563,7 +563,9 @@ public class Client implements Runnable, SocketHandlerListener {
         //shut down socket
         deadSocketHandler.shutdown();
         //remove user from room map
+        int totalUsers = socketHandlerUserMap.size();
         User deadUser = socketHandlerUserMap.remove(deadSocketHandler);
+        while(socketHandlerUserMap.size() == totalUsers){}//wait for user to be removed?
         //broadcast DED message if this was a new discovery
         if(broadcastDead){sendMessageToAll(new DeadUserMessage(clientUser.getSocketAddress(),deadUser));}
         //If host, trigger election

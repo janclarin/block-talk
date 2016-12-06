@@ -144,8 +144,8 @@ public class MessageReadHelper{
 	        			getDataMessageContent(dataMessageBytes));
 	        	return new QueueMessage(senderSocketAddress, message, queueMessageId);
 	        case DISCONNECTED:
-                User contentUser = getMessageContentUser(messageContent);
-                return new DeadUserMessage(senderSocketAddress, contentUser);
+                User deadUser = getMessageContentUser(messageContent);
+                return new DeadUserMessage(senderSocketAddress, deadUser);
 	        // TODO: case LEADER:
 	        // TODO: case NEGATIVE_ACKNOWLEDGEMENT:
 	        // TODO: case ORDER:
