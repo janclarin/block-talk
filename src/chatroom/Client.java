@@ -187,7 +187,7 @@ public class Client implements Runnable, SocketHandlerListener {
             if(encrypt){message = encryptMessage(message);}
             recipientSocketHandler.sendMessage(message);
             if(!recipientSocketHandler.getRemoteSocketAddress().isReachable()) {
-                handleDeadUser(recipientSocketHandler);
+                handleDeadUser(recipientSocketHandler, true);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -405,7 +405,7 @@ public class Client implements Runnable, SocketHandlerListener {
      * @return boolean True if the message is allowed to continue, false otherwise
      */
     private boolean handleDeadUserMessage(DeadUserMessage message) {
-        handleDeadUser(message.getDeadUser().getSocketAddress());
+        handleDeadUser(message.getDeadUser().getSocketAddress(), false);
     }
 
     /**
@@ -540,13 +540,13 @@ public class Client implements Runnable, SocketHandlerListener {
      * Sets the address of the server manager
      * @param serverSocketAddress The address of the server
      */  
-    private void handleDeadUser(SocketHandler deadSocketHandler) {
+    private void handleDeadUser(SocketHandler deadSocketHandler, boolean broadcastDead) {
         //shut down socket
         deadSocketHandler.shutdown();
         //remove user from room map
         User deadUser = socketHandlerUserMap.remove(deadSocketHandler);
-        //broadcast DED message
-        sendMessageToAll(new DeadUserMessage(clientUser.getSocketAddress(),deadUser),true);
+        //broadcast DED message if this was a new discovery
+        if(broadcastDead){sendMessageToAll(new DeadUserMessage(clientUser.getSocketAddress(),deadUser),true);}
         //If host, trigger election
         if(deadSocketHandler == hostSocketHandler) {
             //TODO: trigger election
@@ -559,7 +559,7 @@ public class Client implements Runnable, SocketHandlerListener {
      * Sets the address of the server manager
      * @param serverSocketAddress The address of the server
      */  
-    private void handleDeadUser(InetSocketAddress userAddress) {
+    private void handleDeadUser(InetSocketAddress userAddress, boolean broadcastDead) {
         SocketHandler userSocketHandler = null;
         for(SocketHandler socketHandler : socketHandlerUserMap.keySet()) {
             if(socketHandler.getRemoteSocketAddress().equals(userAddress)) {
@@ -568,6 +568,6 @@ public class Client implements Runnable, SocketHandlerListener {
             }
         }
         if(userSocketHandler == null){return;} //Connection is already closed
-        handleDeadUser(userSocketHandler);
+        handleDeadUser(userSocketHandler, broadcastDead);
     }
 }
