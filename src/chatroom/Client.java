@@ -270,6 +270,9 @@ public class Client implements Runnable, SocketHandlerListener {
             //get token from server
             handleAckMessage((AckMessage) message);
         }
+        else if (message instanceof DeadUserMessage) {
+            handleDeadUserMessage((DeadUserMessage) message);
+        }
 
         if(notify){
             // Notify listener that a message was received.
@@ -393,6 +396,16 @@ public class Client implements Runnable, SocketHandlerListener {
             System.out.println("Token updated: "+roomToken);
         }
         return true;
+    }
+
+    /**
+     * Handles DeadUserMessage.
+     *
+     * @param message Incoming message
+     * @return boolean True if the message is allowed to continue, false otherwise
+     */
+    private boolean handleDeadUserMessage(DeadUserMessage message) {
+        handleDeadUser(message.getDeadUser().getSocketAddress());
     }
 
     /**
