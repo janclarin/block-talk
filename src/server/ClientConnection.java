@@ -50,6 +50,7 @@ public class ClientConnection implements Runnable {
 	@Override
 	public void run() {
 		try {
+			System.out.printf("New Connection @%s", socket.getInetAddress().getHostAddress());
 			InputStream inputStream = socket.getInputStream();
 			Message message;
 			while (!closeConnection) {

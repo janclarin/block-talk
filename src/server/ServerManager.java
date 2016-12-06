@@ -66,9 +66,9 @@ public class ServerManager {
 				}
 			}
 			
+			System.out.println("Listening on "+listenServer.getInetAddress() + ":"+listenServer.getLocalPort()+"...");
 			while(listen){
 				try{
-					System.out.println("Listening on "+listenServer.getInetAddress() + ":"+listenServer.getLocalPort()+"...");
 					threadPool.execute(new ClientConnection(listenServer.accept(), new ClientServerConnectionRelay(serverSockets)));
 				}
 				catch(Exception ex){
