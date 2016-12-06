@@ -95,6 +95,11 @@ public class Client implements Runnable, SocketHandlerListener {
     private InetSocketAddress serverManagerAddress;
 
     /**
+     * SocketHandler connected to current host
+     */
+    private SocketHandler hostSocketHandler;
+
+    /**
      * Creates a new Client with the given models.
      *
      * @param clientUser Client user information.
@@ -273,6 +278,9 @@ public class Client implements Runnable, SocketHandlerListener {
         else if (message instanceof DeadUserMessage) {
             handleDeadUserMessage((DeadUserMessage) message);
         }
+        else if (message instanceof ByeMessage) {
+            handleByeMessage((ByeMessage) message, sender);
+        }
 
         if(notify){
             // Notify listener that a message was received.
@@ -406,6 +414,17 @@ public class Client implements Runnable, SocketHandlerListener {
      */
     private boolean handleDeadUserMessage(DeadUserMessage message) {
         handleDeadUser(message.getDeadUser().getSocketAddress(), false);
+    }
+
+    /**
+     * Handles ByeMessage.
+     *
+     * @param message Incoming message
+     * @return boolean True if the message is allowed to continue, false otherwise
+     */
+    private boolean handleByeMessage(ByeMessage message, User sender) {
+        //Replicates a dead user message
+        handleDeadUser(sender.getSocketAddress(), false);
     }
 
     /**
@@ -546,7 +565,7 @@ public class Client implements Runnable, SocketHandlerListener {
         //remove user from room map
         User deadUser = socketHandlerUserMap.remove(deadSocketHandler);
         //broadcast DED message if this was a new discovery
-        if(broadcastDead){sendMessageToAll(new DeadUserMessage(clientUser.getSocketAddress(),deadUser),true);}
+        if(broadcastDead){sendMessageToAll(new DeadUserMessage(clientUser.getSocketAddress(),deadUser));}
         //If host, trigger election
         if(deadSocketHandler == hostSocketHandler) {
             //TODO: trigger election

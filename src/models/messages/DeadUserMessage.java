@@ -13,12 +13,12 @@ public class DeadUserMessage extends Message {
 
     private final User deadUser;
 
-    public UserInfoMessage(final User sender, final User deadUser) {
+    public DeadUserMessage(final User sender, final User deadUser) {
         super(sender.getSocketAddress());
         this.deadUser = deadUser;
     }
 
-    public UserInfoMessage(final InetSocketAddress senderSocketAddress, final User deadUser) {
+    public DeadUserMessage(final InetSocketAddress senderSocketAddress, final User deadUser) {
         super(senderSocketAddress);
         this.deadUser = deadUser;
     }
