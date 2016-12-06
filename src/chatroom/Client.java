@@ -265,7 +265,7 @@ public class Client implements Runnable, SocketHandlerListener {
         }
         else if (message instanceof AckMessage) {
             //get token from server
-            handleAckMessage((AckMessage) message, senderSocketHandler);
+            handleAckMessage((AckMessage) message);
         }
 
         if(notify){
@@ -380,10 +380,10 @@ public class Client implements Runnable, SocketHandlerListener {
      * @param sender Sender of message
      * @return boolean True if the message is allowed to continue, false otherwise
      */
-    private boolean handleAckMessage(AckMessage message, SocketHandler senderSocketHandler) {
+    private boolean handleAckMessage(AckMessage message) {
         if(message.getInformation().length() > 0){
             roomToken = message.getInformation().split(" ")[2];
-            disconnectFromServer(senderSocketHandler);
+            disconnectFromServer();
             System.out.println("Token updated: "+roomToken);
         }
         return true;
