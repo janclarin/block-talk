@@ -338,7 +338,7 @@ public class Client implements Runnable, SocketHandlerListener {
             int decryptedPort = Integer.parseInt(splitString[1]);
             System.out.println(decryptedInetAddress+":"+decryptedPort);
             InetSocketAddress roomAddress = new InetSocketAddress(decryptedInetAddress, decryptedPort);
-            sendMessage(new HelloMessage(clientUser), roomAddress, true);
+            joinExistingRoom(roomAddress);
             disconnectFromServer();
             listener.listProcessed(false);
         }
@@ -364,6 +364,7 @@ public class Client implements Runnable, SocketHandlerListener {
      * @return boolean True if the message is allowed to continue, false otherwise
      */
     private boolean handleChatMessage(ChatMessage message, User sender) {
+        if(timestamp==-1){timestamp = message.getTimestamp();} //If timestamp is non-synced, sync it
         if(message.getTimestamp() > peekTimestamp()){
             //Put it into a queue to be taken off when timestamp is higher
             queuedMessages.offer(new SenderMessageTuple(sender, message));
@@ -420,7 +421,9 @@ public class Client implements Runnable, SocketHandlerListener {
      * @return int The timestamp before incremented
      */
     public int timestamp(){
-        return timestamp++; //Post increment the timestampg
+        //Dont increment if timestamp is unsynced
+        if(timestamp==-1){return timestamp;}
+        return timestamp++;
     }
 
     /**
@@ -471,6 +474,16 @@ public class Client implements Runnable, SocketHandlerListener {
         byte[] encryptedInfo = encryptionEngine.encrypt(clientUser.getSocketAddress().toString().getBytes());
         System.out.println("ENCODED HOST INFO: "+new String(Base64.getEncoder().encode(encryptedInfo)));
         sendMessage(new HostRoomMessage(clientUser.getSocketAddress(), encryptedInfo), serverManagerAddress, false);
+    }
+
+    /**
+     * Sends a HLO message to existing room host
+     */   
+    private void joinExistingRoom(InetSocketAddress roomAddress) {
+        sendMessage(new HelloMessage(clientUser), roomAddress, true);
+        //prep timestamp to be overwritten by new messages
+        this.timestamp = -1;
+
     }
 
     /**
