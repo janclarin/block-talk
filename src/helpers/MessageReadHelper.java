@@ -257,7 +257,7 @@ public class MessageReadHelper{
     private static String[] splitChatMessage(String messageContent) throws IllegalArgumentException{
         //Split at first space (should be after the timestamp)
         String[] splitContent = messageContent.split(" ",2);
-        if (Integer.parseInt(splitContent[0]) < 0) {
+        if (Integer.parseInt(splitContent[0]) < -1) {
            throw new IllegalArgumentException("Argument must be of the form: <timestamp> <content>.");
         }
         return splitContent;
