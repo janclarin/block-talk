@@ -186,6 +186,9 @@ public class Client implements Runnable, SocketHandlerListener {
         try {
             if(encrypt){message = encryptMessage(message);}
             recipientSocketHandler.sendMessage(message);
+            if(!recipientSocketHandler.getRemoteSocketAddress().isReachable()) {
+                handleDeadUser(recipientSocketHandler);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -518,5 +521,40 @@ public class Client implements Runnable, SocketHandlerListener {
      */  
     public void setServerManagerAddress(InetSocketAddress serverManagerAddress) {
         this.serverManagerAddress = serverManagerAddress;
+    }
+
+    /**
+     * Sets the address of the server manager
+     * @param serverSocketAddress The address of the server
+     */  
+    private void handleDeadUser(SocketHandler deadSocketHandler) {
+        //shut down socket
+        deadSocketHandler.shutdown();
+        //remove user from room map
+        User deadUser = socketHandlerUserMap.remove(deadSocketHandler);
+        //broadcast DED message
+        sendMessageToAll(new DeadUserMessage(clientUser.getSocketAddress(),deadUser),true);
+        //If host, trigger election
+        if(deadSocketHandler == hostSocketHandler) {
+            //TODO: trigger election
+        }
+        //Remove from user ordering
+        //TODO: userRankList.remove(user)
+    }
+
+    /**
+     * Sets the address of the server manager
+     * @param serverSocketAddress The address of the server
+     */  
+    private void handleDeadUser(InetSocketAddress userAddress) {
+        SocketHandler userSocketHandler = null;
+        for(SocketHandler socketHandler : socketHandlerUserMap.keySet()) {
+            if(socketHandler.getRemoteSocketAddress().equals(userAddress)) {
+                userSocketHandler = socketHandler;
+                break;
+            }
+        }
+        if(userSocketHandler == null){return;} //Connection is already closed
+        handleDeadUser(userSocketHandler);
     }
 }
