@@ -328,13 +328,14 @@ public class Client implements Runnable, SocketHandlerListener {
             if(decryptedEntry.length() > 0){break;}
             System.out.println("Non matching room");
         }
-        if(decryptedEntry.length() == 0) {
+        if(decryptedEntry.isEmpty()) {
             createNewRoom();
             listener.listProcessed(true);
         }
         else {
-            String decryptedInetAddress = decryptedEntry.split(":")[0].replace("/","");
-            int decryptedPort = Integer.parseInt(decryptedEntry.split(":")[1]);
+            String[] splitString = decryptedEntry.replace("/","").split(":");
+            String decryptedInetAddress = splitString[0];
+            int decryptedPort = Integer.parseInt(splitString[1]);
             System.out.println(decryptedInetAddress+":"+decryptedPort);
             InetSocketAddress roomAddress = new InetSocketAddress(decryptedInetAddress, decryptedPort);
             sendMessage(new HelloMessage(clientUser), roomAddress, true);
@@ -381,8 +382,9 @@ public class Client implements Runnable, SocketHandlerListener {
      * @return boolean True if the message is allowed to continue, false otherwise
      */
     private boolean handleAckMessage(AckMessage message) {
-        if(message.getInformation().length() > 0){
-            roomToken = message.getInformation().split(" ")[2];
+        String[] splitMessage = message.getInformation().split(" ");
+        if(splitMessage[0].equals("TOKEN")){
+            roomToken = splitMessage[1];
             disconnectFromServer();
             System.out.println("Token updated: "+roomToken);
         }

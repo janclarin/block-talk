@@ -140,9 +140,9 @@ public class BlockTalkClientProgram implements ClientListener {
     }
 
     /**
-     * Prompts the user for the server manager information
+     * Prompts the user for the a key seed to use
      * @param scanner
-     * @return
+     * @return String the key that was chosen
      * @throws UnknownHostException
      */
     private static String promptKey(Client client, Scanner scanner)  throws IOException, GeneralSecurityException {

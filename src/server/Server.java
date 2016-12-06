@@ -133,7 +133,7 @@ public class Server {
 			HostRoomMessage hostRoomMessage = (HostRoomMessage) message;
 			byte[] hostData = hostRoomMessage.getRoomData();
 			addRoomMap(token, hostData);
-			sendMessage(new AckMessage(serverSocketAddress, String.format("Host Updated %s", token.toString())));
+			sendMessage(new AckMessage(serverSocketAddress, String.format("TOKEN %s", token.toString())));
 		} 
 		else if (message instanceof RequestRoomListMessage) {
 			sendMessage(new RoomListMessage(serverSocketAddress, new ArrayList<>(roomMap.values())));
