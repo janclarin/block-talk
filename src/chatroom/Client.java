@@ -384,8 +384,8 @@ public class Client implements Runnable, SocketHandlerListener {
         if(message.getInformation().length() > 0){
             roomToken = message.getInformation().split(" ")[2];
             disconnectFromServer(senderSocketHandler);
+            System.out.println("Token updated: "+roomToken);
         }
-        System.out.println("Token updated: "+roomToken);
         return true;
     }
 
@@ -398,7 +398,6 @@ public class Client implements Runnable, SocketHandlerListener {
     private SocketHandler openSocketConnection(InetSocketAddress userSocketAddress, boolean serverMode) throws IOException
     {
         Socket socket = new Socket(userSocketAddress.getAddress(), userSocketAddress.getPort());
-        while(!socket.isConnected()){}
         SocketHandler socketHandler = new SocketHandler(socket, this, encryptionEngine);
         socketHandler.setServerMode(serverMode);
         socketHandlerThreadPool.execute(socketHandler);
