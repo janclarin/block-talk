@@ -28,9 +28,9 @@ public class RoomListMessage extends Message {
 
     private List<byte[]> buildList(String listString) {
         List<byte[]> list = new ArrayList<byte[]>();
-        listString = listString.replace(MessageType.ROOM_LIST.getProtocolCode(), "");
+        listString = listString.trim();
         String[] splitString = listString.split("\n");
-        for(String encodedEntry: splitString) {
+        for(String encodedEntry : splitString) {
             list.add(Base64.getDecoder().decode(encodedEntry));
         }
         return list;
@@ -43,7 +43,7 @@ public class RoomListMessage extends Message {
         stringBuilder.append(" ");
         for (byte[] entry : entries) {
             //Format: LST [<encoded entry>\n]*
-            stringBuilder.append(Base64.getEncoder().encode(entry));
+            stringBuilder.append(new String(Base64.getEncoder().encode(entry)));
             stringBuilder.append("\n");
         }
         return stringBuilder.toString();

@@ -119,13 +119,12 @@ public class MessageReadHelper{
 	            User sender = getMessageContentUser(messageContent);
 	            return new HelloMessage(sender);
 	        case HOST_ROOM:
-	            // This assumes that the room name is the only thing in the message body.
-	            return new HostRoomMessage(senderSocketAddress, messageContent.getBytes());
+	            // This assumes that the encrypted info is the only thing in the message body.
+	            return new HostRoomMessage(senderSocketAddress, messageContent);
 	        case REQUEST_ROOM_LIST:
 	            return new RequestRoomListMessage(senderSocketAddress);
 	        case ROOM_LIST:
-	            List<byte[]> chatRooms = getMessageContentChatRooms(messageContent);
-	            return new RoomListMessage(senderSocketAddress, chatRooms);
+	            return new RoomListMessage(senderSocketAddress, messageContent);
 	        case USER:
 	            User contentUser = getMessageContentUser(messageContent);
 	            return new UserInfoMessage(senderSocketAddress, contentUser);
@@ -245,23 +244,6 @@ public class MessageReadHelper{
         String ipAddress = messageContentSplit[1];
         int port = Integer.parseInt(messageContentSplit[2]);
         return new User(username, new InetSocketAddress(ipAddress, port));
-    }
-
-    /**
-     * Creates a list of chat rooms from message content.
-     * Expects a format of:
-     * <chatroomName> <hostIpAddress> <hostPort>\n<chatroomName> <hostIpAddress> <hostPort>\n ...
-     *
-     * @param messageContent Message content string.
-     * @return List of ChatRooms parsed from message content.
-     */
-    private static List<byte[]> getMessageContentChatRooms(String messageContent) {
-        List<byte[]> chatRooms = new ArrayList<>();
-        String[] messageContentSplitByNewLines = messageContent.split("\n");
-        for (String chatRoomBytes : messageContentSplitByNewLines) {
-            chatRooms.add(chatRoomBytes.getBytes());
-        }
-        return chatRooms;
     }
 
     /**
