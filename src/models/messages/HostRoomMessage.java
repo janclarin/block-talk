@@ -23,12 +23,12 @@ public class HostRoomMessage extends Message {
     }
 
     private byte[] parseString(String messageContent) {
-        messageContent = messageContent.replace(MessageType.HOST_ROOM.getProtocolCode(), "").trim();
+        messageContent = messageContent.trim();
         return Base64.getDecoder().decode(messageContent);
     }
     
     @Override
     protected String getData() {
-        return String.format("%s %s", MessageType.HOST_ROOM.getProtocolCode(), Base64.getEncoder().encode(encryptedHostInformation));
+        return String.format("%s %s", MessageType.HOST_ROOM.getProtocolCode(), new String(Base64.getEncoder().encode(encryptedHostInformation)));
     }
 }

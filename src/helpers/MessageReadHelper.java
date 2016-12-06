@@ -120,7 +120,7 @@ public class MessageReadHelper{
 	            return new HelloMessage(sender);
 	        case HOST_ROOM:
 	            // This assumes that the encrypted info is the only thing in the message body.
-	            return new HostRoomMessage(senderSocketAddress, messageContent.getBytes());
+	            return new HostRoomMessage(senderSocketAddress, messageContent);
 	        case REQUEST_ROOM_LIST:
 	            return new RequestRoomListMessage(senderSocketAddress);
 	        case ROOM_LIST:

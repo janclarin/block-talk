@@ -34,4 +34,11 @@ public interface ClientListener {
      * @param newUser The new user who has just joined.
      */
     void userHasJoined(User newUser);
+
+    /**
+     * To be called when room list has been processed
+     *
+     * @param isHosting True if room did not already exist
+     */
+    void listProcessed(boolean isHosting);
 }
