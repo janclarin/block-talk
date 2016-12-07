@@ -28,7 +28,7 @@ public class HostUpdatedMessage extends Message {
         stringBuilder.append(MessageType.HOST_UPDATED.getProtocolCode());
         stringBuilder.append(" ");
         stringBuilder.append(token);
-        stringBuilder.append("\n");
+        stringBuilder.append(" ");
         stringBuilder.append(newEncryptedHost);
         return stringBuilder.toString();
     }

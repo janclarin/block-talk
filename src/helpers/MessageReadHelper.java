@@ -140,8 +140,8 @@ public class MessageReadHelper{
 	        			getDataMessageContent(dataMessageBytes));
 	        	return new QueueMessage(senderSocketAddress, message, queueMessageId);
 	        case HOST_UPDATED:
-	        	String token = messageContent.split("\n")[0];
-	        	String encryptedHost = messageContent.split("\n")[1];
+	        	String token = messageContent.split(" ")[0];
+	        	String encryptedHost = messageContent.split(" ")[1];
 	        	return new HostUpdatedMessage(senderSocketAddress, token, encryptedHost.getBytes());
 	        // TODO: case DISCONNECTED:
 	        // TODO: case LEADER:
