@@ -470,7 +470,7 @@ public class Client implements Runnable, SocketHandlerListener {
      * @param message
      */
     private void handleLeaderVoteMessage(LeaderVoteMessage message) {
-        if (!electionMode) triggerElection();
+        if (!electionMode) startElection();
 
         // Increment vote counts for self.
         this.leaderElectionVotesReceived++;
@@ -487,7 +487,7 @@ public class Client implements Runnable, SocketHandlerListener {
     /**
      * Starts the election process by sending a vote to its lowest ranked user if it is not itself.
      */
-    private void triggerElection() {
+    private void startElection() {
         electionMode = true;
 
         // Send vote to lowest ranked user if it exists.
