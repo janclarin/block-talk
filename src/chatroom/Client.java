@@ -97,9 +97,9 @@ public class Client implements Runnable, SocketHandlerListener {
     private InetSocketAddress serverManagerAddress;
 
     /**
-     * SocketHandler connected to current host
+     * Host client user. Used to determine if the host has gone down.
      */
-    private SocketHandler hostSocketHandler;
+    private User hostClientUser;
 
     /**
      * True if there is an ongoing election
@@ -329,6 +329,11 @@ public class Client implements Runnable, SocketHandlerListener {
             sendMessage(new HelloMessage(clientUser), senderSocketHandler, true);
             sendMessage(new UserRankOrderMessage(clientUser.getSocketAddress(), userRankingOrderList), senderSocketHandler, true);
             sendMessage(new AckMessage(clientUser.getSocketAddress(), "TOKEN " + roomToken), senderSocketHandler, true);
+        } else {
+            // The first hello will be from the host. Set it.
+            if (hostClientUser == null) {
+                hostClientUser = message.getSender();
+            }
         }
         socketHandlerUserMap.put(senderSocketHandler, sender);
     }
@@ -476,11 +481,11 @@ public class Client implements Runnable, SocketHandlerListener {
         if (!electionMode) startElection();
 
         // Increment vote counts for self.
-        this.leaderElectionVotesReceived++;
+        leaderElectionVotesReceived++;
 
         // Check if there are enough votes for myself.
         int numVotesNeeded = (int) Math.ceil(socketHandlerUserMap.size() / 2);
-        if (this.leaderElectionVotesReceived >= numVotesNeeded) {
+        if (leaderElectionVotesReceived >= numVotesNeeded) {
             isHost = true; // Become the host.
             sendMessageToAll(new LeaderMessage(clientUser));
             // TODO: Notify server.
@@ -493,6 +498,7 @@ public class Client implements Runnable, SocketHandlerListener {
      * @param message
      */
     private void handleLeaderMessage(LeaderMessage message) {
+        hostClientUser = message.getSender();
         endElection();
     }
 
