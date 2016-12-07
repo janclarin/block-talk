@@ -100,7 +100,7 @@ public class BlockTalkClientProgram implements ClientListener {
                 client.sendMessageToAll(msgC);
                 client.sendMessageToAll(msgB);
                 client.sendMessageToAll(msgA);
-            } else if (message.startsWith("/q") || message.startsWith("/q") || message.toLowerCase().startsWith("/quit")) {
+            } else if (message.toLowerCase().startsWith("/q") || message.toLowerCase().startsWith("/quit")) {
                 shutdown = true;
                 client.sendMessageToAll(new ByeMessage(clientUser.getSocketAddress()));
             }else {

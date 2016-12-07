@@ -36,7 +36,7 @@ public class DeadUserMessage extends Message {
      */
     @Override
     public String getData() {
-        return String.format("%s %s %s %d", MessageType.DISCONNECTED.getProtocolCode(), deadUser.getUsername(),
+        return String.format("%s %s %s %d", MessageType.DEAD_USER.getProtocolCode(), deadUser.getUsername(),
                 deadUser.getIpAddress().getHostAddress(), deadUser.getPort());
     }
 }
