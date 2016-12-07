@@ -12,7 +12,7 @@ public enum MessageType {
     LEADER("LDR"),
     MESSAGE("MSG"),
     NEGATIVE_ACKNOWLEDGEMENT("NAK"),
-    ORDER("ORD"),
+    USER_RANK_ORDER("ORD"),
     REQUEST_ROOM_LIST("ROM"),
     ROOM_LIST("LST"),
     USER("USR"),

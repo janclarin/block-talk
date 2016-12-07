@@ -1,6 +1,5 @@
 package chatroom;
 
-import models.ChatRoom;
 import models.User;
 import models.messages.*;
 import models.SenderMessageTuple;
@@ -17,9 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.Comparator;
 import java.security.GeneralSecurityException;
-import javax.crypto.IllegalBlockSizeException;
 
 import java.util.Base64;
 
@@ -77,8 +74,13 @@ public class Client implements Runnable, SocketHandlerListener {
     /**
      * Priority queue for later-timestamped messages
      */
-    private PriorityQueue<SenderMessageTuple> queuedMessages = new PriorityQueue<SenderMessageTuple>();
-    
+    private PriorityQueue<SenderMessageTuple> queuedMessages = new PriorityQueue<>();
+
+    /**
+     * Room member ranking order. Users added as their information is received. Used for leader election.
+     */
+    private List<User> userRankingOrderList = new ArrayList<>();
+
     /**
      * Encryption engine for encryption protocol
      */
@@ -108,6 +110,9 @@ public class Client implements Runnable, SocketHandlerListener {
     public Client(final User clientUser, final ClientListener listener) {
         this.clientUser = clientUser;
         this.listener = listener;
+
+        // Add the user to the ranking list. This gets updated when connected to a room.
+        this.userRankingOrderList.add(clientUser);
     }
 
     /**
@@ -273,6 +278,9 @@ public class Client implements Runnable, SocketHandlerListener {
             //get token from server
             handleAckMessage((AckMessage) message);
         }
+        else if (message instanceof UserRankOrderMessage) {
+            handleUserRankOrderMessage((UserRankOrderMessage) message);
+        }
         else if (message instanceof DeadUserMessage) {
             handleDeadUserMessage((DeadUserMessage) message);
         }
@@ -299,8 +307,11 @@ public class Client implements Runnable, SocketHandlerListener {
         if (isHost) {
             // Send new client information to all clients.
             sendMessageToAll(new UserInfoMessage(clientUser, sender));
-            // Send message to the new client.
+            // Add sender to ranking order list.
+            userRankingOrderList.add(sender);
+            // Send hello and user rank order message to the new client.
             sendMessage(new HelloMessage(clientUser), senderSocketHandler, true);
+            sendMessage(new UserRankOrderMessage(clientUser.getSocketAddress(), userRankingOrderList), senderSocketHandler, true);
         }
         socketHandlerUserMap.put(senderSocketHandler, sender);
     }
@@ -319,6 +330,9 @@ public class Client implements Runnable, SocketHandlerListener {
                 SocketHandler newSocketHandler = openSocketConnection(messageUser.getSocketAddress(), false);
                 socketHandlerUserMap.put(newSocketHandler, messageUser);
                 sendMessage(new HelloMessage(clientUser), newSocketHandler, true);
+
+                // Add user to ranking order list.
+                userRankingOrderList.add(messageUser);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -405,6 +419,15 @@ public class Client implements Runnable, SocketHandlerListener {
     }
 
     /**
+     * Overrides the internal userRankingOrderList with one from external source.
+     *
+     * @param message Incoming message.
+     */
+    private void handleUserRankOrderMessage(UserRankOrderMessage message) {
+        userRankingOrderList = message.getUserRankOrderList();
+    }
+
+    /*
      * Handles DeadUserMessage.
      *
      * @param message Incoming message
@@ -548,11 +571,28 @@ public class Client implements Runnable, SocketHandlerListener {
     }
 
     /**
+     * Removes the userToRemove from the userRankingOrderList.
+     * @param userToRemove
+     */
+    private void removeUserFromRankingOrder(User userToRemove) {
+        userRankingOrderList.removeIf(user -> user.equals(userToRemove));
+    }
+
+    /**
      * Sets the address of the server manager
      * @param serverSocketAddress The address of the server
      */  
     public void setServerManagerAddress(InetSocketAddress serverManagerAddress) {
         this.serverManagerAddress = serverManagerAddress;
+    }
+
+    /**
+     * Gets the userRankingOrderList.
+     *
+     * @return User ranking order list.
+     */
+    public List<User> getUserRankingOrderList() {
+        return userRankingOrderList;
     }
 
     /**
