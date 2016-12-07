@@ -109,7 +109,7 @@ public class Client implements Runnable, SocketHandlerListener {
     /**
      * Number of votes recieved in current election
      */
-    private int votesRecieved;
+    private int leaderElectionVotesReceived;
 
     /**
      * Creates a new Client with the given models.
@@ -297,6 +297,9 @@ public class Client implements Runnable, SocketHandlerListener {
         else if (message instanceof ByeMessage) {
             handleByeMessage((ByeMessage) message, sender);
         }
+        else if (message instanceof LeaderVoteMessage) {
+            handleLeaderVoteMessage((LeaderVoteMessage) message);
+        }
 
         if(notify){
             // Notify listener that a message was received.
@@ -462,6 +465,27 @@ public class Client implements Runnable, SocketHandlerListener {
     }
 
     /**
+     * Counts votes.
+     *
+     * @param message
+     */
+    private void handleLeaderVoteMessage(LeaderVoteMessage message) {
+        this.leaderElectionVotesReceived++;
+
+        // Send vote to lowest ranked user if it exists.
+        if (userRankingOrderList.size() > 0) {
+            User lowestRankUser = userRankingOrderList.get(0);
+            sendMessage(new LeaderVoteMessage(clientUser), lowestRankUser.getSocketAddress(), true);
+        }
+
+        int numVotesNeeded = (int) Math.ceil(socketHandlerUserMap.size() / 2);
+        if (this.leaderElectionVotesReceived >= numVotesNeeded) {
+            sendMessageToAll(new LeaderMessage(clientUser));
+            electionMode = false;
+        }
+    }
+
+    /**
      * Opens a connection with given user
      * @param userSocketAddress The socket address of the user to open a connection with
      * @param serverMode True if this connection will be with the server
@@ -624,7 +648,7 @@ public class Client implements Runnable, SocketHandlerListener {
             //TODO: trigger election
         }
         //Remove from user ordering
-        //TODO: userRankList.remove(user)
+        removeUserFromRankingOrder(deadUser);
     }
 
     /**
