@@ -1,6 +1,5 @@
 package helpers;
 import exceptions.MessageTypeNotSupportedException;
-import models.ChatRoom;
 import models.MessageType;
 import models.User;
 import models.messages.*;
@@ -15,7 +14,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.Base64;
 
 public class MessageReadHelper{
 
@@ -143,6 +141,11 @@ public class MessageReadHelper{
 	        			getDataMessageType(dataMessageBytes), 
 	        			getDataMessageContent(dataMessageBytes));
 	        	return new QueueMessage(senderSocketAddress, message, queueMessageId);
+	        case HOST_UPDATED:
+	        	String token = messageContent.split(" ")[0];
+	        	String encryptedHost = messageContent.split(" ")[1];
+	        	return new HostUpdatedMessage(senderSocketAddress, token, encryptedHost.getBytes());
+	        // TODO: case DISCONNECTED:
             case USER_RANK_ORDER:
                 return new UserRankOrderMessage(senderSocketAddress, getMessageContentUserList(messageContent));
 	        case DEAD_USER:

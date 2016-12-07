@@ -19,6 +19,7 @@ public enum MessageType {
     YOU("YOU"),
     PROCESS("PRC"),
     QUEUE("QUE"),
+    HOST_UPDATED("RPL"),
     LEADER_VOTE("VOT");
 
     private final String protocolCode;
