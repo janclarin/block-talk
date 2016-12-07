@@ -143,10 +143,11 @@ public class MessageReadHelper{
 	        			getDataMessageType(dataMessageBytes), 
 	        			getDataMessageContent(dataMessageBytes));
 	        	return new QueueMessage(senderSocketAddress, message, queueMessageId);
+            case USER_RANK_ORDER:
+                return new UserRankOrderMessage(senderSocketAddress, getMessageContentUserList(messageContent));
 	        // TODO: case DISCONNECTED:
 	        // TODO: case LEADER:
 	        // TODO: case NEGATIVE_ACKNOWLEDGEMENT:
-	        // TODO: case USER_RANK_ORDER:
 	        default:
 	            throw new MessageTypeNotSupportedException();
 	    }
@@ -244,6 +245,24 @@ public class MessageReadHelper{
         String ipAddress = messageContentSplit[1];
         int port = Integer.parseInt(messageContentSplit[2]);
         return new User(username, new InetSocketAddress(ipAddress, port));
+    }
+
+    /**
+     * Creates a list of users from message content.
+     * Expecting the format:
+     * <username1> <ipAddress1> <port1>\n<username2> <ipAddress2> <port2>\n...
+     *
+     * @param messageContent Message content string.
+     * @return List<User> parsed from message content.</User>
+     */
+    private static List<User> getMessageContentUserList(String messageContent) throws UnknownHostException {
+        List<User> users = new ArrayList<>();
+        String[] messageContentSplitByNewLine = messageContent.split("\n");
+
+        for (int i = 0; i < messageContentSplitByNewLine.length; i++) {
+            users.add(getMessageContentUser(messageContentSplitByNewLine[i]));
+        }
+        return users;
     }
 
     /**
