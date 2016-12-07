@@ -148,6 +148,9 @@ public class MessageReadHelper{
 	        case DEAD_USER:
                 User deadUser = getMessageContentUser(messageContent);
                 return new DeadUserMessage(senderSocketAddress, deadUser);
+            case LEADER_VOTE:
+                User voterUser = getMessageContentUser(messageContent);
+                return new LeaderVoteMessage(voterUser);
 	        // TODO: case LEADER:
 	        // TODO: case NEGATIVE_ACKNOWLEDGEMENT:
 	        default:
