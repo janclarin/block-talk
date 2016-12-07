@@ -146,7 +146,7 @@ public class MessageReadHelper{
 	        // TODO: case DISCONNECTED:
 	        // TODO: case LEADER:
 	        // TODO: case NEGATIVE_ACKNOWLEDGEMENT:
-	        // TODO: case ORDER:
+	        // TODO: case USER_RANK_ORDER:
 	        default:
 	            throw new MessageTypeNotSupportedException();
 	    }
