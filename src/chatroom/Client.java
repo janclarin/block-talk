@@ -289,6 +289,8 @@ public class Client implements Runnable, SocketHandlerListener {
             sendMessageToAll(new UserInfoMessage(clientUser, sender));
             // Send message to the new client.
             sendMessage(new HelloMessage(clientUser), senderSocketHandler, true);
+            // Send ACK with token.
+            sendMessage(new AckMessage(clientUser.getSocketAddress(), "TOKEN " + roomToken), senderSocketHandler, true);
         }
         socketHandlerUserMap.put(senderSocketHandler, sender);
     }
