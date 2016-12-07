@@ -1,6 +1,5 @@
 package chatroom;
 
-import models.ChatRoom;
 import models.User;
 import models.messages.*;
 import models.SenderMessageTuple;
@@ -17,9 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.Comparator;
 import java.security.GeneralSecurityException;
-import javax.crypto.IllegalBlockSizeException;
 
 import java.util.Base64;
 
@@ -77,8 +74,13 @@ public class Client implements Runnable, SocketHandlerListener {
     /**
      * Priority queue for later-timestamped messages
      */
-    private PriorityQueue<SenderMessageTuple> queuedMessages = new PriorityQueue<SenderMessageTuple>();
-    
+    private PriorityQueue<SenderMessageTuple> queuedMessages = new PriorityQueue<>();
+
+    /**
+     * Room member ranking order. Users added as their information is received. Used for leader election.
+     */
+    private List<User> userRankingOrderList = new ArrayList<>();
+
     /**
      * Encryption engine for encryption protocol
      */
@@ -95,6 +97,11 @@ public class Client implements Runnable, SocketHandlerListener {
     private InetSocketAddress serverManagerAddress;
 
     /**
+     * SocketHandler connected to current host
+     */
+    private SocketHandler hostSocketHandler;
+
+    /**
      * Creates a new Client with the given models.
      *
      * @param clientUser Client user information.
@@ -103,6 +110,9 @@ public class Client implements Runnable, SocketHandlerListener {
     public Client(final User clientUser, final ClientListener listener) {
         this.clientUser = clientUser;
         this.listener = listener;
+
+        // Add the user to the ranking list. This gets updated when connected to a room.
+        this.userRankingOrderList.add(clientUser);
     }
 
     /**
@@ -183,11 +193,12 @@ public class Client implements Runnable, SocketHandlerListener {
      * @param encrypt True if the message should be encrypted first
      */
     public void sendMessage(Message message, SocketHandler recipientSocketHandler, boolean encrypt) {
-        try {
-            if(encrypt){message = encryptMessage(message);}
+        if(encrypt){message = encryptMessage(message);}
+        try{
             recipientSocketHandler.sendMessage(message);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ioe) {
+            System.out.println("User "+socketHandlerUserMap.get(recipientSocketHandler).toString()+" is dead!");
+            handleDeadUser(recipientSocketHandler, true);
         }
     }
 
@@ -267,6 +278,15 @@ public class Client implements Runnable, SocketHandlerListener {
             //get token from server
             handleAckMessage((AckMessage) message);
         }
+        else if (message instanceof UserRankOrderMessage) {
+            handleUserRankOrderMessage((UserRankOrderMessage) message);
+        }
+        else if (message instanceof DeadUserMessage) {
+            handleDeadUserMessage((DeadUserMessage) message);
+        }
+        else if (message instanceof ByeMessage) {
+            handleByeMessage((ByeMessage) message, sender);
+        }
 
         if(notify){
             // Notify listener that a message was received.
@@ -287,9 +307,11 @@ public class Client implements Runnable, SocketHandlerListener {
         if (isHost) {
             // Send new client information to all clients.
             sendMessageToAll(new UserInfoMessage(clientUser, sender));
-            // Send message to the new client.
+            // Add sender to ranking order list.
+            userRankingOrderList.add(sender);
+            // Send hello, user rank order, and ACK with token messages to the new client.
             sendMessage(new HelloMessage(clientUser), senderSocketHandler, true);
-            // Send ACK with token.
+            sendMessage(new UserRankOrderMessage(clientUser.getSocketAddress(), userRankingOrderList), senderSocketHandler, true);
             sendMessage(new AckMessage(clientUser.getSocketAddress(), "TOKEN " + roomToken), senderSocketHandler, true);
         }
         socketHandlerUserMap.put(senderSocketHandler, sender);
@@ -309,6 +331,9 @@ public class Client implements Runnable, SocketHandlerListener {
                 SocketHandler newSocketHandler = openSocketConnection(messageUser.getSocketAddress(), false);
                 socketHandlerUserMap.put(newSocketHandler, messageUser);
                 sendMessage(new HelloMessage(clientUser), newSocketHandler, true);
+
+                // Add user to ranking order list.
+                userRankingOrderList.add(messageUser);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -391,6 +416,38 @@ public class Client implements Runnable, SocketHandlerListener {
             disconnectFromServer();
             System.out.println("Token updated: "+roomToken);
         }
+        return true;
+    }
+
+    /**
+     * Overrides the internal userRankingOrderList with one from external source.
+     *
+     * @param message Incoming message.
+     */
+    private void handleUserRankOrderMessage(UserRankOrderMessage message) {
+        userRankingOrderList = message.getUserRankOrderList();
+    }
+
+    /*
+     * Handles DeadUserMessage.
+     *
+     * @param message Incoming message
+     * @return boolean True if the message is allowed to continue, false otherwise
+     */
+    private boolean handleDeadUserMessage(DeadUserMessage message) {
+        handleDeadUser(message.getDeadUser().getSocketAddress(), false);
+        return true;
+    }
+
+    /**
+     * Handles ByeMessage.
+     *
+     * @param message Incoming message
+     * @return boolean True if the message is allowed to continue, false otherwise
+     */
+    private boolean handleByeMessage(ByeMessage message, User sender) {
+        //Replicates a dead user message
+        handleDeadUser(sender.getSocketAddress(), false);
         return true;
     }
 
@@ -515,10 +572,64 @@ public class Client implements Runnable, SocketHandlerListener {
     }
 
     /**
+     * Removes the userToRemove from the userRankingOrderList.
+     * @param userToRemove
+     */
+    private void removeUserFromRankingOrder(User userToRemove) {
+        userRankingOrderList.removeIf(user -> user.equals(userToRemove));
+    }
+
+    /**
      * Sets the address of the server manager
      * @param serverSocketAddress The address of the server
      */  
     public void setServerManagerAddress(InetSocketAddress serverManagerAddress) {
         this.serverManagerAddress = serverManagerAddress;
+    }
+
+    /**
+     * Gets the userRankingOrderList.
+     *
+     * @return User ranking order list.
+     */
+    public List<User> getUserRankingOrderList() {
+        return userRankingOrderList;
+    }
+
+    /**
+     * Sets the address of the server manager
+     * @param serverSocketAddress The address of the server
+     */  
+    private void handleDeadUser(SocketHandler deadSocketHandler, boolean broadcastDead) {
+        //shut down socket
+        deadSocketHandler.shutdown();
+        //remove user from room map
+        int totalUsers = socketHandlerUserMap.size();
+        User deadUser = socketHandlerUserMap.remove(deadSocketHandler);
+        while(socketHandlerUserMap.size() == totalUsers){}//wait for user to be removed?
+        //broadcast DED message if this was a new discovery
+        if(broadcastDead){sendMessageToAll(new DeadUserMessage(clientUser.getSocketAddress(),deadUser));}
+        //If host, trigger election
+        if(deadSocketHandler == hostSocketHandler) {
+            //TODO: trigger election
+        }
+        //Remove from user ordering
+        //TODO: userRankList.remove(user)
+    }
+
+    /**
+     * Sets the address of the server manager
+     * @param serverSocketAddress The address of the server
+     */  
+    private void handleDeadUser(InetSocketAddress userAddress, boolean broadcastDead) {
+        SocketHandler userSocketHandler = null;
+        for(SocketHandler socketHandler : socketHandlerUserMap.keySet()) {
+            if(socketHandler.getRemoteSocketAddress().equals(userAddress)) {
+                userSocketHandler = socketHandler;
+                break;
+            }
+        }
+        if(userSocketHandler == null){return;} //Connection is already closed
+        handleDeadUser(userSocketHandler, broadcastDead);
     }
 }
