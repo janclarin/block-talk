@@ -465,24 +465,47 @@ public class Client implements Runnable, SocketHandlerListener {
     }
 
     /**
-     * Counts votes.
+     * Replies with its own vote. Counts leader votes.
      *
      * @param message
      */
     private void handleLeaderVoteMessage(LeaderVoteMessage message) {
+        if (!electionMode) triggerElection();
+
+        // Increment vote counts for self.
         this.leaderElectionVotesReceived++;
+
+        // Check if there are enough votes for myself.
+        int numVotesNeeded = (int) Math.ceil(socketHandlerUserMap.size() / 2);
+        if (this.leaderElectionVotesReceived >= numVotesNeeded) {
+            sendMessageToAll(new LeaderMessage(clientUser));
+            // TODO: Notify server.
+            endElection();
+        }
+    }
+
+    /**
+     * Starts the election process by sending a vote to its lowest ranked user if it is not itself.
+     */
+    private void triggerElection() {
+        electionMode = true;
 
         // Send vote to lowest ranked user if it exists.
         if (userRankingOrderList.size() > 0) {
             User lowestRankUser = userRankingOrderList.get(0);
-            sendMessage(new LeaderVoteMessage(clientUser), lowestRankUser.getSocketAddress(), true);
+            // Only send vote if not self.
+            if (!lowestRankUser.equals(clientUser)) {
+                sendMessage(new LeaderVoteMessage(clientUser), lowestRankUser.getSocketAddress(), true);
+            }
         }
+    }
 
-        int numVotesNeeded = (int) Math.ceil(socketHandlerUserMap.size() / 2);
-        if (this.leaderElectionVotesReceived >= numVotesNeeded) {
-            sendMessageToAll(new LeaderMessage(clientUser));
-            electionMode = false;
-        }
+    /**
+     * Ends the election and resets vote count.
+     */
+    private void endElection() {
+        electionMode = false;
+        leaderElectionVotesReceived = 0;
     }
 
     /**
