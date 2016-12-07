@@ -257,10 +257,11 @@ public class MessageReadHelper{
      */
     private static List<User> getMessageContentUserList(String messageContent) throws UnknownHostException {
         List<User> users = new ArrayList<>();
-        String[] messageContentSplitByNewLine = messageContent.split("\n");
-
-        for (int i = 0; i < messageContentSplitByNewLine.length; i++) {
-            users.add(getMessageContentUser(messageContentSplitByNewLine[i]));
+        if (!messageContent.isEmpty()) {
+            String[] messageContentSplitByNewLine = messageContent.split("\n");
+            for (int i = 0; i < messageContentSplitByNewLine.length; i++) {
+                users.add(getMessageContentUser(messageContentSplitByNewLine[i]));
+            }
         }
         return users;
     }
