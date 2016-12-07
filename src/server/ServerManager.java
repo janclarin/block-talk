@@ -21,6 +21,7 @@ import helpers.MessageReadHelper;
 import models.messages.ByeMessage;
 import models.messages.Message;
 import models.messages.ProcessMessage;
+import models.messages.QueueMessage;
 
 /**
  * This class manages incoming connections to server from chatroom clients
@@ -29,15 +30,14 @@ import models.messages.ProcessMessage;
  * @author Jan Clarin
  * @author Riley Lahd
  */
-public class ServerManager {
+public class ServerManager implements ClientConnectionListener {
 	
 	private static List<ClientConnectionListener> servers;
 	private static int port = 9999;
 	private static boolean listen;
 	private List<Socket> serverSockets;
 	private static ServerManager serverManager;
-	private Object serverSocketsLock;
-	
+
 	/**
 	 * Starts the main server manager.
 	 * Begins listening for incoming connections and creates a thread based on distinct connection.
@@ -77,12 +77,10 @@ public class ServerManager {
 				}
 			}
 			
-			List<Socket> test = ServerManager.getInstance().getServerSockets();
-			
 			System.out.println("Listening on "+listenServer.getInetAddress() + ":"+listenServer.getLocalPort()+"...");
 			while(listen){
 				try{
-					threadPool.execute(new ClientConnection(listenServer.accept(), new ClientServerConnectionRelay(getInstance().getServerSockets())));
+					threadPool.execute(new ClientConnection(listenServer.accept(), getInstance()));
 				}
 				catch(Exception ex){
 					ex.printStackTrace();
@@ -98,10 +96,12 @@ public class ServerManager {
 		}
 	}
 	
+	/**
+	 * Initialize ServerManager, and serverSockets instances
+	 */
 	public ServerManager(){
 		this.serverManager = this;
 		this.serverSockets = new ArrayList<Socket>();
-		this.serverSocketsLock = new Object();
 	}
 	
 	public static ServerManager getInstance(){
@@ -124,6 +124,13 @@ public class ServerManager {
 		return serverSockets;
 	}
 	
+    /**
+     * Send messages to server sockets until a valid reply is received. Returns first message in the list.
+     * 
+     * @param message
+     * @param messageId
+     * @return
+     */
     public Message sendMessageToServerSockets(Message message, UUID messageId){
     	List<Message> replies = new ArrayList<Message>();
     	List<Socket> toRemove = new ArrayList<Socket>();
@@ -159,14 +166,29 @@ public class ServerManager {
     	return replies.iterator().next();
     }
     
+    /**
+     * Send message to a socket, and return reply as a message.
+     * 
+     * @param socket
+     * @param outgoing
+     * @return
+     * @throws IOException
+     */
     public Message sendMessage(Socket socket, Message outgoing) throws IOException {
-/*        synchronized (socket) {*/
     		InputStream serverInputStream = socket.getInputStream();
         	OutputStream serverOutputStream = socket.getOutputStream();
             serverOutputStream.write(outgoing.toByteArray());
             serverOutputStream.flush();
             return MessageReadHelper.readNextMessage(serverInputStream);
-/*        }*/
     }
+    
+    @Override
+    public Message messageReceived(Message message) {
+        Message responseMessage = null;
+        UUID queueId =  UUID.randomUUID();
+        responseMessage = ServerManager.getInstance().sendMessageToServerSockets(new QueueMessage(message.getSenderSocketAddress(), message, queueId), queueId);
+        responseMessage = ServerManager.getInstance().sendMessageToServerSockets(new ProcessMessage(message.getSenderSocketAddress(), queueId), queueId);
+        return responseMessage;
+    }  
 	
 }
