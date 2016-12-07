@@ -485,11 +485,13 @@ public class Client implements Runnable, SocketHandlerListener {
         leaderElectionVotesReceived++;
 
         // Check if there are enough votes for myself.
-        int numVotesNeeded = (int) Math.ceil(socketHandlerUserMap.size() / 2) + 1;
+        int numVotesNeeded = (int) Math.floor(socketHandlerUserMap.size() / 2) + 1;
         if (leaderElectionVotesReceived >= numVotesNeeded) {
             isHost = true; // Become the host.
             sendMessageToAll(new LeaderMessage(clientUser));
-            // TODO: Notify server.
+            // Notify server.
+            byte[] encryptedInfo = encryptionEngine.encrypt(clientUser.getSocketAddress().toString().getBytes());
+            sendMessage(new HostUpdatedMessage(clientUser.getSocketAddress(),this.roomToken,encryptedInfo),serverManagerAddress, false);
             endElection();
         }
     }

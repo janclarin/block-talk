@@ -1,6 +1,7 @@
 package models.messages;
 
 import java.net.InetSocketAddress;
+import java.util.Base64;
 
 import models.MessageType;
 
@@ -12,6 +13,13 @@ public class HostUpdatedMessage extends Message {
 		super(senderSocketAddress);
 		this.token = token;
 		this.newEncryptedHost = encryptedHost;
+	}
+
+	public HostUpdatedMessage(InetSocketAddress senderSocketAddress, String content) {
+		super(senderSocketAddress);
+		String[] splitContent = content.split(" ");
+		this.token = splitContent[0];
+		this.newEncryptedHost = Base64.getDecoder().decode(splitContent[1]);
 	}
 	
 	public String getToken(){
@@ -29,7 +37,7 @@ public class HostUpdatedMessage extends Message {
         stringBuilder.append(" ");
         stringBuilder.append(token);
         stringBuilder.append(" ");
-        stringBuilder.append(newEncryptedHost);
+        stringBuilder.append(new String(Base64.getEncoder().encode(newEncryptedHost)));
         return stringBuilder.toString();
     }
 }
