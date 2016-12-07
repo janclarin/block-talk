@@ -95,6 +95,11 @@ public class Client implements Runnable, SocketHandlerListener {
     private InetSocketAddress serverManagerAddress;
 
     /**
+     * SocketHandler connected to current host
+     */
+    private SocketHandler hostSocketHandler;
+
+    /**
      * Creates a new Client with the given models.
      *
      * @param clientUser Client user information.
@@ -183,11 +188,12 @@ public class Client implements Runnable, SocketHandlerListener {
      * @param encrypt True if the message should be encrypted first
      */
     public void sendMessage(Message message, SocketHandler recipientSocketHandler, boolean encrypt) {
-        try {
-            if(encrypt){message = encryptMessage(message);}
+        if(encrypt){message = encryptMessage(message);}
+        try{
             recipientSocketHandler.sendMessage(message);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ioe) {
+            System.out.println("User "+socketHandlerUserMap.get(recipientSocketHandler).toString()+" is dead!");
+            handleDeadUser(recipientSocketHandler, true);
         }
     }
 
@@ -266,6 +272,12 @@ public class Client implements Runnable, SocketHandlerListener {
         else if (message instanceof AckMessage) {
             //get token from server
             handleAckMessage((AckMessage) message);
+        }
+        else if (message instanceof DeadUserMessage) {
+            handleDeadUserMessage((DeadUserMessage) message);
+        }
+        else if (message instanceof ByeMessage) {
+            handleByeMessage((ByeMessage) message, sender);
         }
 
         if(notify){
@@ -389,6 +401,29 @@ public class Client implements Runnable, SocketHandlerListener {
             disconnectFromServer();
             System.out.println("Token updated: "+roomToken);
         }
+        return true;
+    }
+
+    /**
+     * Handles DeadUserMessage.
+     *
+     * @param message Incoming message
+     * @return boolean True if the message is allowed to continue, false otherwise
+     */
+    private boolean handleDeadUserMessage(DeadUserMessage message) {
+        handleDeadUser(message.getDeadUser().getSocketAddress(), false);
+        return true;
+    }
+
+    /**
+     * Handles ByeMessage.
+     *
+     * @param message Incoming message
+     * @return boolean True if the message is allowed to continue, false otherwise
+     */
+    private boolean handleByeMessage(ByeMessage message, User sender) {
+        //Replicates a dead user message
+        handleDeadUser(sender.getSocketAddress(), false);
         return true;
     }
 
@@ -518,5 +553,42 @@ public class Client implements Runnable, SocketHandlerListener {
      */  
     public void setServerManagerAddress(InetSocketAddress serverManagerAddress) {
         this.serverManagerAddress = serverManagerAddress;
+    }
+
+    /**
+     * Sets the address of the server manager
+     * @param serverSocketAddress The address of the server
+     */  
+    private void handleDeadUser(SocketHandler deadSocketHandler, boolean broadcastDead) {
+        //shut down socket
+        deadSocketHandler.shutdown();
+        //remove user from room map
+        int totalUsers = socketHandlerUserMap.size();
+        User deadUser = socketHandlerUserMap.remove(deadSocketHandler);
+        while(socketHandlerUserMap.size() == totalUsers){}//wait for user to be removed?
+        //broadcast DED message if this was a new discovery
+        if(broadcastDead){sendMessageToAll(new DeadUserMessage(clientUser.getSocketAddress(),deadUser));}
+        //If host, trigger election
+        if(deadSocketHandler == hostSocketHandler) {
+            //TODO: trigger election
+        }
+        //Remove from user ordering
+        //TODO: userRankList.remove(user)
+    }
+
+    /**
+     * Sets the address of the server manager
+     * @param serverSocketAddress The address of the server
+     */  
+    private void handleDeadUser(InetSocketAddress userAddress, boolean broadcastDead) {
+        SocketHandler userSocketHandler = null;
+        for(SocketHandler socketHandler : socketHandlerUserMap.keySet()) {
+            if(socketHandler.getRemoteSocketAddress().equals(userAddress)) {
+                userSocketHandler = socketHandler;
+                break;
+            }
+        }
+        if(userSocketHandler == null){return;} //Connection is already closed
+        handleDeadUser(userSocketHandler, broadcastDead);
     }
 }

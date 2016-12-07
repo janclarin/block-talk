@@ -78,7 +78,8 @@ public class BlockTalkClientProgram implements ClientListener {
 
         // Listen for user input.
         String message = "";
-        while(!message.equals("/q")){
+        boolean shutdown = false;
+        while(!shutdown){
             message = scanner.nextLine();
             //TODO: Move this logic to another class
             if(message.startsWith("/connect ")){
@@ -99,6 +100,9 @@ public class BlockTalkClientProgram implements ClientListener {
                 client.sendMessageToAll(msgC);
                 client.sendMessageToAll(msgB);
                 client.sendMessageToAll(msgA);
+            } else if (message.toLowerCase().startsWith("/q") || message.toLowerCase().startsWith("/quit")) {
+                shutdown = true;
+                client.sendMessageToAll(new ByeMessage(clientUser.getSocketAddress()));
             }else {
                 client.sendMessageToAll(new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), message));
             }
