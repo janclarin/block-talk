@@ -8,7 +8,7 @@ public class HostUpdatedMessage extends Message {
 	private String token;
 	private byte[] newEncryptedHost;
 	
-	protected HostUpdatedMessage(InetSocketAddress senderSocketAddress, String token, byte[] encryptedHost) {
+	public HostUpdatedMessage(InetSocketAddress senderSocketAddress, String token, byte[] encryptedHost) {
 		super(senderSocketAddress);
 		this.token = token;
 		this.newEncryptedHost = encryptedHost;
