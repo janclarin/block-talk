@@ -42,19 +42,23 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
     public Message sendMessageToServerSockets(Message message, UUID messageId){
     	List<Message> replies = new ArrayList<Message>();
 		Message reply = null;
-    	for(Socket serverSocket : serverSockets){
+    	for(Socket serverSocket : ServerManager.getInstance().getServerSockets()){
     		do{
         		try{
 					reply = sendMessage(serverSocket, message);
 					if(reply instanceof ProcessMessage){
 						reply = ((ProcessMessage)reply).hasMessageId(messageId) ? reply : null;
 					}
+        		} catch (SocketException ex){
+        			reply = new ByeMessage((InetSocketAddress) serverSocket.getLocalSocketAddress());
+        			System.out.printf("Server @%s has diconnected\n", serverSocket.getLocalSocketAddress().toString());
         		} catch (IOException ex){
         			reply = new ByeMessage((InetSocketAddress) serverSocket.getLocalSocketAddress());
         			ex.printStackTrace();
         		}
     		} while (reply == null);
     		if(!(reply instanceof ByeMessage)){
+    			ServerManager.getInstance().removeServerSocket(serverSocket);
         		replies.add(reply);	
     		}
     	}
@@ -65,8 +69,11 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
     public Message messageReceived(Message message) {
         Message responseMessage = null;
         UUID queueId =  UUID.randomUUID();
-        responseMessage = sendMessageToServerSockets(new QueueMessage(message.getSenderSocketAddress(), message, queueId), queueId);
-        responseMessage = sendMessageToServerSockets(new ProcessMessage(message.getSenderSocketAddress(), queueId), queueId);
+/*        responseMessage = sendMessageToServerSockets(new QueueMessage(message.getSenderSocketAddress(), message, queueId), queueId);
+        responseMessage = sendMessageToServerSockets(new ProcessMessage(message.getSenderSocketAddress(), queueId), queueId);*/
+        
+        responseMessage = ServerManager.getInstance().sendMessageToServerSockets(new QueueMessage(message.getSenderSocketAddress(), message, queueId), queueId);
+        responseMessage = ServerManager.getInstance().sendMessageToServerSockets(new ProcessMessage(message.getSenderSocketAddress(), queueId), queueId);
         return responseMessage;
     }  
     

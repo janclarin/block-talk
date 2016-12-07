@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.List;
+import java.util.UUID;
 
 import models.ChatRoom;
 import models.User;
@@ -50,7 +51,8 @@ public class ClientConnection implements Runnable {
 	@Override
 	public void run() {
 		try {
-			System.out.printf("New Connection @%s", socket.getInetAddress().getHostAddress());
+			Thread.currentThread().setName(String.format("@%s", socket.getLocalSocketAddress().toString()));
+			System.out.printf("New Connection @%s\n", socket.getInetAddress().getHostAddress());
 			InputStream inputStream = socket.getInputStream();
 			Message message;
 			while (!closeConnection) {
