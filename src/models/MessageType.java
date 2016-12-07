@@ -6,7 +6,7 @@ package models;
 public enum MessageType {
     ACKNOWLEDGEMENT("ACK"),
     BYE("BYE"),
-    DISCONNECTED("DED"),
+    DEAD_USER("DED"),
     HELLO("HLO"),
     HOST_ROOM("HST"),
     LEADER("LDR"),

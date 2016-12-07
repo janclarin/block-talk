@@ -145,7 +145,9 @@ public class MessageReadHelper{
 	        	return new QueueMessage(senderSocketAddress, message, queueMessageId);
             case USER_RANK_ORDER:
                 return new UserRankOrderMessage(senderSocketAddress, getMessageContentUserList(messageContent));
-	        // TODO: case DISCONNECTED:
+	        case DEAD_USER:
+                User deadUser = getMessageContentUser(messageContent);
+                return new DeadUserMessage(senderSocketAddress, deadUser);
 	        // TODO: case LEADER:
 	        // TODO: case NEGATIVE_ACKNOWLEDGEMENT:
 	        default:
