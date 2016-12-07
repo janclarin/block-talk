@@ -1,5 +1,6 @@
 package helpers;
 import exceptions.MessageTypeNotSupportedException;
+import models.ChatRoom;
 import models.MessageType;
 import models.User;
 import models.messages.*;
@@ -11,7 +12,10 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.Base64;
 
 public class MessageReadHelper{
 
