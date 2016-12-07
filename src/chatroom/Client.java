@@ -478,6 +478,7 @@ public class Client implements Runnable, SocketHandlerListener {
      * @param message
      */
     private void handleLeaderVoteMessage(LeaderVoteMessage message) {
+        if(isHost) return; //Ignore votes from last election
         if (!electionMode) startElection();
 
         // Increment vote counts for self.
