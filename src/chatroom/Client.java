@@ -511,9 +511,14 @@ public class Client implements Runnable, SocketHandlerListener {
         // Send vote to lowest ranked user if it exists.
         if (userRankingOrderList.size() > 0) {
             User lowestRankUser = userRankingOrderList.get(0);
-            // Only send vote if not self.
+            LeaderVoteMessage vote = new LeaderVoteMessage(clientUser);
+            // Only send vote normally if not self.
             if (!lowestRankUser.equals(clientUser)) {
-                sendMessage(new LeaderVoteMessage(clientUser), lowestRankUser.getSocketAddress(), true);
+                sendMessage(vote, lowestRankUser.getSocketAddress(), true);
+            }
+            else {
+                //simulate recieving a vote from self
+                handleLeaderVoteMessage(vote);
             }
         }
     }
