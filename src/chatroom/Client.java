@@ -309,9 +309,10 @@ public class Client implements Runnable, SocketHandlerListener {
             sendMessageToAll(new UserInfoMessage(clientUser, sender));
             // Add sender to ranking order list.
             userRankingOrderList.add(sender);
-            // Send hello and user rank order message to the new client.
+            // Send hello, user rank order, and ACK with token messages to the new client.
             sendMessage(new HelloMessage(clientUser), senderSocketHandler, true);
             sendMessage(new UserRankOrderMessage(clientUser.getSocketAddress(), userRankingOrderList), senderSocketHandler, true);
+            sendMessage(new AckMessage(clientUser.getSocketAddress(), "TOKEN " + roomToken), senderSocketHandler, true);
         }
         socketHandlerUserMap.put(senderSocketHandler, sender);
     }
