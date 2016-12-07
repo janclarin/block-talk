@@ -37,7 +37,7 @@ public class ServerManager implements ClientConnectionListener {
 	private static boolean listen;
 	private List<Socket> serverSockets;
 	
-	private ServerManager serverManager;
+	private static ServerManager serverManager;
 
 	/**
 	 * Starts the main server manager.
@@ -119,10 +119,6 @@ public class ServerManager implements ClientConnectionListener {
 		synchronized(serverSockets){
 			serverSockets.add(socket);
 		}
-	}
-	
-	public List<Socket> getServerSockets(){
-		return serverSockets;
 	}
 	
     /**
