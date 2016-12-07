@@ -4,14 +4,14 @@ import models.MessageType;
 import models.User;
 
 /**
- * LeaderVote message to pass the senderUsername and the sourcePort to send a vote in receivers favour.
- * VOT <senderUsername> <sourceAddress>
+ * Leader message to claim new hosting rights.
+ * HLO <senderUsername> <sourceAddress>
  */
 public class LeaderVoteMessage extends Message {
 
     private final User sender;
 
-    public LeaderVoteMessage(final User sender) {
+    public LeaderMessage(final User sender) {
         super(sender.getSocketAddress());
         this.sender = sender;
     }
@@ -22,7 +22,7 @@ public class LeaderVoteMessage extends Message {
 
     @Override
     protected String getData() {
-        return String.format("%s %s %s %d", MessageType.LEADER_VOTE.getProtocolCode(),
+        return String.format("%s %s %s %d", MessageType.LEADER.getProtocolCode(),
                 sender.getUsername(), this.senderSocketAddress.getHostString(), this.senderSocketAddress.getPort());
     }
 }
