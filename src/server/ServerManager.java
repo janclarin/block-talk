@@ -36,7 +36,8 @@ public class ServerManager implements ClientConnectionListener {
 	private static int port = 9999;
 	private static boolean listen;
 	private List<Socket> serverSockets;
-	private static ServerManager serverManager;
+	
+	private ServerManager serverManager;
 
 	/**
 	 * Starts the main server manager.
