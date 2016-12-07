@@ -50,7 +50,7 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
 					}
         		} catch (IOException ex){
         			reply = new ByeMessage((InetSocketAddress) serverSocket.getLocalSocketAddress());
-        			ex.printStackTrace();
+        			//ex.printStackTrace();
         		}
     		} while (reply == null);
     		if(!(reply instanceof ByeMessage)){

@@ -376,10 +376,10 @@ public class Client implements Runnable, SocketHandlerListener {
         List<byte[]> entries = message.getEntries();
         String decryptedEntry = "";
         for(byte[] entry : entries){
-            if(DEBUG) System.out.println("HOST ENTRY: "+new String(Base64.getEncoder().encode(entry)));
+            printLog("HOST ENTRY: "+new String(Base64.getEncoder().encode(entry)));
             decryptedEntry = new String(encryptionEngine.decrypt(entry));
             if(decryptedEntry.length() > 0){break;}
-            if(DEBUG) System.out.println("Non matching room");
+            printLog("Non matching room");
         }
         if(decryptedEntry.isEmpty()) {
             createNewRoom();
@@ -389,7 +389,7 @@ public class Client implements Runnable, SocketHandlerListener {
             String[] splitString = decryptedEntry.replace("/","").split(":");
             String decryptedInetAddress = splitString[0];
             int decryptedPort = Integer.parseInt(splitString[1]);
-            if(DEBUG) System.out.println(decryptedInetAddress+":"+decryptedPort);
+            printLog(decryptedInetAddress+":"+decryptedPort);
             InetSocketAddress roomAddress = new InetSocketAddress(decryptedInetAddress, decryptedPort);
             joinExistingRoom(roomAddress);
             disconnectFromServer();
@@ -440,7 +440,7 @@ public class Client implements Runnable, SocketHandlerListener {
         if(splitMessage[0].equals("TOKEN")){
             roomToken = splitMessage[1];
             disconnectFromServer();
-            if(DEBUG) System.out.println("Token updated: "+roomToken);
+            printLog("Token updated: "+roomToken);
         }
         return DEBUG;
     }
@@ -617,9 +617,9 @@ public class Client implements Runnable, SocketHandlerListener {
      */   
     private void createNewRoom() {
         setIsHost(true);
-        if(DEBUG) System.out.println("SENDING HST MESSAGE.");
+        printLog("SENDING HST MESSAGE.");
         byte[] encryptedInfo = encryptionEngine.encrypt(clientUser.getSocketAddress().toString().getBytes());
-        if(DEBUG) System.out.println("ENCODED HOST INFO: "+new String(Base64.getEncoder().encode(encryptedInfo)));
+        printLog("ENCODED HOST INFO: "+new String(Base64.getEncoder().encode(encryptedInfo)));
         sendMessage(new HostRoomMessage(clientUser.getSocketAddress(), encryptedInfo), serverManagerAddress, false);
     }
 
@@ -638,7 +638,7 @@ public class Client implements Runnable, SocketHandlerListener {
      */  
     private void disconnectFromServer() {
         SocketHandler serverSocketHandler = null;
-        if(DEBUG) System.out.println("SENDING BYE MESSAGE TO SERVER.");
+        printLog("SENDING BYE MESSAGE TO SERVER.");
         for(SocketHandler socketHandler : socketHandlerUserMap.keySet()) {
             if(socketHandler.getRemoteSocketAddress().equals(serverManagerAddress)) {
                 serverSocketHandler = socketHandler;
@@ -720,5 +720,13 @@ public class Client implements Runnable, SocketHandlerListener {
         }
         if(userSocketHandler == null){return;} //Connection is already closed
         handleDeadUser(userSocketHandler, broadcastDead);
+    }
+
+    /**
+     * Prints a debugging message (or logs it)
+     * @param logMessage Debugging message
+     */  
+    private void printLog(String logMessage) {
+        if (DEBUG) {System.out.println(logMessage);}
     }
 }
