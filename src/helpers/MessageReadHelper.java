@@ -1,6 +1,5 @@
 package helpers;
 import exceptions.MessageTypeNotSupportedException;
-import models.ChatRoom;
 import models.MessageType;
 import models.User;
 import models.messages.*;
@@ -15,7 +14,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.Base64;
 
 public class MessageReadHelper{
 
@@ -143,10 +141,23 @@ public class MessageReadHelper{
 	        			getDataMessageType(dataMessageBytes), 
 	        			getDataMessageContent(dataMessageBytes));
 	        	return new QueueMessage(senderSocketAddress, message, queueMessageId);
+	        case HOST_UPDATED:
+	        	String token = messageContent.split(" ")[0];
+	        	String encryptedHost = messageContent.split(" ")[1];
+	        	return new HostUpdatedMessage(senderSocketAddress, token, encryptedHost.getBytes());
 	        // TODO: case DISCONNECTED:
-	        // TODO: case LEADER:
+            case USER_RANK_ORDER:
+                return new UserRankOrderMessage(senderSocketAddress, getMessageContentUserList(messageContent));
+	        case DEAD_USER:
+                User deadUser = getMessageContentUser(messageContent);
+                return new DeadUserMessage(senderSocketAddress, deadUser);
+            case LEADER_VOTE:
+                User voterUser = getMessageContentUser(messageContent);
+                return new LeaderVoteMessage(voterUser);
+	        case LEADER:
+                User newLeader = getMessageContentUser(messageContent);
+                return new LeaderMessage(newLeader);
 	        // TODO: case NEGATIVE_ACKNOWLEDGEMENT:
-	        // TODO: case ORDER:
 	        default:
 	            throw new MessageTypeNotSupportedException();
 	    }
@@ -244,6 +255,25 @@ public class MessageReadHelper{
         String ipAddress = messageContentSplit[1];
         int port = Integer.parseInt(messageContentSplit[2]);
         return new User(username, new InetSocketAddress(ipAddress, port));
+    }
+
+    /**
+     * Creates a list of users from message content.
+     * Expecting the format:
+     * <username1> <ipAddress1> <port1>\n<username2> <ipAddress2> <port2>\n...
+     *
+     * @param messageContent Message content string.
+     * @return List<User> parsed from message content.</User>
+     */
+    private static List<User> getMessageContentUserList(String messageContent) throws UnknownHostException {
+        List<User> users = new ArrayList<>();
+        if (!messageContent.isEmpty()) {
+            String[] messageContentSplitByNewLine = messageContent.split("\n");
+            for (int i = 0; i < messageContentSplitByNewLine.length; i++) {
+                users.add(getMessageContentUser(messageContentSplitByNewLine[i]));
+            }
+        }
+        return users;
     }
 
     /**

@@ -3,18 +3,15 @@ package server;
 import exceptions.ChatRoomNotFoundException;
 import exceptions.MessageTypeNotSupportedException;
 import helpers.MessageReadHelper;
-import models.ChatRoom;
 import models.messages.*;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -134,7 +131,14 @@ public class Server {
 			byte[] hostData = hostRoomMessage.getRoomData();
 			addRoomMap(token, hostData);
 			sendMessage(new AckMessage(serverSocketAddress, String.format("TOKEN %s", token.toString())));
-		} 
+		}
+		else if (message instanceof HostUpdatedMessage) {
+			HostUpdatedMessage hostRoomMessage = (HostUpdatedMessage) message;
+			byte[] hostData = hostRoomMessage.getEncryptedHost();
+			UUID hostToken = UUID.fromString(hostRoomMessage.getToken());
+			addRoomMap(hostToken, hostData);
+			sendMessage(new AckMessage(serverSocketAddress, String.format("TOKEN %s", token.toString())));
+		}
 		else if (message instanceof RequestRoomListMessage) {
 			sendMessage(new RoomListMessage(serverSocketAddress, new ArrayList<>(roomMap.values())));
 		} 
