@@ -93,13 +93,15 @@ public class BlockTalkClientProgram implements ClientListener {
                 System.out.println("SEND HLO");
                 client.sendMessageToAll(new HelloMessage(clientUser));
             } else if (message.startsWith("/ODR")) {
-                Message msgA = new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "A");
-                Message msgB = new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "B");
-                Message msgC = new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), "C");
+                Message msgA = new ChatMessage(clientUser.getSocketAddress(), client.timestamp(), "A");
+                Message msgB = new ChatMessage(clientUser.getSocketAddress(), client.timestamp(), "B");
+                Message msgC = new ChatMessage(clientUser.getSocketAddress(), client.timestamp(), "C");
                 client.sendMessageToAll(msgC);
                 client.sendMessageToAll(msgB);
                 client.sendMessageToAll(msgA);
-            }else {
+            } else if (message.startsWith("/rank")) {
+                for (User user : client.getUserRankingOrderList()) { System.out.println(user); }
+            } else {
                 client.sendMessageToAll(new ChatMessage(clientUser.getSocketAddress(),client.timestamp(), message));
             }
         }

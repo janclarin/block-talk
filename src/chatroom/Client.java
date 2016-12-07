@@ -105,6 +105,9 @@ public class Client implements Runnable, SocketHandlerListener {
     public Client(final User clientUser, final ClientListener listener) {
         this.clientUser = clientUser;
         this.listener = listener;
+
+        // Add the user to the ranking list. This gets updated when connected to a room.
+        this.userRankingOrderList.add(clientUser);
     }
 
     /**
@@ -269,6 +272,9 @@ public class Client implements Runnable, SocketHandlerListener {
             //get token from server
             handleAckMessage((AckMessage) message);
         }
+        else if (message instanceof UserRankOrderMessage) {
+            handleUserRankOrderMessage((UserRankOrderMessage) message);
+        }
 
         if(notify){
             // Notify listener that a message was received.
@@ -289,8 +295,11 @@ public class Client implements Runnable, SocketHandlerListener {
         if (isHost) {
             // Send new client information to all clients.
             sendMessageToAll(new UserInfoMessage(clientUser, sender));
-            // Send message to the new client.
+            // Add sender to ranking order list.
+            userRankingOrderList.add(sender);
+            // Send hello and user rank order message to the new client.
             sendMessage(new HelloMessage(clientUser), senderSocketHandler, true);
+            sendMessage(new UserRankOrderMessage(clientUser.getSocketAddress(), userRankingOrderList), senderSocketHandler, true);
         }
         socketHandlerUserMap.put(senderSocketHandler, sender);
     }
@@ -395,6 +404,15 @@ public class Client implements Runnable, SocketHandlerListener {
             System.out.println("Token updated: "+roomToken);
         }
         return true;
+    }
+
+    /**
+     * Overrides the internal userRankingOrderList with one from external source.
+     *
+     * @param message Incoming message.
+     */
+    private void handleUserRankOrderMessage(UserRankOrderMessage message) {
+        userRankingOrderList = message.getUserRankOrderList();
     }
 
     /**
@@ -518,10 +536,27 @@ public class Client implements Runnable, SocketHandlerListener {
     }
 
     /**
+     * Removes the userToRemove from the userRankingOrderList.
+     * @param userToRemove
+     */
+    private void removeUserFromRankingOrder(User userToRemove) {
+        userRankingOrderList.removeIf(user -> user.equals(userToRemove));
+    }
+
+    /**
      * Sets the address of the server manager
      * @param serverSocketAddress The address of the server
      */  
     public void setServerManagerAddress(InetSocketAddress serverManagerAddress) {
         this.serverManagerAddress = serverManagerAddress;
+    }
+
+    /**
+     * Gets the userRankingOrderList.
+     *
+     * @return User ranking order list.
+     */
+    public List<User> getUserRankingOrderList() {
+        return userRankingOrderList;
     }
 }
