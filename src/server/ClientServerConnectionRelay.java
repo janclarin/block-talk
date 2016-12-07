@@ -48,8 +48,6 @@ public class ClientServerConnectionRelay implements ClientConnectionListener {
 					if(reply instanceof ProcessMessage){
 						reply = ((ProcessMessage)reply).hasMessageId(messageId) ? reply : null;
 					}
-        		} catch (SocketException ex){
-        			System.out.printf("Server @%s has diconnected", serverSocket.getLocalSocketAddress().toString());
         		} catch (IOException ex){
         			reply = new ByeMessage((InetSocketAddress) serverSocket.getLocalSocketAddress());
         			ex.printStackTrace();
