@@ -102,6 +102,16 @@ public class Client implements Runnable, SocketHandlerListener {
     private SocketHandler hostSocketHandler;
 
     /**
+     * True if there is an ongoing election
+     */
+    private boolean electionMode = false;
+
+    /**
+     * Number of votes recieved in current election
+     */
+    private int votesRecieved;
+
+    /**
      * Creates a new Client with the given models.
      *
      * @param clientUser Client user information.
