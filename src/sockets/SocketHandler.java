@@ -103,17 +103,9 @@ public class SocketHandler implements Runnable {
             throw new IOException("Connection has been terminated.");
         }
 
-        try {
-            if(out == null){out = socket.getOutputStream();}
-            out.write(message.toByteArray());
-            out.flush();
-            // TODO: Handle when the connection terminates.
-            //notifyMessageSent(message); // Notify listeners that the message was successfully sent.
-        } catch (IOException e) {
-            System.err.println("IOException: " + e);
-            e.printStackTrace();
-            // TODO: Notify listeners that sending the message failed.
-        }
+        if(out == null){out = socket.getOutputStream();}
+        out.write(message.toByteArray());
+        out.flush();
     }
 
     /**
