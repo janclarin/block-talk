@@ -484,7 +484,7 @@ public class Client implements Runnable, SocketHandlerListener {
         leaderElectionVotesReceived++;
 
         // Check if there are enough votes for myself.
-        int numVotesNeeded = (int) Math.ceil(socketHandlerUserMap.size() / 2);
+        int numVotesNeeded = (int) Math.ceil(socketHandlerUserMap.size() / 2) + 1;
         if (leaderElectionVotesReceived >= numVotesNeeded) {
             isHost = true; // Become the host.
             sendMessageToAll(new LeaderMessage(clientUser));
