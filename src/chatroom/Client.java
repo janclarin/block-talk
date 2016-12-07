@@ -1,6 +1,5 @@
 package chatroom;
 
-import models.ChatRoom;
 import models.User;
 import models.messages.*;
 import models.SenderMessageTuple;
@@ -17,9 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.Comparator;
 import java.security.GeneralSecurityException;
-import javax.crypto.IllegalBlockSizeException;
 
 import java.util.Base64;
 
@@ -77,8 +74,13 @@ public class Client implements Runnable, SocketHandlerListener {
     /**
      * Priority queue for later-timestamped messages
      */
-    private PriorityQueue<SenderMessageTuple> queuedMessages = new PriorityQueue<SenderMessageTuple>();
-    
+    private PriorityQueue<SenderMessageTuple> queuedMessages = new PriorityQueue<>();
+
+    /**
+     * Room member ranking order. Users added as their information is received. Used for leader election.
+     */
+    private List<User> userRankingOrderList = new ArrayList<>();
+
     /**
      * Encryption engine for encryption protocol
      */
@@ -307,6 +309,9 @@ public class Client implements Runnable, SocketHandlerListener {
                 SocketHandler newSocketHandler = openSocketConnection(messageUser.getSocketAddress(), false);
                 socketHandlerUserMap.put(newSocketHandler, messageUser);
                 sendMessage(new HelloMessage(clientUser), newSocketHandler, true);
+
+                // Add user to ranking order list.
+                userRankingOrderList.add(messageUser);
             } catch (IOException e) {
                 e.printStackTrace();
             }
