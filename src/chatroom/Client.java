@@ -661,7 +661,8 @@ public class Client implements Runnable, SocketHandlerListener {
     private void handleDeadUser(SocketHandler deadSocketHandler, boolean broadcastDead) {
         //shut down socket
         deadSocketHandler.shutdown();
-        //remove user from room map
+        //remove user from room map TODO: move this outside somehow so it does not happen 
+        //while SendMessageToAll is active, which causes concurrent modifiction exception
         int totalUsers = socketHandlerUserMap.size();
         User deadUser = socketHandlerUserMap.remove(deadSocketHandler);
         while(socketHandlerUserMap.size() == totalUsers){}//wait for user to be removed?
