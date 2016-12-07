@@ -37,6 +37,11 @@ public class Client implements Runnable, SocketHandlerListener {
     private final static int SERVER_SOCKET_TIMEOUT = 150;
 
     /**
+     * Enable/disable debug mode
+     */
+    private final static boolean DEBUG = false;
+
+    /**
      * Maps SocketHandlers to the User of the connection.
      */
     private final Map<SocketHandler, User> socketHandlerUserMap = new HashMap<>();
@@ -267,7 +272,7 @@ public class Client implements Runnable, SocketHandlerListener {
      */
     @Override
     public void messageReceived(SocketHandler senderSocketHandler, Message message) {
-        boolean notify = true;
+        boolean notify = DEBUG;
         User sender = socketHandlerUserMap.get(senderSocketHandler);
         if (message instanceof HelloMessage) {
             handleHelloMessage(senderSocketHandler, (HelloMessage) message);
@@ -371,10 +376,10 @@ public class Client implements Runnable, SocketHandlerListener {
         List<byte[]> entries = message.getEntries();
         String decryptedEntry = "";
         for(byte[] entry : entries){
-            System.out.println("HOST ENTRY: "+new String(Base64.getEncoder().encode(entry)));
+            if(DEBUG) System.out.println("HOST ENTRY: "+new String(Base64.getEncoder().encode(entry)));
             decryptedEntry = new String(encryptionEngine.decrypt(entry));
             if(decryptedEntry.length() > 0){break;}
-            System.out.println("Non matching room");
+            if(DEBUG) System.out.println("Non matching room");
         }
         if(decryptedEntry.isEmpty()) {
             createNewRoom();
@@ -384,7 +389,7 @@ public class Client implements Runnable, SocketHandlerListener {
             String[] splitString = decryptedEntry.replace("/","").split(":");
             String decryptedInetAddress = splitString[0];
             int decryptedPort = Integer.parseInt(splitString[1]);
-            System.out.println(decryptedInetAddress+":"+decryptedPort);
+            if(DEBUG) System.out.println(decryptedInetAddress+":"+decryptedPort);
             InetSocketAddress roomAddress = new InetSocketAddress(decryptedInetAddress, decryptedPort);
             joinExistingRoom(roomAddress);
             disconnectFromServer();
@@ -435,9 +440,9 @@ public class Client implements Runnable, SocketHandlerListener {
         if(splitMessage[0].equals("TOKEN")){
             roomToken = splitMessage[1];
             disconnectFromServer();
-            System.out.println("Token updated: "+roomToken);
+            if(DEBUG) System.out.println("Token updated: "+roomToken);
         }
-        return true;
+        return DEBUG;
     }
 
     /**
@@ -457,7 +462,7 @@ public class Client implements Runnable, SocketHandlerListener {
      */
     private boolean handleDeadUserMessage(DeadUserMessage message) {
         handleDeadUser(message.getDeadUser().getSocketAddress(), false);
-        return true;
+        return DEBUG;
     }
 
     /**
@@ -469,7 +474,7 @@ public class Client implements Runnable, SocketHandlerListener {
     private boolean handleByeMessage(ByeMessage message, User sender) {
         //Replicates a dead user message
         handleDeadUser(sender.getSocketAddress(), false);
-        return true;
+        return DEBUG;
     }
 
     /**
@@ -612,9 +617,9 @@ public class Client implements Runnable, SocketHandlerListener {
      */   
     private void createNewRoom() {
         setIsHost(true);
-        System.out.println("SENDING HST MESSAGE.");
+        if(DEBUG) System.out.println("SENDING HST MESSAGE.");
         byte[] encryptedInfo = encryptionEngine.encrypt(clientUser.getSocketAddress().toString().getBytes());
-        System.out.println("ENCODED HOST INFO: "+new String(Base64.getEncoder().encode(encryptedInfo)));
+        if(DEBUG) System.out.println("ENCODED HOST INFO: "+new String(Base64.getEncoder().encode(encryptedInfo)));
         sendMessage(new HostRoomMessage(clientUser.getSocketAddress(), encryptedInfo), serverManagerAddress, false);
     }
 
@@ -633,7 +638,7 @@ public class Client implements Runnable, SocketHandlerListener {
      */  
     private void disconnectFromServer() {
         SocketHandler serverSocketHandler = null;
-        System.out.println("SENDING BYE MESSAGE.");
+        if(DEBUG) System.out.println("SENDING BYE MESSAGE TO SERVER.");
         for(SocketHandler socketHandler : socketHandlerUserMap.keySet()) {
             if(socketHandler.getRemoteSocketAddress().equals(serverManagerAddress)) {
                 serverSocketHandler = socketHandler;
