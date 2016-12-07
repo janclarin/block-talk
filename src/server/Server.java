@@ -134,7 +134,14 @@ public class Server {
 			byte[] hostData = hostRoomMessage.getRoomData();
 			addRoomMap(token, hostData);
 			sendMessage(new AckMessage(serverSocketAddress, String.format("TOKEN %s", token.toString())));
-		} 
+		}
+		else if (message instanceof HostUpdatedMessage) {
+			HostUpdatedMessage hostRoomMessage = (HostUpdatedMessage) message;
+			byte[] hostData = hostRoomMessage.getEncryptedHost();
+			UUID hostToken = UUID.fromString(hostRoomMessage.getToken());
+			addRoomMap(hostToken, hostData);
+			sendMessage(new AckMessage(serverSocketAddress, String.format("TOKEN %s", token.toString())));
+		}
 		else if (message instanceof RequestRoomListMessage) {
 			sendMessage(new RoomListMessage(serverSocketAddress, new ArrayList<>(roomMap.values())));
 		} 

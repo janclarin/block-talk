@@ -18,7 +18,8 @@ public enum MessageType {
     USER("USR"),
     YOU("YOU"),
     PROCESS("PRC"),
-    QUEUE("QUE");
+    QUEUE("QUE"),
+    HOST_UPDATED("RPL");
 
     private final String protocolCode;
 
