@@ -107,7 +107,7 @@ public class Client implements Runnable, SocketHandlerListener {
     private boolean electionMode = false;
 
     /**
-     * Number of votes recieved in current election
+     * Number of votes received in current election.
      */
     private int leaderElectionVotesReceived;
 
@@ -478,6 +478,7 @@ public class Client implements Runnable, SocketHandlerListener {
         // Check if there are enough votes for myself.
         int numVotesNeeded = (int) Math.ceil(socketHandlerUserMap.size() / 2);
         if (this.leaderElectionVotesReceived >= numVotesNeeded) {
+            isHost = true; // Become the host.
             sendMessageToAll(new LeaderMessage(clientUser));
             // TODO: Notify server.
             endElection();
