@@ -300,6 +300,9 @@ public class Client implements Runnable, SocketHandlerListener {
         else if (message instanceof LeaderVoteMessage) {
             handleLeaderVoteMessage((LeaderVoteMessage) message);
         }
+        else if (message instanceof LeaderMessage) {
+            handleLeaderMessage((LeaderMessage) message);
+        }
 
         if(notify){
             // Notify listener that a message was received.
@@ -483,6 +486,14 @@ public class Client implements Runnable, SocketHandlerListener {
             // TODO: Notify server.
             endElection();
         }
+    }
+
+    /**
+     * Handles leader message. Stops the election.
+     * @param message
+     */
+    private void handleLeaderMessage(LeaderMessage message) {
+        endElection();
     }
 
     /**
