@@ -518,7 +518,7 @@ public class Client implements Runnable, SocketHandlerListener {
             }
             else {
                 //simulate recieving a vote from self
-                handleLeaderVoteMessage(vote)
+                handleLeaderVoteMessage(vote);
             }
         }
     }
