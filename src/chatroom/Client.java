@@ -97,9 +97,19 @@ public class Client implements Runnable, SocketHandlerListener {
     private InetSocketAddress serverManagerAddress;
 
     /**
-     * SocketHandler connected to current host
+     * Host client user. Used to determine if the host has gone down.
      */
-    private SocketHandler hostSocketHandler;
+    private User hostClientUser;
+
+    /**
+     * True if there is an ongoing election
+     */
+    private boolean electionMode = false;
+
+    /**
+     * Number of votes received in current election.
+     */
+    private int leaderElectionVotesReceived;
 
     /**
      * Creates a new Client with the given models.
@@ -287,6 +297,12 @@ public class Client implements Runnable, SocketHandlerListener {
         else if (message instanceof ByeMessage) {
             handleByeMessage((ByeMessage) message, sender);
         }
+        else if (message instanceof LeaderVoteMessage) {
+            handleLeaderVoteMessage((LeaderVoteMessage) message);
+        }
+        else if (message instanceof LeaderMessage) {
+            handleLeaderMessage((LeaderMessage) message);
+        }
 
         if(notify){
             // Notify listener that a message was received.
@@ -313,6 +329,11 @@ public class Client implements Runnable, SocketHandlerListener {
             sendMessage(new HelloMessage(clientUser), senderSocketHandler, true);
             sendMessage(new UserRankOrderMessage(clientUser.getSocketAddress(), userRankingOrderList), senderSocketHandler, true);
             sendMessage(new AckMessage(clientUser.getSocketAddress(), "TOKEN " + roomToken), senderSocketHandler, true);
+        } else {
+            // The first hello will be from the host. Set it.
+            if (hostClientUser == null) {
+                hostClientUser = message.getSender();
+            }
         }
         socketHandlerUserMap.put(senderSocketHandler, sender);
     }
@@ -449,6 +470,66 @@ public class Client implements Runnable, SocketHandlerListener {
         //Replicates a dead user message
         handleDeadUser(sender.getSocketAddress(), false);
         return true;
+    }
+
+    /**
+     * Replies with its own vote. Counts leader votes.
+     *
+     * @param message
+     */
+    private void handleLeaderVoteMessage(LeaderVoteMessage message) {
+        if(isHost) return; //Ignore votes from last election
+        if (!electionMode) startElection();
+
+        // Increment vote counts for self.
+        leaderElectionVotesReceived++;
+
+        // Check if there are enough votes for myself.
+        int numVotesNeeded = (int) Math.ceil(socketHandlerUserMap.size() / 2) + 1;
+        if (leaderElectionVotesReceived >= numVotesNeeded) {
+            isHost = true; // Become the host.
+            sendMessageToAll(new LeaderMessage(clientUser));
+            // TODO: Notify server.
+            endElection();
+        }
+    }
+
+    /**
+     * Handles leader message. Stops the election.
+     * @param message
+     */
+    private void handleLeaderMessage(LeaderMessage message) {
+        hostClientUser = message.getSender();
+        endElection();
+    }
+
+    /**
+     * Starts the election process by sending a vote to its lowest ranked user if it is not itself.
+     */
+    private void startElection() {
+        electionMode = true;
+
+        // Send vote to lowest ranked user if it exists.
+        if (userRankingOrderList.size() > 0) {
+            User lowestRankUser = userRankingOrderList.get(0);
+            LeaderVoteMessage vote = new LeaderVoteMessage(clientUser);
+            // Only send vote normally if not self.
+            if (!lowestRankUser.equals(clientUser)) {
+                sendMessage(vote, lowestRankUser.getSocketAddress(), true);
+            }
+            else {
+                //simulate recieving a vote from self
+                handleLeaderVoteMessage(vote);
+            }
+        }
+    }
+
+    /**
+     * Ends the election and resets vote count.
+     */
+    private void endElection() {
+        electionMode = false;
+        leaderElectionVotesReceived = 0;
     }
 
     /**
@@ -603,18 +684,19 @@ public class Client implements Runnable, SocketHandlerListener {
     private void handleDeadUser(SocketHandler deadSocketHandler, boolean broadcastDead) {
         //shut down socket
         deadSocketHandler.shutdown();
-        //remove user from room map
+        //remove user from room map TODO: move this outside somehow so it does not happen 
+        //while SendMessageToAll is active, which causes concurrent modifiction exception
         int totalUsers = socketHandlerUserMap.size();
         User deadUser = socketHandlerUserMap.remove(deadSocketHandler);
         while(socketHandlerUserMap.size() == totalUsers){}//wait for user to be removed?
         //broadcast DED message if this was a new discovery
         if(broadcastDead){sendMessageToAll(new DeadUserMessage(clientUser.getSocketAddress(),deadUser));}
-        //If host, trigger election
-        if(deadSocketHandler == hostSocketHandler) {
-            //TODO: trigger election
-        }
         //Remove from user ordering
-        //TODO: userRankList.remove(user)
+        removeUserFromRankingOrder(deadUser);
+        //If host, trigger election
+        if(hostClientUser != null && deadUser.equals(hostClientUser)) {
+            startElection();
+        }
     }
 
     /**
