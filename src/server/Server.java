@@ -3,18 +3,15 @@ package server;
 import exceptions.ChatRoomNotFoundException;
 import exceptions.MessageTypeNotSupportedException;
 import helpers.MessageReadHelper;
-import models.ChatRoom;
 import models.messages.*;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Random;
 import java.util.UUID;
 
 /**
