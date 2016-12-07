@@ -151,7 +151,9 @@ public class MessageReadHelper{
             case LEADER_VOTE:
                 User voterUser = getMessageContentUser(messageContent);
                 return new LeaderVoteMessage(voterUser);
-	        // TODO: case LEADER:
+	        case LEADER:
+                User newLeader = getMessageContentUser(messageContent);
+                return new LeaderMessage(newLeader);
 	        // TODO: case NEGATIVE_ACKNOWLEDGEMENT:
 	        default:
 	            throw new MessageTypeNotSupportedException();

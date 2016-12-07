@@ -7,7 +7,7 @@ import models.User;
  * Leader message to claim new hosting rights.
  * HLO <senderUsername> <sourceAddress>
  */
-public class LeaderVoteMessage extends Message {
+public class LeaderMessage extends Message {
 
     private final User sender;
 
