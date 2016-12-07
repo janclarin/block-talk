@@ -686,7 +686,7 @@ public class Client implements Runnable, SocketHandlerListener {
         //broadcast DED message if this was a new discovery
         if(broadcastDead){sendMessageToAll(new DeadUserMessage(clientUser.getSocketAddress(),deadUser));}
         //If host, trigger election
-        if(deadSocketHandler == hostSocketHandler) {
+        if(hostClientUser != null && deadUser.equals(hostClientUser)) {
             startElection();
         }
         //Remove from user ordering
