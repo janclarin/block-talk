@@ -40,6 +40,30 @@ public class ServerManager implements ClientConnectionListener {
 	private static ServerManager serverManager;
 
 	/**
+	 * Initialize ServerManager, and serverSockets instances
+	 */
+	public ServerManager(){
+		this.serverManager = this;
+		this.serverSockets = new ArrayList<Socket>();
+	}
+	
+	public static ServerManager getInstance(){
+		return (serverManager != null) ? serverManager : new ServerManager();
+	}
+	
+	public void removeServerSocket(Socket socket){
+		synchronized(serverSockets){
+			serverSockets.remove(socket);
+		}
+	}
+	
+	public void addServerSocket(Socket socket){
+		synchronized(serverSockets){
+			serverSockets.add(socket);
+		}
+	}
+	
+	/**
 	 * Starts the main server manager.
 	 * Begins listening for incoming connections and creates a thread based on distinct connection.
 	 * 
@@ -94,30 +118,6 @@ public class ServerManager implements ClientConnectionListener {
 		catch(Exception ex){
 			System.err.println("Error: Exception: " + ex.getMessage());
 			ex.printStackTrace();
-		}
-	}
-	
-	/**
-	 * Initialize ServerManager, and serverSockets instances
-	 */
-	public ServerManager(){
-		this.serverManager = this;
-		this.serverSockets = new ArrayList<Socket>();
-	}
-	
-	public static ServerManager getInstance(){
-		return (serverManager != null) ? serverManager : new ServerManager();
-	}
-	
-	public void removeServerSocket(Socket socket){
-		synchronized(serverSockets){
-			serverSockets.remove(socket);
-		}
-	}
-	
-	public void addServerSocket(Socket socket){
-		synchronized(serverSockets){
-			serverSockets.add(socket);
 		}
 	}
 	
