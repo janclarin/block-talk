@@ -668,7 +668,7 @@ public class Client implements Runnable, SocketHandlerListener {
         if(broadcastDead){sendMessageToAll(new DeadUserMessage(clientUser.getSocketAddress(),deadUser));}
         //If host, trigger election
         if(deadSocketHandler == hostSocketHandler) {
-            //TODO: trigger election
+            startElection();
         }
         //Remove from user ordering
         removeUserFromRankingOrder(deadUser);
