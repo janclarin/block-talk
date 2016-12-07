@@ -18,7 +18,7 @@ public enum MessageType {
     USER("USR"),
     YOU("YOU"),
     PROCESS("PRC"),
-    QUEUE("QUE");
+    QUEUE("QUE"),
     LEADER_VOTE("VOT");
 
     private final String protocolCode;
