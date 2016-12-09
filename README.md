@@ -1,6 +1,7 @@
-# block-talk
-CPSC 559 Project
+# Block Talk - Distributed Systems Course Project
+A peer-to-peer, room-based, cryptographically secure chat service.
 
+**Group Members**
 - Clinton Cabiles
 - Jan Clarin
 - Riley Lahd
