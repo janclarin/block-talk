@@ -2,9 +2,9 @@
 A peer-to-peer, room-based, cryptographically secure chat service.
 
 **Group Members**
-- Clinton Cabiles
-- Jan Clarin
-- Riley Lahd
+- [Clinton Cabiles](https://github.com/ccabiles)
+- [Riley Lahd](https://github.com/sircinnamon)
+- [Jan Clarin](https://github.com/janclarin)
 
 ## Server-side:
 
