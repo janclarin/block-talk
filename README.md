@@ -23,6 +23,8 @@ CPSC 559 Project
 
 3. Follow prompts to enter server information.
 
-4. Enter `join` or `host` to join or host a chat room, respectively.
- 
-5. If `host` was entered, enter in the room name to host a room.
+4. If the room key entered was able to decrypt a room key from the server, the client will join the existing chat room.
+
+5. Otherwise, the client will be registered as the host with the server.
+
+After which, a client can send messages by typing a message followed by `<Enter>`
